@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 
 const nf = new Intl.NumberFormat("es-CL");
 
-export const revalidate = 300; // 5 min cache; sync corre pocas veces al día
+export const revalidate = 300; // 5 min; el sync corre pocas veces al día
 
 type Tallerista = {
   id: string;
@@ -21,33 +21,47 @@ type Cuero = {
 type ProductoStats = {
   p2: number | string | null;
   sales_total: number | null;
+  familia_id: string | null;
+};
+
+type FamiliaHours = {
+  id: string;
+  hours_per_unit: number | string | null;
 };
 
 export default async function Home() {
   const sb = await createClient();
 
-  const [talleristasRes, cuerosRes, productosRes] = await Promise.all([
-    sb
-      .from("talleristas")
-      .select("id, name, role, bio, specialties")
-      .order("display_order"),
-    sb
-      .from("cueros")
-      .select("id, code, display_name")
-      .order("display_name"),
-    sb
-      .from("productos")
-      .select("p2, sales_total")
-      .eq("status", "active"),
-  ]);
+  const [talleristasRes, cuerosRes, productosRes, familiasRes] =
+    await Promise.all([
+      sb
+        .from("talleristas")
+        .select("id, name, role, bio, specialties")
+        .order("display_order"),
+      sb
+        .from("cueros")
+        .select("id, code, display_name")
+        .order("display_name"),
+      sb
+        .from("productos")
+        .select("p2, sales_total, familia_id")
+        .eq("status", "active"),
+      sb.from("familias").select("id, hours_per_unit"),
+    ]);
 
   const talleristas = (talleristasRes.data ?? []) as Tallerista[];
   const cueros = (cuerosRes.data ?? []) as Cuero[];
   const productos = (productosRes.data ?? []) as ProductoStats[];
+  const familias = (familiasRes.data ?? []) as FamiliaHours[];
+
+  const hoursByFamiliaId = new Map(
+    familias.map((f) => [f.id, Number(f.hours_per_unit ?? 0)]),
+  );
 
   const piesTotal = Math.round(
     productos.reduce(
-      (sum, p) => sum + Number(p.p2 ?? 0) * Number(p.sales_total ?? 0),
+      (sum, p) =>
+        sum + Number(p.p2 ?? 0) * Number(p.sales_total ?? 0),
       0,
     ),
   );
@@ -55,6 +69,16 @@ export default async function Home() {
     (sum, p) => sum + Number(p.sales_total ?? 0),
     0,
   );
+  const horasTotal = Math.round(
+    productos.reduce(
+      (sum, p) =>
+        sum +
+        Number(p.sales_total ?? 0) *
+          (hoursByFamiliaId.get(p.familia_id ?? "") ?? 0),
+      0,
+    ),
+  );
+  const talleresCount = talleristas.length;
 
   return (
     <main className="flex min-h-screen flex-col">
@@ -90,9 +114,14 @@ export default async function Home() {
           </p>
           <dl className="grid grid-cols-1 gap-x-12 gap-y-14 sm:grid-cols-2 lg:grid-cols-4">
             <Stat
+              number={nf.format(horasTotal)}
+              unit="horas"
+              label="de oficio artesanal"
+            />
+            <Stat
               number={nf.format(piesTotal)}
               unit="pies²"
-              label="de cuero cosidos a mano"
+              label="de cuero trabajados"
             />
             <Stat
               number={nf.format(unidadesTotal)}
@@ -100,19 +129,14 @@ export default async function Home() {
               label="terminadas en taller"
             />
             <Stat
-              number={nf.format(talleristas.length)}
-              unit="manos"
-              label="sosteniendo el oficio"
-            />
-            <Stat
-              number={nf.format(cueros.length)}
-              unit="cueros"
-              label="recuperados y trabajados"
+              number={nf.format(talleresCount)}
+              unit="talleres"
+              label="familiares en Chile"
             />
           </dl>
           <p className="mt-12 max-w-2xl font-sans text-sm leading-relaxed text-niebla">
-            Datos en vivo desde el taller. Se actualizan con cada venta, cada
-            corte, cada costura.
+            Datos en vivo desde los talleres. Se mueven con cada venta, cada
+            corte, cada costura. Cifra de los últimos doce meses.
           </p>
         </div>
       </section>
@@ -123,10 +147,11 @@ export default async function Home() {
             El Taller
           </p>
           <h2 className="font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
-            Tres pares de manos.
+            Tres talleres.
           </h2>
           <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
-            Cada pieza pasa por uno de ellos. Sin máquinas, sin apuro.
+            Roberto, César y David lideran cada uno su taller. Cada pieza pasa
+            por sus manos antes de salir.
           </p>
 
           <div className="mt-16 grid grid-cols-1 gap-12 sm:grid-cols-3 sm:gap-10">
