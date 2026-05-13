@@ -10,6 +10,7 @@ type Tallerista = {
   role: string;
   bio: string | null;
   specialties: string[];
+  manos_count: number | null;
 };
 
 type Cuero = {
@@ -36,7 +37,7 @@ export default async function Home() {
     await Promise.all([
       sb
         .from("talleristas")
-        .select("id, name, role, bio, specialties")
+        .select("id, name, role, bio, specialties, manos_count")
         .order("display_order"),
       sb
         .from("cueros")
@@ -79,6 +80,10 @@ export default async function Home() {
     ),
   );
   const talleresCount = talleristas.length;
+  const manosCount = talleristas.reduce(
+    (sum, t) => sum + (t.manos_count ?? 1),
+    0,
+  );
 
   return (
     <main className="flex min-h-screen flex-col">
@@ -129,9 +134,9 @@ export default async function Home() {
               label="terminadas en taller"
             />
             <Stat
-              number={nf.format(talleresCount)}
-              unit="talleres"
-              label="familiares en Chile"
+              number={nf.format(manosCount)}
+              unit="manos"
+              label={`en los ${talleresCount} talleres`}
             />
           </dl>
           <p className="mt-12 max-w-2xl font-sans text-sm leading-relaxed text-niebla">
@@ -147,7 +152,7 @@ export default async function Home() {
             El Taller
           </p>
           <h2 className="font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
-            Tres talleres.
+            {talleresCount} talleres, {manosCount} manos.
           </h2>
           <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
             Roberto, César y David lideran cada uno su taller. Cada pieza pasa
@@ -234,14 +239,18 @@ function Stat({
 }
 
 function TalleristaCard({ t }: { t: Tallerista }) {
+  const manos = t.manos_count ?? 1;
   return (
     <article className="border-t border-piedra pt-6">
       <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-niebla">
-        {t.role}
+        Taller de {t.name}
       </p>
       <h3 className="mt-3 font-serif text-4xl leading-none tracking-[-0.015em]">
         {t.name}
       </h3>
+      <p className="mt-2 font-serif text-sm italic text-cuero">
+        {t.role} · {manos} {manos === 1 ? "mano" : "manos"}
+      </p>
       {t.specialties && t.specialties.length > 0 && (
         <p className="mt-5 font-serif text-base italic leading-relaxed text-niebla">
           {t.specialties.slice(0, 3).join(" · ")}
