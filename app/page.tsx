@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { createClient } from "@/lib/supabase/server";
 
 const nf = new Intl.NumberFormat("es-CL");
@@ -25,9 +27,12 @@ type ProductoStats = {
   familia_id: string | null;
 };
 
-type FamiliaHours = {
+type Familia = {
   id: string;
+  slug: string;
+  name: string;
   hours_per_unit: number | string | null;
+  display_order: number | null;
 };
 
 export default async function Home() {
@@ -47,13 +52,16 @@ export default async function Home() {
         .from("productos")
         .select("p2, sales_total, familia_id")
         .eq("status", "active"),
-      sb.from("familias").select("id, hours_per_unit"),
+      sb
+        .from("familias")
+        .select("id, slug, name, hours_per_unit, display_order")
+        .order("display_order"),
     ]);
 
   const talleristas = (talleristasRes.data ?? []) as Tallerista[];
   const cueros = (cuerosRes.data ?? []) as Cuero[];
   const productos = (productosRes.data ?? []) as ProductoStats[];
-  const familias = (familiasRes.data ?? []) as FamiliaHours[];
+  const familias = (familiasRes.data ?? []) as Familia[];
 
   const hoursByFamiliaId = new Map(
     familias.map((f) => [f.id, Number(f.hours_per_unit ?? 0)]),
@@ -83,6 +91,19 @@ export default async function Home() {
     (sum, t) => sum + (t.manos_count ?? 1),
     0,
   );
+
+  // Conteo de SKUs activos por familia para listar solo las que tienen piezas vivas.
+  const productosPorFamilia = new Map<string, number>();
+  for (const p of productos) {
+    if (!p.familia_id) continue;
+    productosPorFamilia.set(
+      p.familia_id,
+      (productosPorFamilia.get(p.familia_id) ?? 0) + 1,
+    );
+  }
+  const familiasActivas = familias
+    .map((f) => ({ ...f, colores: productosPorFamilia.get(f.id) ?? 0 }))
+    .filter((f) => f.colores > 0);
 
   return (
     <main className="flex min-h-screen flex-col">
@@ -190,6 +211,51 @@ export default async function Home() {
               <TalleristaCard key={t.id} t={t} />
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* LAS PIEZAS ---------------------------------------------------------- */}
+      <section className="border-b border-piedra px-8 py-24 sm:px-16 sm:py-32">
+        <div className="max-w-5xl">
+          <p className="mb-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+            Las piezas
+          </p>
+          <h2 className="font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
+            {familiasActivas.length}{" "}
+            {familiasActivas.length === 1 ? "familia" : "familias"} de objetos.
+          </h2>
+          <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
+            Cada familia es un capítulo. Mismo molde, distinto cuero, distinto
+            color. Entra a cualquiera para ver sus variantes.
+          </p>
+
+          <ul className="mt-16 grid grid-cols-1 gap-x-10 gap-y-3">
+            {familiasActivas.map((f) => {
+              const horas = Number(f.hours_per_unit ?? 0);
+              return (
+                <li
+                  key={f.id}
+                  className="border-b border-piedra"
+                >
+                  <Link
+                    href={`/piezas/${f.slug}`}
+                    className="group flex flex-col items-baseline justify-between gap-2 py-5 sm:flex-row sm:gap-6"
+                  >
+                    <span className="font-serif text-2xl leading-tight transition-colors group-hover:text-cuero sm:text-3xl">
+                      {f.name}
+                    </span>
+                    <span className="font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
+                      {f.colores}{" "}
+                      {f.colores === 1 ? "color" : "colores"}
+                      {horas > 0 ? ` · ${horas} h por unidad` : ""}
+                      {" "}
+                      <span className="text-cuero">→</span>
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       </section>
 

@@ -20,6 +20,7 @@ USO:
   pip install -r scripts/requirements.txt
   python scripts/sync_valiz.py
 """
+import csv
 import json
 import os
 import re
@@ -40,6 +41,7 @@ DASHBOARD_HTML = Path(
         "/Users/benja/Documents/Claude/Artifacts/valiz-produccion-dashboard/index.html",
     )
 )
+DASHBOARD_PRODUCTS_CSV = DASHBOARD_HTML.parent / "data" / "products_export.csv"
 
 if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
     sys.exit(
@@ -84,6 +86,26 @@ def load_dash(html_path: Path) -> dict:
     return json.loads(m.group(1))
 
 
+def load_sku_to_handle(csv_path: Path) -> dict[str, str]:
+    """Lee products_export.csv y devuelve {variant_sku: handle}.
+    El handle solo aparece en la primera fila de cada producto, las variantes
+    siguientes lo heredan implícitamente — Shopify export quirk.
+    """
+    if not csv_path.exists():
+        return {}
+    out: dict[str, str] = {}
+    last_handle: str | None = None
+    with csv_path.open(encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            h = (row.get("Handle") or "").strip()
+            if h:
+                last_handle = h
+            sku = (row.get("Variant SKU") or "").strip()
+            if sku and last_handle:
+                out[sku] = last_handle
+    return out
+
+
 def upsert_cueros(sb: Client, records: list[dict]) -> dict[str, str]:
     """Junta codes únicos del cuero y los upserta. Devuelve {code: id}."""
     codes = {
@@ -115,6 +137,7 @@ def upsert_productos(
     cuero_ids: dict[str, str],
     tallerista_ids: dict[str, str],
     familia_ids: dict[str, str],
+    sku_to_handle: dict[str, str],
 ) -> tuple[int, int]:
     """Upsert productos (solo status='active') con FKs resueltos."""
     rows = []
@@ -143,6 +166,7 @@ def upsert_productos(
             "moda": r.get("moda") if r.get("moda") in ("MODA", "CARRYOVER") else "CARRYOVER",
             "fallado": bool(r.get("fallado")),
             "precio": int(r.get("precio") or 0),
+            "shopify_handle": sku_to_handle.get(r["sku"]) or r.get("handle") or None,
             "sales_total": int(r.get("sales_l12") or 0),
             "status": "active",
         })
@@ -210,8 +234,14 @@ def main() -> None:
     familia_ids = lookup_by(sb, "familias", "slug")
     print(f"   {len(familia_ids)} familias")
 
+    print("🔗 Cargando handles de Shopify desde CSV…")
+    sku_to_handle = load_sku_to_handle(DASHBOARD_PRODUCTS_CSV)
+    print(f"   {len(sku_to_handle)} SKUs con handle")
+
     print("🪡 Upsert productos…")
-    upserted, skipped = upsert_productos(sb, records, cuero_ids, tallerista_ids, familia_ids)
+    upserted, skipped = upsert_productos(
+        sb, records, cuero_ids, tallerista_ids, familia_ids, sku_to_handle
+    )
     print(f"   {upserted} activos · {skipped} archivados (omitidos)")
 
     print("💰 Upsert ventas_mensuales…")
