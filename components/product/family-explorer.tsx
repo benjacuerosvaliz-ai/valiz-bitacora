@@ -51,7 +51,7 @@ const HOTSPOTS_MOCHILA_ALFORJA: Hotspot[] = [
     label: "Cremallera continua",
     description:
       "Recorre el perímetro superior. Dos correderas — la abres del lado que quieras.",
-    position: { front: [50, 27], side: [52, 26] },
+    position: { front: [50, 32], side: [50, 33] },
     preferredView: "front",
   },
   {
@@ -59,7 +59,7 @@ const HOTSPOTS_MOCHILA_ALFORJA: Hotspot[] = [
     label: "Bolsillo vertical",
     description:
       "Con su propio cierre. Accedes sin abrir la mochila completa.",
-    position: { front: [68, 55], side: [55, 52] },
+    position: { front: [62, 58], side: [58, 52] },
     preferredView: "side",
   },
   {
@@ -67,15 +67,15 @@ const HOTSPOTS_MOCHILA_ALFORJA: Hotspot[] = [
     label: "Compartimento principal",
     description:
       "Un solo espacio amplio, forrado en el mismo cuero. Sin divisiones, sin telas.",
-    position: { interior: [55, 40] },
+    position: { interior: [50, 42] },
     preferredView: "interior",
   },
   {
     id: "strap",
     label: "Tira ajustable",
     description: "Hebilla de bronce envejecido. La ajustas al cuerpo.",
-    position: { front: [85, 55], side: [82, 65] },
-    preferredView: "front",
+    position: { front: [56, 82], side: [72, 70] },
+    preferredView: "side",
   },
 ];
 
@@ -381,21 +381,21 @@ function FloatingStage({
   const pointerX = useMotionValue(0); // -1..1
   const pointerY = useMotionValue(0); // -1..1
 
-  const springConfig = { stiffness: 90, damping: 18, mass: 0.6 };
+  const springConfig = { stiffness: 70, damping: 16, mass: 0.7 };
   const rotateY = useSpring(
-    useTransform(pointerX, [-1, 1], [-12, 12]),
+    useTransform(pointerX, [-1, 1], [-18, 18]),
     springConfig,
   );
   const rotateX = useSpring(
-    useTransform(pointerY, [-1, 1], [8, -8]),
+    useTransform(pointerY, [-1, 1], [12, -12]),
     springConfig,
   );
 
-  // Idle floating loop
+  // Idle floating loop — más amplio y contemplativo
   const idleY = useMotionValue(0);
   useEffect(() => {
-    const controls = animate(idleY, [-8, 8], {
-      duration: 4,
+    const controls = animate(idleY, [-14, 14], {
+      duration: 5,
       repeat: Infinity,
       repeatType: "reverse",
       ease: "easeInOut",
