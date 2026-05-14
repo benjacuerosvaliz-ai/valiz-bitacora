@@ -16,3 +16,21 @@
 body {
   font-family: var(--font-sans);
 }
+
+/* Custom cursor: ocultamos el cursor nativo solo en desktop con mouse fino.
+   Mobile / touch / pen mantiene el comportamiento del sistema. Inputs y
+   textareas siguen con cursor de texto explícito para que se pueda escribir. */
+@media (hover: hover) and (pointer: fine) {
+  html {
+    cursor: none;
+  }
+  html * {
+    cursor: inherit;
+  }
+  input,
+  textarea,
+  [contenteditable="true"] {
+    cursor: text;
+  }
+}
+

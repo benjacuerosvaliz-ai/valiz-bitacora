@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Newsreader, Manrope } from "next/font/google";
 
+import { CustomCursor } from "@/components/custom-cursor";
 import { LenisProvider } from "@/components/lenis-provider";
 
 import "./globals.css";
@@ -35,6 +36,7 @@ export default function RootLayout({
       className={`${newsreader.variable} ${manrope.variable} antialiased`}
     >
       <body className="min-h-screen bg-fondo text-tinta font-sans">
+        <CustomCursor />
         <LenisProvider>{children}</LenisProvider>
       </body>
     </html>

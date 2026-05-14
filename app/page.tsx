@@ -4,6 +4,10 @@ import Link from "next/link";
 import { AnimatedNumber } from "@/components/animations/animated-number";
 import { ParallaxImage } from "@/components/animations/parallax-image";
 import { SectionReveal } from "@/components/animations/section-reveal";
+import {
+  FamilyHoverImageProvider,
+  FamilyHoverTrigger,
+} from "@/components/family-hover-image";
 import { createStaticClient } from "@/lib/supabase/static";
 
 const nf = new Intl.NumberFormat("es-CL");
@@ -103,6 +107,15 @@ export default async function Home() {
   const familiasActivas = familias
     .map((f) => ({ ...f, colores: productosPorFamilia.get(f.id) ?? 0 }))
     .filter((f) => f.colores > 0);
+
+  // Imagen hero por familia para el efecto cursor-reveal en "Las piezas".
+  // Por ahora solo mochila-alforja tiene fotos editadas; el resto se va
+  // sumando a medida que entran al sistema. Familias sin imagen siguen
+  // funcionando como link normal sin hover-reveal.
+  const FAMILY_HOVER_IMAGE: Record<string, string | undefined> = {
+    "mochila-alforja":
+      "/images/productos/mochila-alforja/MA-G-CRU/01-front.webp",
+  };
 
   return (
     <main className="flex min-h-screen flex-col">
@@ -306,32 +319,38 @@ export default async function Home() {
             </p>
           </SectionReveal>
 
-          <ul className="mt-16 grid grid-cols-1 gap-x-10 gap-y-3">
-            {familiasActivas.map((f, i) => {
-              const horas = Number(f.hours_per_unit ?? 0);
-              return (
-                <SectionReveal key={f.id} delay={i * 0.04}>
-                  <li className="border-b border-piedra">
-                    <Link
-                      href={`/piezas/${f.slug}`}
-                      className="group flex flex-col items-baseline justify-between gap-2 py-5 sm:flex-row sm:gap-6"
-                    >
-                      <span className="font-serif text-2xl leading-tight transition-colors duration-500 group-hover:text-cuero sm:text-3xl">
-                        {f.name}
-                      </span>
-                      <span className="font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
-                        {f.colores} {f.colores === 1 ? "color" : "colores"}
-                        {horas > 0 ? ` · ${horas} h por unidad` : ""}{" "}
-                        <span className="text-cuero transition-transform duration-500 group-hover:translate-x-1 inline-block">
-                          →
-                        </span>
-                      </span>
-                    </Link>
-                  </li>
-                </SectionReveal>
-              );
-            })}
-          </ul>
+          <FamilyHoverImageProvider>
+            <ul className="mt-16 grid grid-cols-1 gap-x-10 gap-y-3">
+              {familiasActivas.map((f, i) => {
+                const horas = Number(f.hours_per_unit ?? 0);
+                const hoverImg = FAMILY_HOVER_IMAGE[f.slug];
+                return (
+                  <SectionReveal key={f.id} delay={i * 0.04}>
+                    <li className="border-b border-piedra">
+                      <FamilyHoverTrigger imageSrc={hoverImg}>
+                        <Link
+                          href={`/piezas/${f.slug}`}
+                          className="group flex flex-col items-baseline justify-between gap-2 py-5 sm:flex-row sm:gap-6"
+                        >
+                          <span className="font-serif text-2xl leading-tight transition-colors duration-500 group-hover:text-cuero sm:text-3xl">
+                            {f.name}
+                          </span>
+                          <span className="font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
+                            {f.colores}{" "}
+                            {f.colores === 1 ? "color" : "colores"}
+                            {horas > 0 ? ` · ${horas} h por unidad` : ""}{" "}
+                            <span className="text-cuero transition-transform duration-500 group-hover:translate-x-1 inline-block">
+                              →
+                            </span>
+                          </span>
+                        </Link>
+                      </FamilyHoverTrigger>
+                    </li>
+                  </SectionReveal>
+                );
+              })}
+            </ul>
+          </FamilyHoverImageProvider>
         </div>
       </section>
 
