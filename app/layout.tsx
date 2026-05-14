@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Newsreader, Manrope } from "next/font/google";
+
+import { LenisProvider } from "@/components/lenis-provider";
+
 import "./globals.css";
 
 const newsreader = Newsreader({
@@ -32,7 +35,7 @@ export default function RootLayout({
       className={`${newsreader.variable} ${manrope.variable} antialiased`}
     >
       <body className="min-h-screen bg-fondo text-tinta font-sans">
-        {children}
+        <LenisProvider>{children}</LenisProvider>
       </body>
     </html>
   );

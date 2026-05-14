@@ -191,9 +191,9 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* VIDA PRESENTE ------------------------------------------------------- */}
-      <section className="border-b border-piedra px-8 py-28 sm:px-16 sm:py-40">
-        <div className="mx-auto max-w-7xl">
+      {/* VIDA PRESENTE — sticky scroll storytelling ------------------------- */}
+      <section className="border-b border-piedra px-8 sm:px-16">
+        <div className="mx-auto max-w-7xl pt-28 sm:pt-40">
           <SectionReveal>
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-niebla">
               II · Vida presente
@@ -208,30 +208,57 @@ export default async function Home() {
             </p>
           </SectionReveal>
 
-          <SectionReveal delay={0.15} className="mt-16">
-            <ParallaxImage
-              src="/images/vida-presente.jpg"
-              alt="Manos cortando cuero sobre mesa de madera con hilos de colores"
-              sizes="(min-width: 1024px) 80vw, 100vw"
-              intensity={10}
-              className="aspect-[4/3] w-full"
-            />
-          </SectionReveal>
+          {/* Sticky-scroll: foto fija a la izquierda mientras el texto pasa */}
+          <div className="mt-24 grid grid-cols-1 gap-y-16 lg:grid-cols-2 lg:gap-x-20">
+            <div className="lg:sticky lg:top-12 lg:h-[calc(100svh-6rem)] lg:self-start">
+              <ParallaxImage
+                src="/images/vida-presente.jpg"
+                alt="Manos cortando cuero sobre mesa de madera con hilos de colores"
+                sizes="(min-width: 1024px) 45vw, 100vw"
+                intensity={8}
+                className="h-full w-full"
+              />
+            </div>
 
-          <SectionReveal delay={0.1} className="mt-16">
-            <p className="font-serif text-[5.5rem] leading-[0.85] tracking-[-0.04em] sm:text-[8rem] xl:text-[10rem]">
-              <AnimatedNumber value={horasTotal} />
-            </p>
-            <p className="mt-2 font-serif text-2xl italic leading-tight text-cuero sm:text-3xl">
-              horas de oficio artesanal cosidas a mano.
-            </p>
+            <div className="flex flex-col gap-[40vh] pb-[10vh] lg:py-[15vh]">
+              <SectionReveal>
+                <p className="font-serif text-[5rem] leading-[0.85] tracking-[-0.04em] sm:text-[7rem] xl:text-[9rem]">
+                  <AnimatedNumber value={horasTotal} />
+                </p>
+                <p className="mt-2 font-serif text-2xl italic leading-tight text-cuero sm:text-3xl">
+                  horas de oficio artesanal cosidas a mano.
+                </p>
+              </SectionReveal>
 
-            <p className="mt-12 max-w-2xl font-serif text-lg leading-relaxed sm:text-xl">
-              <AnimatedNumber value={unidadesTotal} /> piezas terminadas en{" "}
-              {talleresCount} talleres, {manosCount} manos. Cifras de los
-              últimos doce meses.
-            </p>
-          </SectionReveal>
+              <SectionReveal>
+                <p className="font-serif text-4xl leading-tight tracking-[-0.015em] sm:text-5xl">
+                  <AnimatedNumber value={unidadesTotal} /> piezas{" "}
+                  <span className="italic text-cuero">
+                    terminadas en el último año
+                  </span>
+                  .
+                </p>
+              </SectionReveal>
+
+              <SectionReveal>
+                <p className="font-serif text-4xl leading-tight tracking-[-0.015em] sm:text-5xl">
+                  {talleresCount} talleres, {manosCount} manos.{" "}
+                  <span className="italic text-cuero">
+                    Una pieza pasa por todas antes de salir.
+                  </span>
+                </p>
+              </SectionReveal>
+
+              <SectionReveal>
+                <p className="font-sans text-sm leading-relaxed text-niebla">
+                  Cifras vivas — se mueven con cada venta, cada corte, cada
+                  costura. Últimos doce meses.
+                </p>
+              </SectionReveal>
+            </div>
+          </div>
+
+          <div className="h-28 sm:h-40" />
         </div>
       </section>
 
