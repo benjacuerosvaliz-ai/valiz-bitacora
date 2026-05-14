@@ -97,6 +97,13 @@ const SKUS_WITH_PHOTOS: Record<string, Set<string>> = {
   "mochila-alforja": new Set(["MA-G-CRU", "MA-G-MIEL", "MA-G-NE"]),
 };
 
+/** Ángulo en el wedge para cada vista. 3 caras a 120° de distancia. */
+const VIEW_ANGLE: Record<View, number> = {
+  front: 0,
+  side: -120,
+  interior: -240,
+};
+
 export function FamilyExplorer({
   familySlug,
   familyName,
@@ -186,13 +193,14 @@ export function FamilyExplorer({
 
             {/* Main: image + controls */}
             <div className="relative grid flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[3fr_1.4fr]">
-              {/* Image stage — floating + tilt with cursor/touch */}
-              <FloatingStage
+              {/* Stage 3D — wedge con las 3 fotos como caras */}
+              <Wedge3D
                 familySlug={familySlug}
                 familyName={familyName}
                 selectedSku={selectedSku}
                 colorValiz={selectedVariant.color_valiz}
                 view={view}
+                onViewChange={setView}
                 hotspots={hotspots}
                 activeHotspotId={activeHotspotId}
                 onHotspotClick={(h) => {
@@ -358,12 +366,13 @@ export function FamilyExplorer({
   );
 }
 
-function FloatingStage({
+function Wedge3D({
   familySlug,
   familyName,
   selectedSku,
   colorValiz,
   view,
+  onViewChange,
   hotspots,
   activeHotspotId,
   onHotspotClick,
@@ -373,25 +382,37 @@ function FloatingStage({
   selectedSku: string;
   colorValiz: string | null;
   view: View;
+  onViewChange: (v: View) => void;
   hotspots: Hotspot[];
   activeHotspotId: string | null;
   onHotspotClick: (h: Hotspot) => void;
 }) {
-  const stageRef = useRef<HTMLDivElement>(null);
-  const pointerX = useMotionValue(0); // -1..1
-  const pointerY = useMotionValue(0); // -1..1
+  // Ángulo objetivo según la vista seleccionada por tabs.
+  // El usuario también puede arrastrar para girar manualmente; el drag agrega
+  // un offset que se suma al ángulo de la vista, y al soltar snapeamos a la
+  // cara más cercana actualizando la vista correspondiente.
+  const targetAngle = VIEW_ANGLE[view];
+  const dragOffset = useMotionValue(0);
+  const baseAngle = useMotionValue(targetAngle);
 
-  const springConfig = { stiffness: 70, damping: 16, mass: 0.7 };
-  const rotateY = useSpring(
-    useTransform(pointerX, [-1, 1], [-18, 18]),
-    springConfig,
-  );
-  const rotateX = useSpring(
-    useTransform(pointerY, [-1, 1], [12, -12]),
-    springConfig,
+  // Sincronizar baseAngle cuando cambia la vista (anim spring suave)
+  useEffect(() => {
+    const controls = animate(baseAngle, targetAngle, {
+      type: "spring",
+      stiffness: 60,
+      damping: 18,
+      mass: 0.9,
+    });
+    return () => controls.stop();
+  }, [targetAngle, baseAngle]);
+
+  // Ángulo final aplicado al wedge = base + drag
+  const wedgeRotateY = useTransform(
+    [baseAngle, dragOffset],
+    ([b, d]: number[]) => b + d,
   );
 
-  // Idle floating loop — más amplio y contemplativo
+  // Idle floating Y bob — más amplio y lento
   const idleY = useMotionValue(0);
   useEffect(() => {
     const controls = animate(idleY, [-14, 14], {
@@ -403,75 +424,135 @@ function FloatingStage({
     return () => controls.stop();
   }, [idleY]);
 
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!stageRef.current) return;
-    const rect = stageRef.current.getBoundingClientRect();
-    const nx = (e.clientX - rect.left) / rect.width;
-    const ny = (e.clientY - rect.top) / rect.height;
-    pointerX.set(nx * 2 - 1);
-    pointerY.set(ny * 2 - 1);
+  // Drag handlers
+  const stageRef = useRef<HTMLDivElement>(null);
+  const dragState = useRef<{ active: boolean; startX: number; startOffset: number }>({
+    active: false,
+    startX: 0,
+    startOffset: 0,
+  });
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    dragState.current = {
+      active: true,
+      startX: e.clientX,
+      startOffset: dragOffset.get(),
+    };
+    setIsDragging(true);
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
 
-  const handlePointerLeave = () => {
-    pointerX.set(0);
-    pointerY.set(0);
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragState.current.active) return;
+    const delta = e.clientX - dragState.current.startX;
+    // 1px drag = 0.5° rotación
+    dragOffset.set(dragState.current.startOffset + delta * 0.5);
   };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragState.current.active) return;
+    dragState.current.active = false;
+    setIsDragging(false);
+    (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+
+    // Snap a la vista más cercana según ángulo total
+    const total = baseAngle.get() + dragOffset.get();
+    // Normalizar a [-180, 180]
+    const normalized = ((total % 360) + 540) % 360 - 180;
+    // Encuentra la vista cuya VIEW_ANGLE está más cerca
+    let bestView: View = "front";
+    let bestDist = Infinity;
+    (Object.entries(VIEW_ANGLE) as [View, number][]).forEach(([v, a]) => {
+      const dist = Math.min(
+        Math.abs(normalized - a),
+        Math.abs(normalized - a + 360),
+        Math.abs(normalized - a - 360),
+      );
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestView = v;
+      }
+    });
+    // Animar dragOffset a 0 mientras cambia la vista
+    animate(dragOffset, 0, { duration: 0.5, ease: [0.16, 1, 0.3, 1] });
+    if (bestView !== view) onViewChange(bestView);
+  };
+
+  // Las 3 caras del wedge, cada una a 120° del centro
+  const faces: { view: View; angle: number }[] = [
+    { view: "front", angle: 0 },
+    { view: "side", angle: 120 },
+    { view: "interior", angle: 240 },
+  ];
 
   return (
     <div
       ref={stageRef}
+      onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
-      onPointerLeave={handlePointerLeave}
-      style={{ perspective: 1400 }}
-      className="relative overflow-hidden bg-fondo"
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      style={{ perspective: 1800, touchAction: "none" }}
+      className={`relative overflow-hidden bg-fondo select-none ${
+        isDragging ? "cursor-grabbing" : "cursor-grab"
+      }`}
     >
       <motion.div
         style={{
-          rotateX,
-          rotateY,
+          rotateY: wedgeRotateY,
           y: idleY,
           transformStyle: "preserve-3d",
         }}
         className="absolute inset-0"
       >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`${selectedSku}-${view}`}
-            initial={{ opacity: 0, scale: 1.03 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute inset-0"
+        {faces.map((face) => (
+          <div
+            key={face.view}
+            style={{
+              position: "absolute",
+              inset: 0,
+              transform: `rotateY(${face.angle}deg) translateZ(280px)`,
+              backfaceVisibility: "hidden",
+            }}
           >
             <Image
-              src={`/images/productos/${familySlug}/${selectedSku}/${VIEW_FILE[view]}`}
-              alt={`${familyName} ${colorValiz ?? ""} vista ${VIEW_LABEL[view]}`}
+              src={`/images/productos/${familySlug}/${selectedSku}/${VIEW_FILE[face.view]}`}
+              alt={`${familyName} ${colorValiz ?? ""} vista ${VIEW_LABEL[face.view]}`}
               fill
               sizes="(min-width: 1024px) 60vw, 100vw"
               className="object-contain p-6 sm:p-10"
             />
-          </motion.div>
-        </AnimatePresence>
+          </div>
+        ))}
+      </motion.div>
 
-        {/* Hotspots viven dentro del transform 3D para tiltarse con el bolso */}
-        {hotspots.map((h) => {
+      {/* Hotspots viven fuera del 3D, en una capa 2D encima del stage. Solo
+          visibles cuando el wedge está quieto en la vista actual (no durante
+          drag). Posicionados sobre la imagen visible (que ocupa el stage). */}
+      {!isDragging &&
+        hotspots.map((h) => {
           const pos = h.position[view];
           if (!pos) return null;
           const isActive = activeHotspotId === h.id;
           return (
             <motion.button
-              key={h.id}
+              key={`${view}-${h.id}`}
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.35, duration: 0.4 }}
-              onClick={() => onHotspotClick(h)}
+              transition={{ delay: 0.3, duration: 0.4 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onHotspotClick(h);
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
               style={{
                 position: "absolute",
                 left: `${pos[0]}%`,
                 top: `${pos[1]}%`,
                 transform: "translate(-50%, -50%)",
               }}
-              className={`flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-sm transition-colors duration-300 ${
+              className={`z-10 flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-sm transition-colors duration-300 ${
                 isActive
                   ? "bg-tinta text-fondo"
                   : "bg-fondo/85 text-tinta ring-1 ring-piedra hover:bg-fondo"
@@ -484,7 +565,11 @@ function FloatingStage({
             </motion.button>
           );
         })}
-      </motion.div>
+
+      {/* Hint discreto */}
+      <p className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 font-sans text-[10px] uppercase tracking-[0.22em] text-niebla">
+        Arrastra para girar
+      </p>
     </div>
   );
 }
