@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { createClient } from "@/lib/supabase/server";
+import { createStaticClient } from "@/lib/supabase/static";
 
 const nf = new Intl.NumberFormat("es-CL");
 
@@ -36,7 +36,7 @@ type Familia = {
 };
 
 export default async function Home() {
-  const sb = await createClient();
+  const sb = createStaticClient();
 
   const [talleristasRes, cuerosRes, productosRes, familiasRes] =
     await Promise.all([

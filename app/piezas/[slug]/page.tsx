@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
+import { createStaticClient } from "@/lib/supabase/static";
 
 const nf = new Intl.NumberFormat("es-CL");
 const SHOPIFY_BASE = "https://www.valiz.cl/products/";
@@ -9,7 +9,7 @@ const SHOPIFY_BASE = "https://www.valiz.cl/products/";
 export const revalidate = 300;
 
 export async function generateStaticParams() {
-  const sb = await createClient();
+  const sb = createStaticClient();
   const { data } = await sb.from("familias").select("slug");
   return (data ?? []).map((f) => ({ slug: f.slug as string }));
 }
@@ -20,7 +20,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const sb = await createClient();
+  const sb = createStaticClient();
   const { data } = await sb
     .from("familias")
     .select("name")
@@ -56,7 +56,7 @@ export default async function FamiliaPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const sb = await createClient();
+  const sb = createStaticClient();
 
   const { data: familia } = await sb
     .from("familias")
