@@ -57,6 +57,13 @@ PROVEEDOR_TO_TALLERISTA = {
     "DAVID": "David",
 }
 
+# Correcciones puntuales sobre el campo color_valiz del dashboard.
+# El dashboard tiene typos/inconsistencias antiguas que normalizamos al sincronizar.
+COLOR_VALIZ_FIXES = {
+    "Cafe Gastado": "Café Gastado",  # typo histórico, confirmado por Benja
+}
+
+
 FAMILIA_TO_SLUG = {
     "Mochila Alforja": "mochila-alforja",
     "Mochila Alforja Mama": "mochila-alforja-mama",
@@ -78,12 +85,19 @@ FAMILIA_TO_SLUG = {
 
 
 def load_dash(html_path: Path) -> dict:
-    """Extrae window.DASH = {...} del index.html del dashboard."""
+    """Extrae window.DASH = {...} del index.html del dashboard.
+    Normaliza color_valiz aplicando COLOR_VALIZ_FIXES.
+    """
     html = html_path.read_text(encoding="utf-8")
     m = re.search(r"window\.DASH\s*=\s*(\{.*?\});\s*\n", html, re.DOTALL)
     if not m:
         sys.exit(f"❌ window.DASH no encontrado en {html_path}")
-    return json.loads(m.group(1))
+    data = json.loads(m.group(1))
+    for r in data.get("records", []):
+        cv = r.get("color_valiz")
+        if cv in COLOR_VALIZ_FIXES:
+            r["color_valiz"] = COLOR_VALIZ_FIXES[cv]
+    return data
 
 
 def load_sku_to_handle(csv_path: Path) -> dict[str, str]:
