@@ -45,3 +45,6 @@ next-env.d.ts
 .venv/
 __pycache__/
 *.pyc
+
+# imágenes originales sin optimizar — solo las optimizadas en public/images/ van al repo
+/public/images/raw/
