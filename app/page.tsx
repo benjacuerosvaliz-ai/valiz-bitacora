@@ -112,36 +112,27 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="border-b border-piedra px-8 py-24 sm:px-16 sm:py-32">
+      <section className="border-b border-piedra px-8 py-28 sm:px-16 sm:py-40">
         <div className="max-w-5xl">
-          <p className="mb-12 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-niebla">
+          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-niebla">
             Hasta hoy · el contador del oficio
           </p>
-          <dl className="grid grid-cols-1 gap-x-12 gap-y-14 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat
-              number={nf.format(horasTotal)}
-              unit="horas"
-              label="de oficio artesanal"
-            />
-            <Stat
-              number={nf.format(piesTotal)}
-              unit="pies²"
-              label="de cuero trabajados"
-            />
-            <Stat
-              number={nf.format(unidadesTotal)}
-              unit="piezas"
-              label="terminadas en taller"
-            />
-            <Stat
-              number={nf.format(manosCount)}
-              unit="manos"
-              label={`en los ${talleresCount} talleres`}
-            />
-          </dl>
-          <p className="mt-12 max-w-2xl font-sans text-sm leading-relaxed text-niebla">
-            Datos en vivo desde los talleres. Se mueven con cada venta, cada
-            corte, cada costura. Cifra de los últimos doce meses.
+
+          <p className="mt-10 font-serif text-[7rem] leading-[0.85] tracking-[-0.04em] sm:text-[12rem] lg:text-[15rem]">
+            {nf.format(horasTotal)}
+          </p>
+          <p className="mt-2 font-serif text-2xl italic leading-tight text-cuero sm:mt-4 sm:text-4xl">
+            horas de oficio artesanal cosidas a mano.
+          </p>
+
+          <p className="mt-14 max-w-2xl font-serif text-lg leading-relaxed sm:text-xl">
+            {nf.format(piesTotal)} pies² de cuero trabajados ·{" "}
+            {nf.format(unidadesTotal)} piezas terminadas en {talleresCount}{" "}
+            talleres chilenos.
+          </p>
+          <p className="mt-6 max-w-2xl font-sans text-sm leading-relaxed text-niebla">
+            Datos en vivo, últimos doce meses. Se mueven con cada venta y cada
+            costura.
           </p>
         </div>
       </section>
@@ -209,32 +200,6 @@ export default async function Home() {
         </div>
       </footer>
     </main>
-  );
-}
-
-function Stat({
-  number,
-  unit,
-  label,
-}: {
-  number: string;
-  unit: string;
-  label: string;
-}) {
-  return (
-    <div>
-      <dt className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-niebla">
-        {label}
-      </dt>
-      <dd className="mt-3 flex items-baseline gap-2">
-        <span className="font-serif text-6xl leading-none tracking-[-0.025em] sm:text-7xl">
-          {number}
-        </span>
-        <span className="font-serif text-xl italic text-cuero sm:text-2xl">
-          {unit}
-        </span>
-      </dd>
-    </div>
   );
 }
 
