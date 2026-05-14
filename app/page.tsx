@@ -61,8 +61,7 @@ export default async function Home() {
 
   const piesTotal = Math.round(
     productos.reduce(
-      (sum, p) =>
-        sum + Number(p.p2 ?? 0) * Number(p.sales_total ?? 0),
+      (sum, p) => sum + Number(p.p2 ?? 0) * Number(p.sales_total ?? 0),
       0,
     ),
   );
@@ -96,29 +95,67 @@ export default async function Home() {
         </p>
       </header>
 
+      {/* HERO ---------------------------------------------------------------- */}
       <section className="border-b border-piedra px-8 py-32 sm:px-16 sm:py-40">
         <div className="max-w-4xl">
           <p className="mb-10 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-niebla">
-            Bitácora viva
+            Valiz · Bitácora viva
           </p>
           <h1 className="font-serif text-5xl leading-[1.04] tracking-[-0.022em] sm:text-7xl">
             Cuero recuperado, manos chilenas, objetos hechos para envejecer
             bien.
           </h1>
           <p className="mt-10 max-w-2xl font-serif text-xl italic leading-relaxed text-cuero sm:text-2xl">
-            Cada pieza Valiz nace en un taller real. Su historia empieza acá y
-            sigue contigo.
+            Cada Valiz vive tres vidas: la que el cuero ya tuvo, la que pasa en
+            taller, la que viene contigo.
           </p>
         </div>
       </section>
 
+      {/* VIDA PASADA --------------------------------------------------------- */}
       <section className="border-b border-piedra px-8 py-28 sm:px-16 sm:py-40">
         <div className="max-w-5xl">
           <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-niebla">
-            Hasta hoy · el contador del oficio
+            I · Vida pasada
+          </p>
+          <h2 className="mt-3 font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
+            El cuero antes de ser tuyo.
+          </h2>
+          <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
+            Cada pieza Valiz nace de un cuero rescatado de la industria
+            ganadera chilena. Material que iba a desperdiciarse, curtido y
+            transformado en objeto noble.
           </p>
 
-          <p className="mt-10 font-serif text-[7rem] leading-[0.85] tracking-[-0.04em] sm:text-[12rem] lg:text-[15rem]">
+          <p className="mt-16 font-serif text-[6rem] leading-[0.85] tracking-[-0.04em] sm:text-[10rem] lg:text-[13rem]">
+            {nf.format(piesTotal)}
+          </p>
+          <p className="mt-2 font-serif text-2xl italic leading-tight text-cuero sm:mt-4 sm:text-4xl">
+            pies² de cuero rescatado en los últimos doce meses.
+          </p>
+
+          <p className="mt-14 max-w-2xl font-serif text-lg leading-relaxed sm:text-xl">
+            Lo trabajamos en {nf.format(cueros.length)} cueros con nombre
+            propio. Cada uno con su carácter, su tacto, su origen.
+          </p>
+        </div>
+      </section>
+
+      {/* VIDA PRESENTE ------------------------------------------------------- */}
+      <section className="border-b border-piedra px-8 py-28 sm:px-16 sm:py-40">
+        <div className="max-w-5xl">
+          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-niebla">
+            II · Vida presente
+          </p>
+          <h2 className="mt-3 font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
+            Las horas en taller.
+          </h2>
+          <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
+            Tres talleres chilenos, sin máquinas industriales, sin apuro. Cada
+            pieza pasa por las manos de Roberto, César o David antes de salir.
+          </p>
+
+          <p className="mt-16 font-serif text-[7rem] leading-[0.85] tracking-[-0.04em] sm:text-[12rem] lg:text-[15rem]">
             {nf.format(horasTotal)}
           </p>
           <p className="mt-2 font-serif text-2xl italic leading-tight text-cuero sm:mt-4 sm:text-4xl">
@@ -126,27 +163,24 @@ export default async function Home() {
           </p>
 
           <p className="mt-14 max-w-2xl font-serif text-lg leading-relaxed sm:text-xl">
-            {nf.format(piesTotal)} pies² de cuero trabajados ·{" "}
-            {nf.format(unidadesTotal)} piezas terminadas en {talleresCount}{" "}
-            talleres chilenos.
-          </p>
-          <p className="mt-6 max-w-2xl font-sans text-sm leading-relaxed text-niebla">
-            Datos en vivo, últimos doce meses. Se mueven con cada venta y cada
-            costura.
+            {nf.format(unidadesTotal)} piezas terminadas en{" "}
+            {talleresCount} talleres, {manosCount} manos. Cifras de los últimos
+            doce meses.
           </p>
         </div>
       </section>
 
+      {/* EL TALLER ----------------------------------------------------------- */}
       <section className="border-b border-piedra px-8 py-24 sm:px-16 sm:py-32">
         <div className="max-w-5xl">
           <p className="mb-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-            El Taller
+            Los talleres
           </p>
           <h2 className="font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
             {talleresCount} talleres, {manosCount} manos.
           </h2>
           <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
-            Roberto, César y David lideran cada uno su taller. Cada pieza pasa
+            Roberto, César y David lideran cada uno su equipo. Cada pieza pasa
             por sus manos antes de salir.
           </p>
 
@@ -158,6 +192,7 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* LOS CUEROS ---------------------------------------------------------- */}
       <section className="border-b border-piedra px-8 py-24 sm:px-16 sm:py-32">
         <div className="max-w-5xl">
           <p className="mb-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
@@ -186,6 +221,30 @@ export default async function Home() {
               </li>
             ))}
           </ul>
+        </div>
+      </section>
+
+      {/* VIDA FUTURA --------------------------------------------------------- */}
+      <section className="border-b border-piedra px-8 py-28 sm:px-16 sm:py-40">
+        <div className="max-w-5xl">
+          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-niebla">
+            III · Vida futura
+          </p>
+          <h2 className="mt-3 font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
+            Tu bitácora empieza aquí.
+          </h2>
+          <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
+            Cuando llevas una Valiz, su historia sigue contigo. Cada pieza se
+            vuelve cuaderno vivo: lugares donde fue, gente que la cargó,
+            momentos que vivió. Los Valiz no se reemplazan — se acumulan
+            historia.
+          </p>
+
+          <p className="mt-16 font-serif text-3xl leading-tight tracking-[-0.015em] text-cuero sm:text-4xl">
+            <em>Próximamente</em> — fotos georeferenciadas, mapa mundial de
+            objetos en viaje, perfil Valiz para cada dueño. Cada bitácora suma
+            a la bitácora colectiva.
+          </p>
         </div>
       </section>
 
