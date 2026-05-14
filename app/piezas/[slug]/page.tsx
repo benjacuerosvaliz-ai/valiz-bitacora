@@ -32,7 +32,7 @@ export async function generateMetadata({
 }
 
 type Tallerista = { name: string; role: string };
-type Cuero = { display_name: string; code: string };
+type Cuero = { display_name: string };
 
 type ProductoWithRels = {
   sku: string;
@@ -69,7 +69,7 @@ export default async function FamiliaPage({
   const { data: productosRaw } = await sb
     .from("productos")
     .select(
-      "sku, color_valiz, p2, precio, sales_total, shopify_handle, cuero:cueros(display_name, code), tallerista:talleristas(name, role)",
+      "sku, color_valiz, p2, precio, sales_total, shopify_handle, cuero:cueros(display_name), tallerista:talleristas(name, role)",
     )
     .eq("familia_id", familia.id)
     .eq("status", "active")
@@ -217,27 +217,18 @@ export default async function FamiliaPage({
 }
 
 function ProductoCard({ p }: { p: ProductoWithRels }) {
-  const cuero = pickOne(p.cuero);
   const handle = p.shopify_handle;
-  const precio = p.precio
-    ? `$${nf.format(p.precio)}`
-    : null;
+  const precio = p.precio ? `$${nf.format(p.precio)}` : null;
   const p2 = p.p2 != null ? Number(p.p2) : null;
 
   return (
     <li className="border-t border-piedra pt-8">
       <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-niebla">
-        {p.color_valiz ?? "—"}
+        Color
       </p>
-      {cuero ? (
-        <p className="mt-3 font-serif text-3xl leading-tight tracking-[-0.015em]">
-          {cuero.display_name}
-        </p>
-      ) : (
-        <p className="mt-3 font-serif text-3xl leading-tight italic text-niebla">
-          Cuero por confirmar
-        </p>
-      )}
+      <p className="mt-3 font-serif text-3xl leading-tight tracking-[-0.015em]">
+        {p.color_valiz ?? "Por confirmar"}
+      </p>
       <p className="mt-4 font-sans text-sm text-niebla">
         {p2 ? `${p2} pies² de cuero` : "—"}
         {precio ? ` · ${precio} CLP` : ""}

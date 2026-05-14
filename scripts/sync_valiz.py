@@ -107,18 +107,39 @@ def load_sku_to_handle(csv_path: Path) -> dict[str, str]:
 
 
 def upsert_cueros(sb: Client, records: list[dict]) -> dict[str, str]:
-    """Junta codes únicos del cuero y los upserta. Devuelve {code: id}."""
-    codes = {
-        r["color_cuero"]
-        for r in records
-        if r.get("color_cuero") and r["color_cuero"] not in ("?", "NA", "")
-    }
+    """Upsert cueros con display_name = color Valiz más común para ese code.
 
-    if codes:
-        rows = [
-            {"code": code, "display_name": code.title()}
-            for code in sorted(codes)
-        ]
+    El UI público nunca muestra el código del proveedor — siempre el color Valiz
+    (regla de marca). Si un cuero del proveedor tiene >1 color Valiz, gana el
+    más frecuente y se imprime una advertencia para que el usuario corrija el
+    valiz-overrides.json del dashboard si quiere otro.
+    """
+    from collections import Counter
+
+    code_to_valiz: dict[str, Counter] = {}
+    for r in records:
+        if r.get("status") != "active":
+            continue
+        code = r.get("color_cuero")
+        valiz = r.get("color_valiz")
+        if not code or code in ("?", "NA", ""):
+            continue
+        if not valiz or valiz in ("?", ""):
+            continue
+        code_to_valiz.setdefault(code, Counter())[valiz] += 1
+
+    for code, counter in code_to_valiz.items():
+        if len(counter) > 1:
+            print(
+                f"   ⚠️  {code} mapea a {len(counter)} colores Valiz "
+                f"({dict(counter)}) — gana el más frecuente."
+            )
+
+    rows = [
+        {"code": code, "display_name": counter.most_common(1)[0][0]}
+        for code, counter in sorted(code_to_valiz.items())
+    ]
+    if rows:
         sb.table("cueros").upsert(rows, on_conflict="code").execute()
 
     res = sb.table("cueros").select("id,code").execute()

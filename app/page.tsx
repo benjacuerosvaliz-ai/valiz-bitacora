@@ -17,7 +17,6 @@ type Tallerista = {
 
 type Cuero = {
   id: string;
-  code: string;
   display_name: string;
 };
 
@@ -46,7 +45,7 @@ export default async function Home() {
         .order("display_order"),
       sb
         .from("cueros")
-        .select("id, code, display_name")
+        .select("id, display_name")
         .order("display_name"),
       sb
         .from("productos")
@@ -273,18 +272,13 @@ export default async function Home() {
             tacto antes que por su nombre.
           </p>
 
-          <ul className="mt-16 grid grid-cols-1 gap-x-10 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="mt-16 grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
             {cueros.map((c) => (
               <li
                 key={c.id}
-                className="flex items-baseline justify-between border-b border-piedra pb-3"
+                className="border-b border-piedra pb-3 font-serif text-xl leading-tight"
               >
-                <span className="font-serif text-xl leading-tight">
-                  {c.display_name}
-                </span>
-                <span className="font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
-                  {c.code.split(" ")[0]}
-                </span>
+                {c.display_name}
               </li>
             ))}
           </ul>
