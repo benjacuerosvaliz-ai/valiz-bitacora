@@ -4,7 +4,14 @@ import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber"
 import { Text, useTexture } from "@react-three/drei";
 import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { MathUtils, type Group, type PerspectiveCamera } from "three";
+import {
+  MathUtils,
+  RepeatWrapping,
+  SRGBColorSpace,
+  type Group,
+  type PerspectiveCamera,
+  type Texture,
+} from "three";
 
 const COL = {
   fondo: "#f7f6f2",
@@ -190,41 +197,56 @@ function CameraRig() {
 function Lighting({ shelvingCount }: { shelvingCount: number }) {
   return (
     <>
-      <ambientLight intensity={0.45} color="#fff5e6" />
-      {/* Track lighting tipo galería: 4 spots cenitales cálidos */}
+      {/* Ambient general — sube la base para que no quede oscuro */}
+      <ambientLight intensity={0.85} color="#fff5e6" />
+      {/* Hemisferio: cielo cálido arriba, piso marrón abajo — da gradient natural */}
+      <hemisphereLight
+        args={["#fff2d8", "#3a2418", 0.6]}
+      />
+      {/* Track lighting cenital cálida — 4 puntos fuertes que iluminan las paredes/shelves */}
       {[0, 1, 2, 3].map((i) => {
         const a = (i / 4) * Math.PI * 2;
-        const r = 4.5;
+        const r = 5;
         return (
           <pointLight
             key={i}
-            position={[Math.sin(a) * r, 3.8, -Math.cos(a) * r]}
-            intensity={1.6}
-            color="#fff0d6"
-            distance={16}
+            position={[Math.sin(a) * r, 4.0, -Math.cos(a) * r]}
+            intensity={3.0}
+            color="#fff0d0"
+            distance={18}
             decay={1.4}
           />
         );
       })}
-      <directionalLight position={[0, 8, 0]} intensity={0.25} color="#fff5e6" />
+      {/* Cenital general */}
+      <directionalLight
+        position={[3, 8, 4]}
+        intensity={0.6}
+        color="#fff5e6"
+      />
     </>
   );
 }
 
 function Room() {
+  // Texturas reales (Polyhaven CC0). useTexture acepta un modificador para
+  // configurar el tiling antes de aplicarse.
+  const floorTex = useTexture("/textures/wood_floor_diff.jpg", configureTile(4, 4));
+  const wallTex = useTexture("/textures/wall_plaster_diff.jpg", configureTile(3, 1.5));
+
   return (
     <group>
-      {/* Piso */}
+      {/* Piso con madera real */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[20, 20]} />
-        <meshStandardMaterial color={COL.pisoMadera} roughness={0.85} />
+        <meshStandardMaterial map={floorTex} roughness={0.75} />
       </mesh>
-      {/* Techo */}
+      {/* Techo: color plano cálido (no necesita textura) */}
       <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 4.5, 0]}>
         <planeGeometry args={[20, 20]} />
         <meshStandardMaterial color={COL.techo} roughness={1} />
       </mesh>
-      {/* Paredes */}
+      {/* Paredes con textura yeso */}
       {[
         { pos: [0, 2.25, -10] as const, rot: [0, 0, 0] as const },
         { pos: [0, 2.25, 10] as const, rot: [0, Math.PI, 0] as const },
@@ -233,11 +255,28 @@ function Room() {
       ].map((w, i) => (
         <mesh key={i} position={w.pos} rotation={w.rot}>
           <planeGeometry args={[20, 4.5]} />
-          <meshStandardMaterial color={COL.paredCalida} roughness={1} />
+          <meshStandardMaterial map={wallTex} roughness={1} />
         </mesh>
       ))}
     </group>
   );
+}
+
+/**
+ * Helper para useTexture: configura RepeatWrapping y tile size, y marca
+ * el color space como sRGB para que los colores no se desaturen.
+ */
+function configureTile(repeatX: number, repeatY: number) {
+  return (texture: Texture | Texture[]) => {
+    const apply = (t: Texture) => {
+      t.wrapS = RepeatWrapping;
+      t.wrapT = RepeatWrapping;
+      t.repeat.set(repeatX, repeatY);
+      t.colorSpace = SRGBColorSpace;
+    };
+    if (Array.isArray(texture)) texture.forEach(apply);
+    else apply(texture);
+  };
 }
 
 /**
@@ -266,6 +305,16 @@ function ShelvingUnit({
   const cubbyW = (W - T * (COLS + 1)) / COLS;
   const cubbyH = (H - T * (ROWS + 1)) / ROWS;
 
+  // Textura de madera real para todo el mueble
+  const woodTex = useTexture(
+    "/textures/wood_dark_diff.jpg",
+    configureTile(1, 1),
+  );
+  const woodTexFine = useTexture(
+    "/textures/wood_dark_diff.jpg",
+    configureTile(0.4, 0.4),
+  );
+
   const cubbyCenters = useMemo(() => {
     const out: { x: number; y: number; index: number }[] = [];
     for (let row = 0; row < ROWS; row++) {
@@ -280,10 +329,10 @@ function ShelvingUnit({
 
   return (
     <group position={position} rotation={[0, rotationY, 0]}>
-      {/* Backboard */}
+      {/* Backboard con textura de madera */}
       <mesh position={[0, 0, -D / 2]}>
         <boxGeometry args={[W, H, 0.025]} />
-        <meshStandardMaterial color={COL.maderaOscura} roughness={0.75} />
+        <meshStandardMaterial map={woodTexFine} roughness={0.75} />
       </mesh>
 
       {/* Verticales (COLS + 1) */}
@@ -292,7 +341,7 @@ function ShelvingUnit({
         return (
           <mesh key={`v-${i}`} position={[x, 0, 0]} castShadow>
             <boxGeometry args={[T, H, D]} />
-            <meshStandardMaterial color={COL.maderaMedia} roughness={0.7} />
+            <meshStandardMaterial map={woodTex} roughness={0.7} />
           </mesh>
         );
       })}
@@ -303,7 +352,7 @@ function ShelvingUnit({
         return (
           <mesh key={`h-${i}`} position={[0, y, 0]} castShadow>
             <boxGeometry args={[W, T, D]} />
-            <meshStandardMaterial color={COL.maderaMedia} roughness={0.7} />
+            <meshStandardMaterial map={woodTex} roughness={0.7} />
           </mesh>
         );
       })}
