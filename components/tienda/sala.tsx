@@ -497,9 +497,8 @@ function ShelvingUnit({
       {/* Letrero de madera arriba del shelving */}
       <SignBoard
         text={shelving.name}
-        position={[0, H / 2 + 0.5, 0]}
+        position={[0, H / 2 + 0.55, 0]}
         onClick={onSignClick}
-        woodTex={woodTex}
       />
     </group>
   );
@@ -509,15 +508,20 @@ function SignBoard({
   text,
   position,
   onClick,
-  woodTex,
 }: {
   text: string;
   position: [number, number, number];
   onClick: () => void;
-  woodTex: Texture;
 }) {
   const groupRef = useRef<Group>(null);
   const [hovered, setHovered] = useState(false);
+
+  // Textura de madera clara para el letrero (distinta de la madera oscura
+  // de los muebles)
+  const lightWood = useTexture(
+    "/textures/wood_light_diff.jpg",
+    configureTile(1, 0.4),
+  );
 
   useFrame((_, dt) => {
     if (!groupRef.current) return;
@@ -544,19 +548,39 @@ function SignBoard({
         onClick();
       }}
     >
-      {/* Tabla de madera */}
+      {/* Tabla de madera clara — un poco más grande y con bevel para
+          dimensión */}
       <mesh castShadow>
-        <boxGeometry args={[2.6, 0.5, 0.08]} />
-        <meshStandardMaterial map={woodTex} roughness={0.6} />
+        <boxGeometry args={[2.8, 0.6, 0.06]} />
+        <meshStandardMaterial map={lightWood} roughness={0.7} />
       </mesh>
-      {/* Texto pirograbado */}
+
+      {/* Texto pirograbado: color café muy oscuro, casi negro quemado.
+          Ligeramente hundido en la madera (z = 0.020 vs surface 0.030) y
+          duplicado con offset para simular el "halo" carbonizado del
+          pirograbado real. */}
+      {/* Sombra de pirograbado (halo café) */}
       <Text
-        position={[0, 0, 0.045]}
-        fontSize={0.22}
-        color="#f7f6f2"
+        position={[0, -0.01, 0.024]}
+        fontSize={0.28}
+        color="#6b3a14"
         anchorX="center"
         anchorY="middle"
-        maxWidth={2.4}
+        maxWidth={2.5}
+        outlineWidth={0.006}
+        outlineColor="#6b3a14"
+        outlineOpacity={0.4}
+      >
+        {text}
+      </Text>
+      {/* Texto principal café oscuro quemado, levemente hundido */}
+      <Text
+        position={[0, 0, 0.028]}
+        fontSize={0.28}
+        color="#2a1206"
+        anchorX="center"
+        anchorY="middle"
+        maxWidth={2.5}
       >
         {text}
       </Text>
