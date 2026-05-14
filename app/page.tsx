@@ -1,6 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { AnimatedNumber } from "@/components/animations/animated-number";
+import { ParallaxImage } from "@/components/animations/parallax-image";
+import { SectionReveal } from "@/components/animations/section-reveal";
 import { createStaticClient } from "@/lib/supabase/static";
 
 const nf = new Intl.NumberFormat("es-CL");
@@ -106,16 +109,16 @@ export default async function Home() {
       {/* HERO ---------------------------------------------------------------- */}
       <section className="grid min-h-[100svh] grid-cols-1 lg:grid-cols-[1.05fr_1fr]">
         <div className="flex flex-col justify-between border-b border-piedra px-8 py-10 sm:px-16 sm:py-14 lg:order-1 lg:border-b-0 lg:border-r">
-          <div className="flex items-baseline justify-between">
+          <SectionReveal className="flex items-baseline justify-between">
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
               Valiz · Bitácora
             </p>
             <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
               Mayo 2026
             </p>
-          </div>
+          </SectionReveal>
 
-          <div className="max-w-2xl py-16 lg:py-24">
+          <SectionReveal className="max-w-2xl py-16 lg:py-24" delay={0.2}>
             <p className="mb-10 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-niebla">
               Bitácora viva
             </p>
@@ -127,29 +130,29 @@ export default async function Home() {
               Cada Valiz vive tres vidas: la que el cuero ya tuvo, la que pasa
               en taller, la que viene contigo.
             </p>
-          </div>
+          </SectionReveal>
 
-          <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
-            Desliza ↓
-          </p>
+          <SectionReveal delay={0.6}>
+            <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
+              Desliza ↓
+            </p>
+          </SectionReveal>
         </div>
 
-        <div className="relative aspect-[3/4] lg:order-2 lg:aspect-auto">
-          <Image
-            src="/images/hero.jpg"
-            alt="Valiz alforja en costa chilena"
-            fill
-            priority
-            sizes="(min-width: 1024px) 50vw, 100vw"
-            className="object-cover"
-          />
-        </div>
+        <ParallaxImage
+          src="/images/hero.jpg"
+          alt="Valiz alforja en costa chilena"
+          priority
+          sizes="(min-width: 1024px) 50vw, 100vw"
+          intensity={14}
+          className="aspect-[3/4] lg:order-2 lg:aspect-auto"
+        />
       </section>
 
       {/* VIDA PASADA --------------------------------------------------------- */}
       <section className="border-b border-piedra px-8 py-28 sm:px-16 sm:py-40">
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-x-16 gap-y-12 lg:grid-cols-[1.4fr_1fr] lg:items-center">
-          <div>
+          <SectionReveal>
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-niebla">
               I · Vida pasada
             </p>
@@ -162,7 +165,7 @@ export default async function Home() {
             </p>
 
             <p className="mt-16 font-serif text-[5.5rem] leading-[0.85] tracking-[-0.04em] sm:text-[8rem] xl:text-[10rem]">
-              {nf.format(piesTotal)}
+              <AnimatedNumber value={piesTotal} />
             </p>
             <p className="mt-2 font-serif text-2xl italic leading-tight text-cuero sm:text-3xl">
               pies² de cuero chileno curtido en los últimos doce meses.
@@ -174,75 +177,85 @@ export default async function Home() {
               {nf.format(cueros.length)} cueros con nombre propio, cada uno con
               su carácter, su tacto, su origen.
             </p>
-          </div>
+          </SectionReveal>
 
-          <div className="relative aspect-[3/4] w-full overflow-hidden">
-            <Image
+          <SectionReveal delay={0.15}>
+            <ParallaxImage
               src="/images/vida-pasada.jpg"
               alt="Pila de cueros enrollados en distintos colores"
-              fill
               sizes="(min-width: 1024px) 40vw, 100vw"
-              className="object-cover"
+              intensity={8}
+              className="aspect-[3/4] w-full"
             />
-          </div>
+          </SectionReveal>
         </div>
       </section>
 
       {/* VIDA PRESENTE ------------------------------------------------------- */}
       <section className="border-b border-piedra px-8 py-28 sm:px-16 sm:py-40">
         <div className="mx-auto max-w-7xl">
-          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-niebla">
-            II · Vida presente
-          </p>
-          <h2 className="mt-3 font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
-            Las horas en taller.
-          </h2>
-          <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
-            Tres talleres chilenos, sin máquinas industriales, sin apuro. Cada
-            pieza pasa por las manos de Roberto, César o David antes de salir.
-          </p>
+          <SectionReveal>
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-niebla">
+              II · Vida presente
+            </p>
+            <h2 className="mt-3 font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
+              Las horas en taller.
+            </h2>
+            <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
+              Tres talleres chilenos, sin máquinas industriales, sin apuro.
+              Cada pieza pasa por las manos de Roberto, César o David antes de
+              salir.
+            </p>
+          </SectionReveal>
 
-          <div className="relative mt-16 aspect-[4/3] w-full overflow-hidden">
-            <Image
+          <SectionReveal delay={0.15} className="mt-16">
+            <ParallaxImage
               src="/images/vida-presente.jpg"
               alt="Manos cortando cuero sobre mesa de madera con hilos de colores"
-              fill
               sizes="(min-width: 1024px) 80vw, 100vw"
-              className="object-cover"
+              intensity={10}
+              className="aspect-[4/3] w-full"
             />
-          </div>
+          </SectionReveal>
 
-          <p className="mt-16 font-serif text-[5.5rem] leading-[0.85] tracking-[-0.04em] sm:text-[8rem] xl:text-[10rem]">
-            {nf.format(horasTotal)}
-          </p>
-          <p className="mt-2 font-serif text-2xl italic leading-tight text-cuero sm:text-3xl">
-            horas de oficio artesanal cosidas a mano.
-          </p>
+          <SectionReveal delay={0.1} className="mt-16">
+            <p className="font-serif text-[5.5rem] leading-[0.85] tracking-[-0.04em] sm:text-[8rem] xl:text-[10rem]">
+              <AnimatedNumber value={horasTotal} />
+            </p>
+            <p className="mt-2 font-serif text-2xl italic leading-tight text-cuero sm:text-3xl">
+              horas de oficio artesanal cosidas a mano.
+            </p>
 
-          <p className="mt-12 max-w-2xl font-serif text-lg leading-relaxed sm:text-xl">
-            {nf.format(unidadesTotal)} piezas terminadas en {talleresCount}{" "}
-            talleres, {manosCount} manos. Cifras de los últimos doce meses.
-          </p>
+            <p className="mt-12 max-w-2xl font-serif text-lg leading-relaxed sm:text-xl">
+              <AnimatedNumber value={unidadesTotal} /> piezas terminadas en{" "}
+              {talleresCount} talleres, {manosCount} manos. Cifras de los
+              últimos doce meses.
+            </p>
+          </SectionReveal>
         </div>
       </section>
 
       {/* EL TALLER ----------------------------------------------------------- */}
       <section className="border-b border-piedra px-8 py-24 sm:px-16 sm:py-32">
         <div className="mx-auto max-w-5xl">
-          <p className="mb-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-            Los talleres
-          </p>
-          <h2 className="font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
-            {talleresCount} talleres, {manosCount} manos.
-          </h2>
-          <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
-            Roberto, César y David lideran cada uno su equipo. Cada pieza pasa
-            por sus manos antes de salir.
-          </p>
+          <SectionReveal>
+            <p className="mb-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+              Los talleres
+            </p>
+            <h2 className="font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
+              {talleresCount} talleres, {manosCount} manos.
+            </h2>
+            <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
+              Roberto, César y David lideran cada uno su equipo. Cada pieza
+              pasa por sus manos antes de salir.
+            </p>
+          </SectionReveal>
 
           <div className="mt-16 grid grid-cols-1 gap-12 sm:grid-cols-3 sm:gap-10">
-            {talleristas.map((t) => (
-              <TalleristaCard key={t.id} t={t} />
+            {talleristas.map((t, i) => (
+              <SectionReveal key={t.id} delay={0.1 + i * 0.1}>
+                <TalleristaCard t={t} />
+              </SectionReveal>
             ))}
           </div>
         </div>
@@ -251,37 +264,44 @@ export default async function Home() {
       {/* LAS PIEZAS ---------------------------------------------------------- */}
       <section className="border-b border-piedra px-8 py-24 sm:px-16 sm:py-32">
         <div className="mx-auto max-w-5xl">
-          <p className="mb-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-            Las piezas
-          </p>
-          <h2 className="font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
-            {familiasActivas.length}{" "}
-            {familiasActivas.length === 1 ? "familia" : "familias"} de objetos.
-          </h2>
-          <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
-            Cada familia es un capítulo. Mismo molde, distinto cuero, distinto
-            color. Entra a cualquiera para ver sus variantes.
-          </p>
+          <SectionReveal>
+            <p className="mb-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+              Las piezas
+            </p>
+            <h2 className="font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
+              {familiasActivas.length}{" "}
+              {familiasActivas.length === 1 ? "familia" : "familias"} de
+              objetos.
+            </h2>
+            <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
+              Cada familia es un capítulo. Mismo molde, distinto cuero,
+              distinto color. Entra a cualquiera para ver sus variantes.
+            </p>
+          </SectionReveal>
 
           <ul className="mt-16 grid grid-cols-1 gap-x-10 gap-y-3">
-            {familiasActivas.map((f) => {
+            {familiasActivas.map((f, i) => {
               const horas = Number(f.hours_per_unit ?? 0);
               return (
-                <li key={f.id} className="border-b border-piedra">
-                  <Link
-                    href={`/piezas/${f.slug}`}
-                    className="group flex flex-col items-baseline justify-between gap-2 py-5 sm:flex-row sm:gap-6"
-                  >
-                    <span className="font-serif text-2xl leading-tight transition-colors group-hover:text-cuero sm:text-3xl">
-                      {f.name}
-                    </span>
-                    <span className="font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
-                      {f.colores} {f.colores === 1 ? "color" : "colores"}
-                      {horas > 0 ? ` · ${horas} h por unidad` : ""}{" "}
-                      <span className="text-cuero">→</span>
-                    </span>
-                  </Link>
-                </li>
+                <SectionReveal key={f.id} delay={i * 0.04}>
+                  <li className="border-b border-piedra">
+                    <Link
+                      href={`/piezas/${f.slug}`}
+                      className="group flex flex-col items-baseline justify-between gap-2 py-5 sm:flex-row sm:gap-6"
+                    >
+                      <span className="font-serif text-2xl leading-tight transition-colors duration-500 group-hover:text-cuero sm:text-3xl">
+                        {f.name}
+                      </span>
+                      <span className="font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
+                        {f.colores} {f.colores === 1 ? "color" : "colores"}
+                        {horas > 0 ? ` · ${horas} h por unidad` : ""}{" "}
+                        <span className="text-cuero transition-transform duration-500 group-hover:translate-x-1 inline-block">
+                          →
+                        </span>
+                      </span>
+                    </Link>
+                  </li>
+                </SectionReveal>
               );
             })}
           </ul>
@@ -291,25 +311,26 @@ export default async function Home() {
       {/* LOS CUEROS ---------------------------------------------------------- */}
       <section className="border-b border-piedra px-8 py-24 sm:px-16 sm:py-32">
         <div className="mx-auto max-w-5xl">
-          <p className="mb-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-            Los cueros
-          </p>
-          <h2 className="font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
-            {nf.format(cueros.length)} cueros con nombre propio.
-          </h2>
-          <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
-            Curtidos en Chile, cada uno con su carácter. Los conoces por su
-            tacto antes que por su nombre.
-          </p>
+          <SectionReveal>
+            <p className="mb-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+              Los cueros
+            </p>
+            <h2 className="font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
+              {nf.format(cueros.length)} cueros con nombre propio.
+            </h2>
+            <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
+              Curtidos en Chile, cada uno con su carácter. Los conoces por su
+              tacto antes que por su nombre.
+            </p>
+          </SectionReveal>
 
           <ul className="mt-16 grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
-            {cueros.map((c) => (
-              <li
-                key={c.id}
-                className="border-b border-piedra pb-3 font-serif text-xl leading-tight"
-              >
-                {c.display_name}
-              </li>
+            {cueros.map((c, i) => (
+              <SectionReveal key={c.id} delay={i * 0.03}>
+                <li className="border-b border-piedra pb-3 font-serif text-xl leading-tight">
+                  {c.display_name}
+                </li>
+              </SectionReveal>
             ))}
           </ul>
         </div>
@@ -318,7 +339,7 @@ export default async function Home() {
       {/* VIDA FUTURA --------------------------------------------------------- */}
       <section className="border-b border-piedra px-8 py-28 sm:px-16 sm:py-40">
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-x-16 gap-y-12 lg:grid-cols-[1.4fr_1fr] lg:items-center">
-          <div>
+          <SectionReveal>
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-niebla">
               III · Vida futura
             </p>
@@ -334,20 +355,20 @@ export default async function Home() {
 
             <p className="mt-12 max-w-xl font-serif text-2xl leading-tight tracking-[-0.015em] text-cuero sm:text-3xl">
               <em>Próximamente</em> — fotos georeferenciadas, mapa mundial de
-              objetos en viaje, perfil Valiz para cada dueño. Cada bitácora suma
-              a la bitácora colectiva.
+              objetos en viaje, perfil Valiz para cada dueño. Cada bitácora
+              suma a la bitácora colectiva.
             </p>
-          </div>
+          </SectionReveal>
 
-          <div className="relative aspect-[3/4] w-full overflow-hidden">
-            <Image
+          <SectionReveal delay={0.15}>
+            <ParallaxImage
               src="/images/vida-futura.jpg"
               alt="Mochila Valiz apoyada en un pasamanos de madera, bosque con nieve"
-              fill
               sizes="(min-width: 1024px) 40vw, 100vw"
-              className="object-cover"
+              intensity={8}
+              className="aspect-[3/4] w-full"
             />
-          </div>
+          </SectionReveal>
         </div>
       </section>
 
