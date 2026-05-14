@@ -42,7 +42,7 @@ export default async function TiendaPage() {
       .in("slug", slugs),
     sb
       .from("productos")
-      .select("sku, color_valiz, familia_id, status")
+      .select("sku, color_valiz, familia_id, status, precio, shopify_handle")
       .eq("status", "active"),
   ]);
 
@@ -66,6 +66,8 @@ export default async function TiendaPage() {
         sku: p.sku as string,
         colorValiz: (p.color_valiz as string | null) ?? null,
         photoUrl: KNOWN_FRONT_PHOTOS[p.sku as string] ?? null,
+        precio: (p.precio as number | null) ?? null,
+        shopifyHandle: (p.shopify_handle as string | null) ?? null,
       }));
     return {
       slug,
