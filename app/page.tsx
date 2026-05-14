@@ -38,9 +38,19 @@ type Familia = {
   id: string;
   slug: string;
   name: string;
+  description: string | null;
   hours_per_unit: number | string | null;
   display_order: number | null;
 };
+
+// Devuelve la primera frase de un texto (corta en el primer .!?). Si el
+// texto es corto, lo devuelve completo. Sirve para usar las
+// descripciones largas de familias.description como bajadas en la home.
+function firstSentence(text: string | null | undefined): string | null {
+  if (!text) return null;
+  const match = text.match(/^[^.!?]+[.!?]/);
+  return (match ? match[0] : text).trim();
+}
 
 export default async function Home() {
   const sb = createStaticClient();
@@ -58,7 +68,7 @@ export default async function Home() {
         .eq("status", "active"),
       sb
         .from("familias")
-        .select("id, slug, name, hours_per_unit, display_order")
+        .select("id, slug, name, description, hours_per_unit, display_order")
         .order("display_order"),
     ]);
 
@@ -335,25 +345,33 @@ export default async function Home() {
               {familiasActivas.map((f, i) => {
                 const horas = Number(f.hours_per_unit ?? 0);
                 const hoverImg = FAMILY_HOVER_IMAGE[f.slug];
+                const bajada = firstSentence(f.description);
                 return (
                   <SectionReveal key={f.id} delay={i * 0.04}>
                     <li className="border-b border-piedra">
                       <FamilyHoverTrigger imageSrc={hoverImg}>
                         <Link
                           href={`/piezas/${f.slug}`}
-                          className="group flex flex-col items-baseline justify-between gap-2 py-5 sm:flex-row sm:gap-6"
+                          className="group flex flex-col gap-2 py-5"
                         >
-                          <span className="font-serif text-2xl leading-tight transition-colors duration-500 group-hover:text-cuero sm:text-3xl">
-                            {f.name}
-                          </span>
-                          <span className="font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
-                            {f.colores}{" "}
-                            {f.colores === 1 ? "color" : "colores"}
-                            {horas > 0 ? ` · ${horas} h por unidad` : ""}{" "}
-                            <span className="text-cuero transition-transform duration-500 group-hover:translate-x-1 inline-block">
-                              →
+                          <div className="flex flex-col items-baseline justify-between gap-2 sm:flex-row sm:gap-6">
+                            <span className="font-serif text-2xl leading-tight transition-colors duration-500 group-hover:text-cuero sm:text-3xl">
+                              {f.name}
                             </span>
-                          </span>
+                            <span className="font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
+                              {f.colores}{" "}
+                              {f.colores === 1 ? "color" : "colores"}
+                              {horas > 0 ? ` · ${horas} h por unidad` : ""}{" "}
+                              <span className="text-cuero transition-transform duration-500 group-hover:translate-x-1 inline-block">
+                                →
+                              </span>
+                            </span>
+                          </div>
+                          {bajada && (
+                            <span className="max-w-2xl font-serif text-base italic leading-relaxed text-niebla">
+                              {bajada}
+                            </span>
+                          )}
                         </Link>
                       </FamilyHoverTrigger>
                     </li>
