@@ -1,106 +1,46 @@
 "use client";
 
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { useTexture } from "@react-three/drei";
+import { Text, useTexture } from "@react-three/drei";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import {
-  type Group,
-  MathUtils,
-  type Mesh,
-  type PerspectiveCamera,
-  Vector3,
-} from "three";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { MathUtils, type Group, type PerspectiveCamera } from "three";
 
-/**
- * Paleta Valiz traducida a Three.js
- */
 const COL = {
   fondo: "#f7f6f2",
   tinta: "#1a1a1a",
   cuero: "#7a3b1f",
-  piedra: "#d4d2cb",
-  niebla: "#666666",
-  ambar: "#d97a00",
-  paredCalida: "#ebe5d8", // cream cálido para paredes
-  pisoMadera: "#3a2418", // madera oscura noble
-  techo: "#f0ebe0", // crema suave techo
+  paredCalida: "#e9e3d3",
+  pisoMadera: "#2e1d12",
+  techo: "#ece6da",
+  maderaMueble: "#5a3a22",
+  maderaMuebleTop: "#6b4528",
 };
 
-type Portal = {
-  id: string;
-  label: string;
-  caption: string;
-  imageUrl: string;
-  href: string;
-  /** [posición x, y, z] en la sala */
-  position: [number, number, number];
-  /** rotación en eje Y (para que la pintura mire al centro) */
-  rotationY: number;
-  /** tamaño del cuadro [ancho, alto] */
-  size: [number, number];
+export type SalaFamily = {
+  slug: string;
+  name: string;
+  productPhoto?: string | null;
+  hoursPerUnit?: number | null;
 };
 
-const PORTALS: Portal[] = [
-  {
-    id: "bitacora",
-    label: "La Bitácora",
-    caption: "Las tres vidas del objeto",
-    imageUrl: "/images/hero.jpg",
-    href: "/",
-    position: [0, 1.7, -4.9],
-    rotationY: 0,
-    size: [2, 2.4],
-  },
-  {
-    id: "vida-pasada",
-    label: "Vida pasada",
-    caption: "El cuero antes de ser tuyo",
-    imageUrl: "/images/vida-pasada.jpg",
-    href: "/#vida-pasada",
-    position: [-4.9, 1.7, -2],
-    rotationY: Math.PI / 2,
-    size: [1.6, 2],
-  },
-  {
-    id: "vida-presente",
-    label: "Vida presente",
-    caption: "Las horas en taller",
-    imageUrl: "/images/vida-presente.jpg",
-    href: "/#vida-presente",
-    position: [-4.9, 1.7, 1.5],
-    rotationY: Math.PI / 2,
-    size: [2.2, 1.7],
-  },
-  {
-    id: "mochila-alforja",
-    label: "Mochila Alforja",
-    caption: "Conoce la pieza",
-    imageUrl:
-      "/images/productos/mochila-alforja/MA-G-CRU/01-front.webp",
-    href: "/piezas/mochila-alforja",
-    position: [4.9, 1.7, -1],
-    rotationY: -Math.PI / 2,
-    size: [1.6, 2],
-  },
-];
-
-export default function Sala() {
+export default function Sala({ families }: { families: SalaFamily[] }) {
   const router = useRouter();
-
   return (
     <div className="fixed inset-0 bg-fondo">
       <Canvas
         shadows
-        camera={{ position: [0, 1.6, 2.5], fov: 55 }}
+        camera={{ position: [0, 1.6, 0], fov: 60 }}
         gl={{ antialias: true }}
       >
-        <Scene
-          onPortalClick={(href) => router.push(href)}
-        />
+        <Suspense fallback={null}>
+          <Scene
+            families={families}
+            onStationClick={(slug) => router.push(`/piezas/${slug}`)}
+          />
+        </Suspense>
       </Canvas>
 
-      {/* UI overlay */}
       <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-6 sm:p-10">
         <div className="flex items-baseline justify-between">
           <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
@@ -115,163 +55,207 @@ export default function Sala() {
           </a>
         </div>
         <p className="text-center font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
-          Mueve el cursor para mirar alrededor · click en los cuadros para
-          entrar
+          Arrastra para girar la cámara · click en un mueble para entrar a esa
+          familia
         </p>
       </div>
     </div>
   );
 }
 
-function Scene({ onPortalClick }: { onPortalClick: (href: string) => void }) {
-  // Cursor-driven look-around: mover el mouse rota la cámara dentro de
-  // límites confortables.
-  const cursor = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const handle = (e: PointerEvent) => {
-      cursor.current.x = (e.clientX / window.innerWidth) * 2 - 1;
-      cursor.current.y = (e.clientY / window.innerHeight) * 2 - 1;
-    };
-    window.addEventListener("pointermove", handle);
-    return () => window.removeEventListener("pointermove", handle);
-  }, []);
-
+function Scene({
+  families,
+  onStationClick,
+}: {
+  families: SalaFamily[];
+  onStationClick: (slug: string) => void;
+}) {
   return (
     <>
-      <CameraLook cursor={cursor} />
-      <Lighting />
+      <CameraRig />
+      <Lighting count={families.length} />
       <Room />
-      {PORTALS.map((p) => (
-        <Portal key={p.id} portal={p} onClick={() => onPortalClick(p.href)} />
-      ))}
+      {families.map((f, i) => {
+        const angle = (i / families.length) * Math.PI * 2;
+        const radius = 7.2;
+        const x = Math.sin(angle) * radius;
+        const z = -Math.cos(angle) * radius;
+        // Cada estación mira al centro (donde está la cámara)
+        const rotY = angle + Math.PI;
+        return (
+          <Station
+            key={f.slug}
+            family={f}
+            position={[x, 0, z]}
+            rotationY={rotY}
+            onClick={() => onStationClick(f.slug)}
+          />
+        );
+      })}
     </>
   );
 }
 
-function CameraLook({
-  cursor,
-}: {
-  cursor: React.RefObject<{ x: number; y: number }>;
-}) {
-  const { camera } = useThree();
-  const targetRot = useRef({ x: 0, y: 0 });
+/**
+ * Drag-to-look-around: el usuario arrastra desde cualquier punto del canvas
+ * y la cámara rota libremente 360° en yaw, con pitch limitado a ±20° para
+ * que no se desoriente. La inercia hace que al soltar siga un toque más.
+ */
+function CameraRig() {
+  const { camera, gl } = useThree();
+  const yaw = useRef(0);
+  const pitch = useRef(0);
+  const yawVelocity = useRef(0);
+  const pitchVelocity = useRef(0);
+  const dragging = useRef(false);
+  const lastPos = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const el = gl.domElement;
+    el.style.touchAction = "none";
+
+    const down = (e: PointerEvent) => {
+      dragging.current = true;
+      lastPos.current = { x: e.clientX, y: e.clientY };
+      (el as HTMLElement).setPointerCapture(e.pointerId);
+      yawVelocity.current = 0;
+      pitchVelocity.current = 0;
+    };
+    const move = (e: PointerEvent) => {
+      if (!dragging.current) return;
+      const dx = e.clientX - lastPos.current.x;
+      const dy = e.clientY - lastPos.current.y;
+      lastPos.current = { x: e.clientX, y: e.clientY };
+      // 1px = 0.005 rad ≈ 0.3°
+      yawVelocity.current = -dx * 0.005;
+      pitchVelocity.current = -dy * 0.005;
+      yaw.current += yawVelocity.current;
+      pitch.current = MathUtils.clamp(
+        pitch.current + pitchVelocity.current,
+        -MathUtils.degToRad(20),
+        MathUtils.degToRad(20),
+      );
+    };
+    const up = (e: PointerEvent) => {
+      dragging.current = false;
+      try {
+        (el as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch {}
+    };
+
+    el.addEventListener("pointerdown", down);
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", up);
+    return () => {
+      el.removeEventListener("pointerdown", down);
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("pointerup", up);
+      el.removeEventListener("pointercancel", up);
+    };
+  }, [gl]);
 
   useFrame(() => {
-    if (!cursor.current) return;
-    // Cursor X/Y → rotación yaw/pitch con límites
-    const yaw = -cursor.current.x * MathUtils.degToRad(28);
-    const pitch = -cursor.current.y * MathUtils.degToRad(15);
-
-    targetRot.current.x = MathUtils.lerp(targetRot.current.x, pitch, 0.08);
-    targetRot.current.y = MathUtils.lerp(targetRot.current.y, yaw, 0.08);
-
+    // Inercia: si el usuario soltó, dejamos que la rotación siga decayendo
+    if (!dragging.current) {
+      yaw.current += yawVelocity.current * 0.92;
+      pitch.current = MathUtils.clamp(
+        pitch.current + pitchVelocity.current * 0.92,
+        -MathUtils.degToRad(20),
+        MathUtils.degToRad(20),
+      );
+      yawVelocity.current *= 0.92;
+      pitchVelocity.current *= 0.92;
+    }
     const cam = camera as PerspectiveCamera;
     cam.rotation.order = "YXZ";
-    cam.rotation.y = targetRot.current.y;
-    cam.rotation.x = targetRot.current.x;
+    cam.rotation.y = yaw.current;
+    cam.rotation.x = pitch.current;
   });
 
   return null;
 }
 
-function Lighting() {
+function Lighting({ count }: { count: number }) {
+  // Luces de "techo de exhibición" — 4 grandes alrededor del centro
   return (
     <>
-      <ambientLight intensity={0.35} color={COL.fondo} />
-      {/* Luz cenital cálida tipo gallery */}
-      <directionalLight
-        position={[0, 6, 0]}
-        intensity={0.4}
-        color="#fff5e6"
-        castShadow
-      />
-      {/* Spots cálidos sobre los 4 cuadros para acento */}
-      {PORTALS.map((p) => (
-        <spotLight
-          key={`spot-${p.id}`}
-          position={[p.position[0] * 0.4, 3.4, p.position[2] * 0.4]}
-          target-position={p.position}
-          angle={0.6}
-          penumbra={0.5}
-          intensity={1.2}
-          color="#fff0d6"
-          distance={8}
-        />
-      ))}
+      <ambientLight intensity={0.4} color="#fff5e6" />
+      {[0, 1, 2, 3].map((i) => {
+        const a = (i / 4) * Math.PI * 2;
+        const r = 5;
+        return (
+          <pointLight
+            key={i}
+            position={[Math.sin(a) * r, 3.6, -Math.cos(a) * r]}
+            intensity={1.5}
+            color="#fff0d6"
+            distance={14}
+            decay={1.6}
+          />
+        );
+      })}
+      {/* Suplemento general */}
+      <directionalLight position={[0, 8, 0]} intensity={0.3} color="#fff5e6" />
     </>
   );
 }
 
 function Room() {
-  // Sala: 10m ancho × 10m fondo × 3.5m alto
-  // Origen en el centro del piso
   return (
     <group>
       {/* Piso */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-        <planeGeometry args={[10, 10]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[20, 20]} />
         <meshStandardMaterial color={COL.pisoMadera} roughness={0.85} />
       </mesh>
       {/* Techo */}
-      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 3.5, 0]}>
-        <planeGeometry args={[10, 10]} />
+      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 4, 0]}>
+        <planeGeometry args={[20, 20]} />
         <meshStandardMaterial color={COL.techo} roughness={1} />
       </mesh>
-      {/* Pared frente (-Z) */}
-      <mesh position={[0, 1.75, -5]}>
-        <planeGeometry args={[10, 3.5]} />
-        <meshStandardMaterial color={COL.paredCalida} roughness={1} />
-      </mesh>
-      {/* Pared atrás (+Z) — tapada para que no se vea el "afuera" si gira */}
-      <mesh position={[0, 1.75, 5]} rotation={[0, Math.PI, 0]}>
-        <planeGeometry args={[10, 3.5]} />
-        <meshStandardMaterial color={COL.paredCalida} roughness={1} />
-      </mesh>
-      {/* Pared izq (-X) */}
-      <mesh position={[-5, 1.75, 0]} rotation={[0, Math.PI / 2, 0]}>
-        <planeGeometry args={[10, 3.5]} />
-        <meshStandardMaterial color={COL.paredCalida} roughness={1} />
-      </mesh>
-      {/* Pared der (+X) */}
-      <mesh position={[5, 1.75, 0]} rotation={[0, -Math.PI / 2, 0]}>
-        <planeGeometry args={[10, 3.5]} />
-        <meshStandardMaterial color={COL.paredCalida} roughness={1} />
-      </mesh>
+      {/* 4 paredes */}
+      {[
+        { pos: [0, 2, -10] as const, rot: [0, 0, 0] as const },
+        { pos: [0, 2, 10] as const, rot: [0, Math.PI, 0] as const },
+        { pos: [-10, 2, 0] as const, rot: [0, Math.PI / 2, 0] as const },
+        { pos: [10, 2, 0] as const, rot: [0, -Math.PI / 2, 0] as const },
+      ].map((w, i) => (
+        <mesh key={i} position={w.pos} rotation={w.rot}>
+          <planeGeometry args={[20, 4]} />
+          <meshStandardMaterial color={COL.paredCalida} roughness={1} />
+        </mesh>
+      ))}
     </group>
   );
 }
 
-function Portal({
-  portal,
+function Station({
+  family,
+  position,
+  rotationY,
   onClick,
 }: {
-  portal: Portal;
+  family: SalaFamily;
+  position: [number, number, number];
+  rotationY: number;
   onClick: () => void;
 }) {
   const groupRef = useRef<Group>(null);
-  const frameRef = useRef<Mesh>(null);
   const [hovered, setHovered] = useState(false);
 
-  const texture = useTexture(portal.imageUrl);
-
-  // Hover: leve scale + glow visual
   useFrame((_, delta) => {
     if (!groupRef.current) return;
-    const targetScale = hovered ? 1.04 : 1;
-    const current = groupRef.current.scale.x;
-    const next = MathUtils.lerp(current, targetScale, delta * 6);
+    const target = hovered ? 1.05 : 1;
+    const next = MathUtils.lerp(groupRef.current.scale.x, target, delta * 6);
     groupRef.current.scale.setScalar(next);
   });
-
-  const [w, h] = portal.size;
-  const frameThickness = 0.05;
 
   return (
     <group
       ref={groupRef}
-      position={portal.position}
-      rotation={[0, portal.rotationY, 0]}
+      position={position}
+      rotation={[0, rotationY, 0]}
       onPointerOver={(e: ThreeEvent<PointerEvent>) => {
         e.stopPropagation();
         setHovered(true);
@@ -286,25 +270,92 @@ function Portal({
         onClick();
       }}
     >
-      {/* Marco (un poquito más grande que la imagen) */}
-      <mesh ref={frameRef} position={[0, 0, -0.02]}>
-        <boxGeometry args={[w + frameThickness * 2, h + frameThickness * 2, 0.04]} />
-        <meshStandardMaterial color={COL.tinta} roughness={0.6} />
-      </mesh>
-      {/* Imagen */}
-      <mesh position={[0, 0, 0]}>
-        <planeGeometry args={[w, h]} />
-        <meshStandardMaterial map={texture} roughness={0.4} />
-      </mesh>
-      {/* Glow al hacer hover */}
+      {/* Mueble de madera — base con patas */}
+      <WoodenDisplay />
+
+      {/* Producto exhibido (si hay foto) */}
+      {family.productPhoto ? (
+        <ProductDisplay url={family.productPhoto} />
+      ) : (
+        <PlaceholderDisplay />
+      )}
+
+      {/* Nombre de la familia */}
+      <Text
+        position={[0, 0.18, 0.5]}
+        rotation={[-Math.PI / 3, 0, 0]}
+        fontSize={0.18}
+        color={COL.fondo}
+        anchorX="center"
+        anchorY="middle"
+        maxWidth={2}
+        textAlign="center"
+      >
+        {family.name}
+      </Text>
+
       {hovered && (
         <pointLight
-          position={[0, 0, 0.5]}
-          intensity={0.6}
+          position={[0, 1.6, 0.8]}
+          intensity={1.2}
           color="#fff5e6"
-          distance={2}
+          distance={3}
         />
       )}
     </group>
+  );
+}
+
+function WoodenDisplay() {
+  // Base con 4 patas y un tablero superior
+  return (
+    <group>
+      {/* Tablero */}
+      <mesh position={[0, 0.8, 0]} castShadow>
+        <boxGeometry args={[2, 0.08, 1]} />
+        <meshStandardMaterial color={COL.maderaMuebleTop} roughness={0.7} />
+      </mesh>
+      {/* Patas */}
+      {[
+        [-0.9, 0.4, -0.42],
+        [0.9, 0.4, -0.42],
+        [-0.9, 0.4, 0.42],
+        [0.9, 0.4, 0.42],
+      ].map((p, i) => (
+        <mesh key={i} position={p as [number, number, number]} castShadow>
+          <boxGeometry args={[0.08, 0.8, 0.08]} />
+          <meshStandardMaterial color={COL.maderaMueble} roughness={0.75} />
+        </mesh>
+      ))}
+      {/* Repisa interior baja */}
+      <mesh position={[0, 0.18, 0]}>
+        <boxGeometry args={[1.85, 0.04, 0.85]} />
+        <meshStandardMaterial color={COL.maderaMueble} roughness={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
+function ProductDisplay({ url }: { url: string }) {
+  const texture = useTexture(url);
+  return (
+    <mesh position={[0, 1.55, 0]}>
+      <planeGeometry args={[1.2, 1.5]} />
+      <meshStandardMaterial map={texture} transparent roughness={0.4} />
+    </mesh>
+  );
+}
+
+function PlaceholderDisplay() {
+  return (
+    <mesh position={[0, 1.55, 0]}>
+      <planeGeometry args={[1.2, 1.5]} />
+      <meshStandardMaterial
+        color={COL.paredCalida}
+        roughness={0.9}
+        opacity={0.5}
+        transparent
+      />
+    </mesh>
   );
 }
