@@ -48,3 +48,8 @@ __pycache__/
 
 # imágenes originales sin optimizar — solo las optimizadas en public/images/ van al repo
 /public/images/raw/
+# originales (JPG/JPEG/PNG) dentro de productos/ — solo los .webp optimizados van al repo
+/public/images/productos/**/*.jpg
+/public/images/productos/**/*.JPG
+/public/images/productos/**/*.jpeg
+/public/images/productos/**/*.png
