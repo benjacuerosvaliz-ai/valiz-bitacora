@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { Text, useTexture } from "@react-three/drei";
+import { Environment, Text, useTexture } from "@react-three/drei";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -167,6 +167,10 @@ function Scene({
   return (
     <>
       <CameraRig focus={focus} />
+      {/* Environment HDR — da reflejos y ambient lighting realistic; sin
+          esto las superficies se ven plásticas. 'apartment' es cálido
+          tipo boutique. background=false porque tenemos paredes propias. */}
+      <Environment preset="apartment" background={false} environmentIntensity={0.6} />
       <Lighting />
       <Room />
       {shelvings.map((s) => {
@@ -297,11 +301,14 @@ function CameraRig({ focus }: { focus: FocusWall }) {
       const absX = Math.abs(cx);
       const absY = Math.abs(cy);
       if (absX > HOVER_DEAD) {
+        // INVERTIDO: cursor a la derecha → cámara mira a la derecha
+        // (drag-the-camera, no drag-the-world)
         const speed =
           Math.sign(cx) * Math.min(1, (absX - HOVER_DEAD) / (1 - HOVER_DEAD));
-        yawTarget.current += speed * HOVER_SPEED * delta;
+        yawTarget.current -= speed * HOVER_SPEED * delta;
       }
       if (absY > HOVER_DEAD) {
+        // cursor arriba → cámara mira arriba (intuitivo, no se toca)
         const speed =
           -Math.sign(cy) * Math.min(1, (absY - HOVER_DEAD) / (1 - HOVER_DEAD));
         pitchTarget.current = MathUtils.clamp(
@@ -363,14 +370,19 @@ function Lighting() {
 }
 
 function Room() {
-  const floorTex = useTexture("/textures/wood_floor_diff.jpg", configureTile(4, 4));
-  const wallTex = useTexture("/textures/wall_plaster_diff.jpg", configureTile(3, 1.5));
+  const floor = usePBR("wood_floor", 4, 4);
+  const wall = usePBR("wall_plaster", 3, 1.5);
 
   return (
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[20, 20]} />
-        <meshStandardMaterial map={floorTex} roughness={0.75} />
+        <meshStandardMaterial
+          map={floor.diff}
+          normalMap={floor.nor}
+          roughnessMap={floor.rough}
+          roughness={1}
+        />
       </mesh>
       <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 4.5, 0]}>
         <planeGeometry args={[20, 20]} />
@@ -382,13 +394,44 @@ function Room() {
         { pos: [-10, 2.25, 0] as const, rot: [0, Math.PI / 2, 0] as const },
         { pos: [10, 2.25, 0] as const, rot: [0, -Math.PI / 2, 0] as const },
       ].map((w, i) => (
-        <mesh key={i} position={w.pos} rotation={w.rot}>
+        <mesh key={i} position={w.pos} rotation={w.rot} receiveShadow>
           <planeGeometry args={[20, 4.5]} />
-          <meshStandardMaterial map={wallTex} roughness={1} />
+          <meshStandardMaterial
+            map={wall.diff}
+            normalMap={wall.nor}
+            roughnessMap={wall.rough}
+            roughness={1}
+          />
         </mesh>
       ))}
     </group>
   );
+}
+
+/**
+ * Hook PBR: carga los 3 maps (diff sRGB, nor linear, rough linear) para
+ * un material dado y los configura con tile + colorSpace correcto.
+ * Esto saca a las superficies de la planitud plástica.
+ */
+function usePBR(name: string, repeatX: number, repeatY: number) {
+  const [diff, nor, rough] = useTexture(
+    [
+      `/textures/${name}_diff.jpg`,
+      `/textures/${name}_nor.jpg`,
+      `/textures/${name}_rough.jpg`,
+    ],
+    (textures) => {
+      const arr = Array.isArray(textures) ? textures : [textures];
+      arr.forEach((t) => {
+        t.wrapS = RepeatWrapping;
+        t.wrapT = RepeatWrapping;
+        t.repeat.set(repeatX, repeatY);
+      });
+      // Solo el diffuse va en sRGB; normal y roughness en linear.
+      if (arr[0]) arr[0].colorSpace = SRGBColorSpace;
+    },
+  );
+  return { diff, nor, rough };
 }
 
 function configureTile(repeatX: number, repeatY: number) {
@@ -427,14 +470,8 @@ function ShelvingUnit({
   const cubbyW = (W - T * (COLS + 1)) / COLS;
   const cubbyH = (H - T * (ROWS + 1)) / ROWS;
 
-  const woodTex = useTexture(
-    "/textures/wood_dark_diff.jpg",
-    configureTile(1, 1),
-  );
-  const woodTexFine = useTexture(
-    "/textures/wood_dark_diff.jpg",
-    configureTile(0.4, 0.4),
-  );
+  const woodPBR = usePBR("wood_dark", 1, 1);
+  const woodFinePBR = usePBR("wood_dark", 0.4, 0.4);
 
   const cubbyCenters = useMemo(() => {
     const out: { x: number; y: number; index: number }[] = [];
@@ -451,18 +488,28 @@ function ShelvingUnit({
   return (
     <group position={position} rotation={[0, rotationY, 0]}>
       {/* Backboard */}
-      <mesh position={[0, 0, -D / 2]}>
+      <mesh position={[0, 0, -D / 2]} receiveShadow>
         <boxGeometry args={[W, H, 0.025]} />
-        <meshStandardMaterial map={woodTexFine} roughness={0.75} />
+        <meshStandardMaterial
+          map={woodFinePBR.diff}
+          normalMap={woodFinePBR.nor}
+          roughnessMap={woodFinePBR.rough}
+          roughness={1}
+        />
       </mesh>
 
       {/* Verticales */}
       {Array.from({ length: COLS + 1 }).map((_, i) => {
         const x = -W / 2 + T / 2 + i * (cubbyW + T);
         return (
-          <mesh key={`v-${i}`} position={[x, 0, 0]} castShadow>
+          <mesh key={`v-${i}`} position={[x, 0, 0]} castShadow receiveShadow>
             <boxGeometry args={[T, H, D]} />
-            <meshStandardMaterial map={woodTex} roughness={0.7} />
+            <meshStandardMaterial
+              map={woodPBR.diff}
+              normalMap={woodPBR.nor}
+              roughnessMap={woodPBR.rough}
+              roughness={1}
+            />
           </mesh>
         );
       })}
@@ -471,9 +518,14 @@ function ShelvingUnit({
       {Array.from({ length: ROWS + 1 }).map((_, i) => {
         const y = -H / 2 + T / 2 + i * (cubbyH + T);
         return (
-          <mesh key={`h-${i}`} position={[0, y, 0]} castShadow>
+          <mesh key={`h-${i}`} position={[0, y, 0]} castShadow receiveShadow>
             <boxGeometry args={[W, T, D]} />
-            <meshStandardMaterial map={woodTex} roughness={0.7} />
+            <meshStandardMaterial
+              map={woodPBR.diff}
+              normalMap={woodPBR.nor}
+              roughnessMap={woodPBR.rough}
+              roughness={1}
+            />
           </mesh>
         );
       })}
@@ -488,7 +540,7 @@ function ShelvingUnit({
             url={variant.photoUrl}
             label={variant.colorValiz}
             position={[c.x, c.y, D / 2 - 0.04]}
-            size={[cubbyW * 0.78, cubbyH * 0.82]}
+            size={[cubbyW * 0.95, cubbyH * 0.95]}
             onClick={() => onVariantClick(variant)}
           />
         );
@@ -516,12 +568,8 @@ function SignBoard({
   const groupRef = useRef<Group>(null);
   const [hovered, setHovered] = useState(false);
 
-  // Textura de madera clara para el letrero (distinta de la madera oscura
-  // de los muebles)
-  const lightWood = useTexture(
-    "/textures/wood_light_diff.jpg",
-    configureTile(1, 0.4),
-  );
+  // Madera clara PBR para el letrero
+  const lightWood = usePBR("wood_light", 1, 0.4);
 
   useFrame((_, dt) => {
     if (!groupRef.current) return;
@@ -548,34 +596,35 @@ function SignBoard({
         onClick();
       }}
     >
-      {/* Tabla de madera clara — un poco más grande y con bevel para
-          dimensión */}
-      <mesh castShadow>
+      {/* Tabla de madera clara */}
+      <mesh castShadow receiveShadow>
         <boxGeometry args={[2.8, 0.6, 0.06]} />
-        <meshStandardMaterial map={lightWood} roughness={0.7} />
+        <meshStandardMaterial
+          map={lightWood.diff}
+          normalMap={lightWood.nor}
+          roughnessMap={lightWood.rough}
+          roughness={1}
+        />
       </mesh>
 
-      {/* Texto pirograbado: color café muy oscuro, casi negro quemado.
-          Ligeramente hundido en la madera (z = 0.020 vs surface 0.030) y
-          duplicado con offset para simular el "halo" carbonizado del
-          pirograbado real. */}
-      {/* Sombra de pirograbado (halo café) */}
+      {/* Texto pirograbado en DOS capas, ahora claramente DELANTE del
+          mesh (z = 0.04 > surface 0.03 = visible). Halo carbonizado +
+          texto principal café oscuro quemado. */}
       <Text
-        position={[0, -0.01, 0.024]}
+        position={[0, -0.005, 0.04]}
         fontSize={0.28}
         color="#6b3a14"
         anchorX="center"
         anchorY="middle"
         maxWidth={2.5}
-        outlineWidth={0.006}
+        outlineWidth={0.012}
         outlineColor="#6b3a14"
-        outlineOpacity={0.4}
+        outlineOpacity={0.5}
       >
         {text}
       </Text>
-      {/* Texto principal café oscuro quemado, levemente hundido */}
       <Text
-        position={[0, 0, 0.028]}
+        position={[0, 0, 0.041]}
         fontSize={0.28}
         color="#2a1206"
         anchorX="center"
