@@ -1,8 +1,15 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import {
+  animate,
+  AnimatePresence,
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+} from "motion/react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const SHOPIFY_BASE = "https://www.valiz.cl/products/";
 const nf = new Intl.NumberFormat("es-CL");
@@ -178,84 +185,42 @@ export function FamilyExplorer({
             </div>
 
             {/* Main: image + controls */}
-            <div className="grid flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[3fr_1.4fr]">
-              {/* Image stage */}
-              <div className="relative overflow-hidden bg-fondo">
-                <AnimatePresence mode="wait">
+            <div className="relative grid flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[3fr_1.4fr]">
+              {/* Image stage — floating + tilt with cursor/touch */}
+              <FloatingStage
+                familySlug={familySlug}
+                familyName={familyName}
+                selectedSku={selectedSku}
+                colorValiz={selectedVariant.color_valiz}
+                view={view}
+                hotspots={hotspots}
+                activeHotspotId={activeHotspotId}
+                onHotspotClick={(h) => {
+                  if (view !== h.preferredView) setView(h.preferredView);
+                  setActiveHotspotId((id) => (id === h.id ? null : h.id));
+                }}
+              />
+
+              {/* Active hotspot callout — vive como overlay sobre el stage */}
+              <AnimatePresence>
+                {activeHotspot && (
                   <motion.div
-                    key={`${selectedSku}-${view}`}
-                    initial={{ opacity: 0, scale: 1.03 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.98 }}
-                    transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute inset-0"
+                    key={activeHotspot.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 12 }}
+                    transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                    className="pointer-events-none absolute inset-x-6 bottom-6 z-10 max-w-md rounded-md bg-fondo/95 p-5 ring-1 ring-piedra backdrop-blur-md sm:inset-x-10 sm:bottom-10"
                   >
-                    <Image
-                      src={`/images/productos/${familySlug}/${selectedSku}/${VIEW_FILE[view]}`}
-                      alt={`${familyName} ${selectedVariant.color_valiz ?? ""} vista ${VIEW_LABEL[view]}`}
-                      fill
-                      sizes="(min-width: 1024px) 60vw, 100vw"
-                      className="object-contain p-6 sm:p-10"
-                    />
+                    <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+                      {activeHotspot.label}
+                    </p>
+                    <p className="mt-2 font-serif italic leading-relaxed">
+                      {activeHotspot.description}
+                    </p>
                   </motion.div>
-                </AnimatePresence>
-
-                {/* Hotspot buttons */}
-                {hotspots.map((h) => {
-                  const pos = h.position[view];
-                  if (!pos) return null;
-                  const isActive = activeHotspotId === h.id;
-                  return (
-                    <motion.button
-                      key={h.id}
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.4, duration: 0.4 }}
-                      onClick={() => {
-                        if (view !== h.preferredView) setView(h.preferredView);
-                        setActiveHotspotId(isActive ? null : h.id);
-                      }}
-                      style={{
-                        position: "absolute",
-                        left: `${pos[0]}%`,
-                        top: `${pos[1]}%`,
-                        transform: "translate(-50%, -50%)",
-                      }}
-                      className={`group/dot flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-sm transition-all duration-300 ${
-                        isActive
-                          ? "bg-tinta text-fondo"
-                          : "bg-fondo/85 text-tinta ring-1 ring-piedra hover:scale-110 hover:bg-fondo"
-                      }`}
-                      aria-label={h.label}
-                    >
-                      <span className="font-serif text-lg leading-none">
-                        {isActive ? "×" : "+"}
-                      </span>
-                    </motion.button>
-                  );
-                })}
-
-                {/* Active hotspot callout */}
-                <AnimatePresence>
-                  {activeHotspot && (
-                    <motion.div
-                      key={activeHotspot.id}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 12 }}
-                      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-                      className="absolute inset-x-6 bottom-6 max-w-md rounded-md bg-fondo/95 p-5 ring-1 ring-piedra backdrop-blur-md sm:inset-x-10 sm:bottom-10"
-                    >
-                      <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
-                        {activeHotspot.label}
-                      </p>
-                      <p className="mt-2 font-serif italic leading-relaxed">
-                        {activeHotspot.description}
-                      </p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                )}
+              </AnimatePresence>
 
               {/* Controls column */}
               <div className="flex flex-col justify-between gap-8 border-t border-piedra px-6 py-6 sm:px-10 lg:border-l lg:border-t-0 lg:py-10">
@@ -390,5 +355,136 @@ export function FamilyExplorer({
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+function FloatingStage({
+  familySlug,
+  familyName,
+  selectedSku,
+  colorValiz,
+  view,
+  hotspots,
+  activeHotspotId,
+  onHotspotClick,
+}: {
+  familySlug: string;
+  familyName: string;
+  selectedSku: string;
+  colorValiz: string | null;
+  view: View;
+  hotspots: Hotspot[];
+  activeHotspotId: string | null;
+  onHotspotClick: (h: Hotspot) => void;
+}) {
+  const stageRef = useRef<HTMLDivElement>(null);
+  const pointerX = useMotionValue(0); // -1..1
+  const pointerY = useMotionValue(0); // -1..1
+
+  const springConfig = { stiffness: 90, damping: 18, mass: 0.6 };
+  const rotateY = useSpring(
+    useTransform(pointerX, [-1, 1], [-12, 12]),
+    springConfig,
+  );
+  const rotateX = useSpring(
+    useTransform(pointerY, [-1, 1], [8, -8]),
+    springConfig,
+  );
+
+  // Idle floating loop
+  const idleY = useMotionValue(0);
+  useEffect(() => {
+    const controls = animate(idleY, [-8, 8], {
+      duration: 4,
+      repeat: Infinity,
+      repeatType: "reverse",
+      ease: "easeInOut",
+    });
+    return () => controls.stop();
+  }, [idleY]);
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!stageRef.current) return;
+    const rect = stageRef.current.getBoundingClientRect();
+    const nx = (e.clientX - rect.left) / rect.width;
+    const ny = (e.clientY - rect.top) / rect.height;
+    pointerX.set(nx * 2 - 1);
+    pointerY.set(ny * 2 - 1);
+  };
+
+  const handlePointerLeave = () => {
+    pointerX.set(0);
+    pointerY.set(0);
+  };
+
+  return (
+    <div
+      ref={stageRef}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+      style={{ perspective: 1400 }}
+      className="relative overflow-hidden bg-fondo"
+    >
+      <motion.div
+        style={{
+          rotateX,
+          rotateY,
+          y: idleY,
+          transformStyle: "preserve-3d",
+        }}
+        className="absolute inset-0"
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`${selectedSku}-${view}`}
+            initial={{ opacity: 0, scale: 1.03 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute inset-0"
+          >
+            <Image
+              src={`/images/productos/${familySlug}/${selectedSku}/${VIEW_FILE[view]}`}
+              alt={`${familyName} ${colorValiz ?? ""} vista ${VIEW_LABEL[view]}`}
+              fill
+              sizes="(min-width: 1024px) 60vw, 100vw"
+              className="object-contain p-6 sm:p-10"
+            />
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Hotspots viven dentro del transform 3D para tiltarse con el bolso */}
+        {hotspots.map((h) => {
+          const pos = h.position[view];
+          if (!pos) return null;
+          const isActive = activeHotspotId === h.id;
+          return (
+            <motion.button
+              key={h.id}
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.35, duration: 0.4 }}
+              onClick={() => onHotspotClick(h)}
+              style={{
+                position: "absolute",
+                left: `${pos[0]}%`,
+                top: `${pos[1]}%`,
+                transform: "translate(-50%, -50%)",
+              }}
+              className={`flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-sm transition-colors duration-300 ${
+                isActive
+                  ? "bg-tinta text-fondo"
+                  : "bg-fondo/85 text-tinta ring-1 ring-piedra hover:bg-fondo"
+              }`}
+              aria-label={h.label}
+            >
+              <span className="font-serif text-lg leading-none">
+                {isActive ? "×" : "+"}
+              </span>
+            </motion.button>
+          );
+        })}
+      </motion.div>
+    </div>
   );
 }
