@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { FamilyExplorer } from "@/components/product/family-explorer";
 import { createStaticClient } from "@/lib/supabase/static";
 
 const nf = new Intl.NumberFormat("es-CL");
@@ -129,6 +130,21 @@ export default async function FamiliaPage({
             <p className="mt-10 max-w-2xl font-serif text-lg leading-relaxed sm:text-xl">
               {familia.description}
             </p>
+          )}
+
+          {productos.length > 0 && (
+            <div className="mt-12">
+              <FamilyExplorer
+                familySlug={familia.slug}
+                familyName={familia.name}
+                variants={productos.map((p) => ({
+                  sku: p.sku,
+                  color_valiz: p.color_valiz,
+                  precio: p.precio,
+                  shopify_handle: p.shopify_handle,
+                }))}
+              />
+            </div>
           )}
         </div>
       </section>
