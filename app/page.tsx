@@ -122,21 +122,22 @@ export default async function Home() {
             El cuero antes de ser tuyo.
           </h2>
           <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
-            Cada pieza Valiz nace de un cuero rescatado de la industria
-            ganadera chilena. Material que iba a desperdiciarse, curtido y
-            transformado en objeto noble.
+            Subproducto de la industria ganadera chilena. Sin nosotros,
+            descarte; con nosotros, objeto que vivirá décadas.
           </p>
 
           <p className="mt-16 font-serif text-[6rem] leading-[0.85] tracking-[-0.04em] sm:text-[10rem] lg:text-[13rem]">
             {nf.format(piesTotal)}
           </p>
           <p className="mt-2 font-serif text-2xl italic leading-tight text-cuero sm:mt-4 sm:text-4xl">
-            pies² de cuero rescatado en los últimos doce meses.
+            pies² de cuero chileno curtido en los últimos doce meses.
           </p>
 
           <p className="mt-14 max-w-2xl font-serif text-lg leading-relaxed sm:text-xl">
-            Lo trabajamos en {nf.format(cueros.length)} cueros con nombre
-            propio. Cada uno con su carácter, su tacto, su origen.
+            Curtido localmente con procesos cuidadosos — agua tratada, químicos
+            certificados, residuos controlados. Lo trabajamos en{" "}
+            {nf.format(cueros.length)} cueros con nombre propio, cada uno con
+            su carácter, su tacto, su origen.
           </p>
         </div>
       </section>
