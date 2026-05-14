@@ -146,9 +146,20 @@ export default async function Home() {
           </SectionReveal>
 
           <SectionReveal delay={0.6}>
-            <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
-              Desliza ↓
-            </p>
+            <div className="flex items-baseline justify-between gap-4">
+              <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
+                Desliza ↓
+              </p>
+              <Link
+                href="/tienda"
+                className="group inline-flex items-center gap-3 border border-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-all duration-500 hover:bg-tinta hover:text-fondo"
+              >
+                Entrar a la tienda
+                <span className="transition-transform duration-500 group-hover:translate-x-1">
+                  ↗
+                </span>
+              </Link>
+            </div>
           </SectionReveal>
         </div>
 
