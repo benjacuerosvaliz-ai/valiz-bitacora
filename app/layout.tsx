@@ -36,7 +36,7 @@ export default function RootLayout({
       lang="es"
       className={`${newsreader.variable} ${manrope.variable} antialiased`}
     >
-      <body className="min-h-screen bg-fondo text-tinta font-sans">
+      <body className="min-h-screen bg-fondo text-tinta font-sans pt-14 sm:pt-0">
         <CustomCursor />
         <UserChip />
         <LenisProvider>{children}</LenisProvider>
