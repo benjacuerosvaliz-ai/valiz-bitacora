@@ -428,11 +428,27 @@ export default async function Home() {
               historia.
             </p>
 
-            <p className="mt-12 max-w-xl font-serif text-2xl leading-tight tracking-[-0.015em] text-cuero sm:text-3xl">
-              <em>Próximamente</em> — fotos georeferenciadas, mapa mundial de
-              objetos en viaje, perfil Valiz para cada dueño. Cada bitácora
-              suma a la bitácora colectiva.
+            <p className="mt-10 max-w-xl font-serif text-xl leading-relaxed text-tinta sm:text-2xl">
+              Crea tu cuenta y vas a encontrar tu equipaje armado: si compraste
+              antes en valiz.cl, todas tus piezas aparecen automáticamente.
+              Sumas puntos por cada compra, por cada bitácora con foto, y los
+              canjeas como descuento real en la tienda.
             </p>
+
+            <div className="mt-10 flex flex-wrap gap-4">
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-3 bg-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-fondo transition-colors hover:bg-cuero"
+              >
+                Entrar a tu equipaje →
+              </Link>
+              <Link
+                href="/bitacora"
+                className="inline-flex items-center gap-3 border border-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
+              >
+                Bitácora colectiva →
+              </Link>
+            </div>
           </SectionReveal>
 
           <SectionReveal delay={0.15}>

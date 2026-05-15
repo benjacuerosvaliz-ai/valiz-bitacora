@@ -3,6 +3,7 @@ import { Newsreader, Manrope } from "next/font/google";
 
 import { CustomCursor } from "@/components/custom-cursor";
 import { LenisProvider } from "@/components/lenis-provider";
+import { UserChip } from "@/components/user-chip";
 
 import "./globals.css";
 
@@ -37,6 +38,7 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-fondo text-tinta font-sans">
         <CustomCursor />
+        <UserChip />
         <LenisProvider>{children}</LenisProvider>
       </body>
     </html>
