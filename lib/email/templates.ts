@@ -1,10 +1,11 @@
 /**
- * Templates HTML para emails Valiz. Plain HTML (no React Email todavía,
- * por simplicidad). Estilo coherente con la web:
- *   - Newsreader serif para encabezados, Manrope sans para microcopia.
- *   - Paleta cuero/tinta/fondo.
- *   - Sin imágenes en el body por ahora (evita problemas de tracking en
- *     clientes de email).
+ * Templates HTML para emails Valiz. Estética coherente con la web:
+ *   - Logo Valiz arriba (caligrafía circular).
+ *   - Newsreader serif para encabezados y párrafos.
+ *   - Manrope sans para microcopia.
+ *   - Paleta: cuero #7a3b1f / tinta #1a1a1a / fondo #f7f6f2 / piedra
+ *     #d4d2cb / niebla #666666.
+ *   - Voz: explicativa pero inteligente, sin marear.
  */
 
 const FONDO = "#f7f6f2";
@@ -13,10 +14,14 @@ const CUERO = "#7a3b1f";
 const NIEBLA = "#666666";
 const PIEDRA = "#d4d2cb";
 
+const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL ?? "https://bitacora.valiz.cl";
+const LOGO_URL = `${APP_URL}/images/valiz-logo.png`;
+
 function shell(opts: {
   preheader: string;
   title: string;
-  intro: string;
+  intro?: string;
   body: string;
   cta?: { label: string; url: string };
   footer?: string;
@@ -27,32 +32,92 @@ function shell(opts: {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
     <title>${escape(title)}</title>
-    <style>
-      body { margin: 0; padding: 0; background: ${FONDO}; color: ${TINTA}; font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif; }
-      .container { max-width: 560px; margin: 0 auto; padding: 40px 24px; }
-      .brand { font-size: 11px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: ${CUERO}; }
-      h1 { font-family: 'Newsreader', Georgia, serif; font-size: 36px; line-height: 1.05; letter-spacing: -0.015em; font-weight: 400; margin: 16px 0 24px; color: ${TINTA}; }
-      p.intro { font-family: 'Newsreader', Georgia, serif; font-style: italic; font-size: 18px; line-height: 1.5; color: ${NIEBLA}; margin: 0 0 28px; }
-      p.body { font-family: 'Newsreader', Georgia, serif; font-size: 17px; line-height: 1.55; margin: 0 0 16px; }
-      a.cta { display: inline-block; margin-top: 24px; padding: 14px 24px; background: ${TINTA}; color: ${FONDO}; font-size: 11px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; text-decoration: none; }
-      .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid ${PIEDRA}; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: ${NIEBLA}; }
-      .preheader { display: none; max-height: 0; overflow: hidden; opacity: 0; }
-      code.codigo { display: inline-block; padding: 8px 14px; background: ${FONDO}; border: 1px solid ${PIEDRA}; font-family: 'Courier New', monospace; font-size: 18px; letter-spacing: 0.05em; }
-    </style>
   </head>
-  <body>
-    <span class="preheader">${escape(preheader)}</span>
-    <div class="container">
-      <p class="brand">Valiz · Bitácora</p>
-      <h1>${escape(title)}</h1>
-      <p class="intro">${escape(intro)}</p>
-      <div>${body}</div>
-      ${cta ? `<a class="cta" href="${escape(cta.url)}">${escape(cta.label)} &rarr;</a>` : ""}
-      <div class="footer">
-        ${footer ?? "Valiz · MMXXVI · bitacora.valiz.cl"}
-      </div>
-    </div>
+  <body style="margin:0; padding:0; background:${FONDO}; color:${TINTA}; -webkit-font-smoothing:antialiased; font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;">
+    <span style="display:none; max-height:0; overflow:hidden; opacity:0; color:transparent; font-size:0; line-height:0;">${escape(preheader)}</span>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${FONDO};">
+      <tr>
+        <td align="center" style="padding:48px 16px 24px 16px;">
+          <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px; width:100%;">
+
+            <!-- Logo -->
+            <tr>
+              <td align="center" style="padding:0 0 32px 0;">
+                <img src="${LOGO_URL}" alt="Valiz" width="64" height="64" style="display:block; width:64px; height:64px;" />
+              </td>
+            </tr>
+
+            <!-- Brand microcopy -->
+            <tr>
+              <td align="center" style="padding:0 0 24px 0;">
+                <p style="margin:0; font-size:11px; font-weight:600; letter-spacing:0.22em; text-transform:uppercase; color:${CUERO};">
+                  Valiz · Bitácora
+                </p>
+              </td>
+            </tr>
+
+            <!-- Title -->
+            <tr>
+              <td style="padding:0 8px;">
+                <h1 style="margin:0 0 ${intro ? "20" : "32"}px 0; font-family:Georgia,'Times New Roman',serif; font-size:34px; line-height:1.08; letter-spacing:-0.015em; font-weight:400; color:${TINTA}; text-align:left;">
+                  ${escape(title)}
+                </h1>
+              </td>
+            </tr>
+
+            ${
+              intro
+                ? `<tr>
+              <td style="padding:0 8px 28px 8px;">
+                <p style="margin:0; font-family:Georgia,'Times New Roman',serif; font-style:italic; font-size:18px; line-height:1.5; color:${NIEBLA};">
+                  ${escape(intro)}
+                </p>
+              </td>
+            </tr>`
+                : ""
+            }
+
+            <!-- Body -->
+            <tr>
+              <td style="padding:0 8px;">
+                ${body}
+              </td>
+            </tr>
+
+            ${
+              cta
+                ? `<tr>
+              <td style="padding:32px 8px 0 8px;">
+                <a href="${escape(cta.url)}" style="display:inline-block; padding:14px 28px; background:${TINTA}; color:${FONDO}; font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif; font-size:11px; font-weight:600; letter-spacing:0.22em; text-transform:uppercase; text-decoration:none;">
+                  ${escape(cta.label)} &rarr;
+                </a>
+              </td>
+            </tr>`
+                : ""
+            }
+
+            <!-- Footer -->
+            <tr>
+              <td style="padding:56px 8px 0 8px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid ${PIEDRA};">
+                  <tr>
+                    <td style="padding:20px 0 0 0;">
+                      <p style="margin:0; font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:${NIEBLA}; line-height:1.6;">
+                        ${footer ?? "Cuero, madera y manos chilenas. Valiz · MMXXVI · bitacora.valiz.cl"}
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
   </body>
 </html>`;
 }
@@ -66,7 +131,20 @@ function escape(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
+const FONT_BODY =
+  "Georgia,'Times New Roman',serif";
+const FONT_MONO = "'Courier New',monospace";
+
 const nf = new Intl.NumberFormat("es-CL");
+
+// p() = párrafo serif del body. Centraliza estilos así no repetimos inline.
+function p(content: string): string {
+  return `<p style="margin:0 0 16px 0; font-family:${FONT_BODY}; font-size:17px; line-height:1.55; color:${TINTA};">${content}</p>`;
+}
+
+function code(content: string): string {
+  return `<p style="margin:24px 0; text-align:center;"><code style="display:inline-block; padding:14px 22px; background:${FONDO}; border:1px solid ${PIEDRA}; font-family:${FONT_MONO}; font-size:20px; letter-spacing:0.08em; color:${TINTA};">${escape(content)}</code></p>`;
+}
 
 // ============================================================================
 // Notificación admin: nueva pieza pendiente de validar
@@ -81,25 +159,29 @@ export function tplAdminCompraPendiente(args: {
   matchedSku: string | null;
   adminUrl: string;
 }): { subject: string; html: string } {
-  const body = `
-    <p class="body">
-      <strong>${escape(args.userEmail)}</strong> agregó una pieza:
-    </p>
-    <p class="body">
-      <strong>${escape(args.familiaName)}</strong> · ${escape(args.colorValiz)}<br/>
-      Comprada en <em>${escape(args.lugarCompra)}</em> el ${escape(args.fechaCompra)}<br/>
-      SKU match: ${args.matchedSku ? `<code>${escape(args.matchedSku)}</code>` : "<em>sin match</em>"}
-    </p>
-    <p class="body">
-      <a href="${escape(args.fotoUrl)}">Ver foto adjunta &rarr;</a>
-    </p>
-  `;
+  const skuLine = args.matchedSku
+    ? `Match con SKU <strong>${escape(args.matchedSku)}</strong> del catálogo.`
+    : `Sin match con catálogo — revisar.`;
+  const body = [
+    p(
+      `<strong>${escape(args.userEmail)}</strong> agregó a su equipaje:`,
+    ),
+    p(
+      `<strong>${escape(args.familiaName)}</strong> · <em>${escape(args.colorValiz)}</em><br/>` +
+        `Comprada en <em>${escape(args.lugarCompra)}</em> el ${escape(args.fechaCompra)}.<br/>` +
+        skuLine,
+    ),
+    p(
+      `<a href="${escape(args.fotoUrl)}" style="color:${CUERO}; text-decoration:underline;">Ver foto adjunta &rarr;</a>`,
+    ),
+  ].join("");
   return {
-    subject: `Pieza pendiente de validar — ${args.familiaName}`,
+    subject: `Pieza por validar — ${args.familiaName} ${args.colorValiz}`,
     html: shell({
-      preheader: `${args.userEmail} agregó una ${args.familiaName} ${args.colorValiz}`,
-      title: "Pieza por validar",
-      intro: "Alguien sumó una Valiz a su equipaje. Revisa la foto y valida si va.",
+      preheader: `${args.userEmail} sumó una ${args.familiaName} ${args.colorValiz}`,
+      title: "Pieza por validar.",
+      intro:
+        "Alguien sumó una Valiz a su equipaje. Mira la foto y confirma si va.",
       body,
       cta: { label: "Ir al admin", url: args.adminUrl },
     }),
@@ -116,22 +198,21 @@ export function tplAdminBitacoraNueva(args: {
   fotoUrl: string;
   bitacoraUrl: string;
 }): { subject: string; html: string } {
-  const body = `
-    <p class="body">
-      <strong>${escape(args.userEmail)}</strong> subió bitácora desde
-      <em>${escape(args.lugar)}</em>.
-    </p>
-    <p class="body">${escape(args.texto)}</p>
-    <p class="body">
-      <a href="${escape(args.fotoUrl)}">Ver foto &rarr;</a>
-    </p>
-  `;
+  const body = [
+    p(
+      `<strong>${escape(args.userEmail)}</strong> subió una entrada desde <em>${escape(args.lugar)}</em>.`,
+    ),
+    p(escape(args.texto)),
+    p(
+      `<a href="${escape(args.fotoUrl)}" style="color:${CUERO}; text-decoration:underline;">Ver foto &rarr;</a>`,
+    ),
+  ].join("");
   return {
     subject: `Nueva bitácora — ${args.lugar}`,
     html: shell({
       preheader: `${args.userEmail} subió bitácora desde ${args.lugar}`,
-      title: "Bitácora nueva",
-      intro: "Una pieza nueva con historia subida al feed colectivo.",
+      title: "Bitácora nueva.",
+      intro: "Una pieza Valiz dejó historia en algún lugar nuevo.",
       body,
       cta: { label: "Ver en la web", url: args.bitacoraUrl },
     }),
@@ -147,28 +228,25 @@ export function tplCanjeConfirmacion(args: {
   ptsRestantes: number;
   shopUrl: string;
 }): { subject: string; html: string } {
-  const body = `
-    <p class="body">
-      Tu código de descuento:
-    </p>
-    <p class="body">
-      <code class="codigo">${escape(args.codigo)}</code>
-    </p>
-    <p class="body">
-      Vale <strong>$${nf.format(args.monto)} CLP</strong> en tu próxima compra
-      en valiz.cl. Pégalo en el cupón al checkout. Es de un solo uso.
-    </p>
-    <p class="body">
-      Te quedan <strong>${nf.format(args.ptsRestantes)} pts</strong> en tu
-      bitácora.
-    </p>
-  `;
+  const body = [
+    p(
+      `Tu código de descuento por <strong>$${nf.format(args.monto)} CLP</strong> está listo:`,
+    ),
+    code(args.codigo),
+    p(
+      `Pégalo en el cupón al hacer checkout en <a href="${escape(args.shopUrl)}" style="color:${CUERO};">valiz.cl</a>. Es de un solo uso.`,
+    ),
+    p(
+      `Saldo restante en tu bitácora: <strong>${nf.format(args.ptsRestantes)} pts</strong>.`,
+    ),
+  ].join("");
   return {
-    subject: `Tu código de descuento — $${nf.format(args.monto)}`,
+    subject: `Tu código Valiz — $${nf.format(args.monto)}`,
     html: shell({
       preheader: `Código de ${nf.format(args.monto)} CLP para usar en valiz.cl`,
-      title: "Tu código está listo",
-      intro: "Aquí queda registrado por si lo pierdes en la web.",
+      title: "Tu código está listo.",
+      intro:
+        "Te lo dejamos también acá por si lo pierdes en la web.",
       body,
       cta: { label: "Ir a comprar", url: args.shopUrl },
     }),
@@ -182,25 +260,24 @@ export function tplCodigoVerificacion(args: {
   codigo: string;
   expiresInMin: number;
 }): { subject: string; html: string } {
-  const body = `
-    <p class="body">
-      Para vincular este correo a tu cuenta Valiz, escribe este código en
-      la página donde quedaste:
-    </p>
-    <p class="body">
-      <code class="codigo">${escape(args.codigo)}</code>
-    </p>
-    <p class="body">
-      Caduca en ${args.expiresInMin} minutos. Si no fuiste tú, ignora este
-      correo — no pasa nada.
-    </p>
-  `;
+  const body = [
+    p(
+      `Este es el código para vincular este correo a tu bitácora Valiz:`,
+    ),
+    code(args.codigo),
+    p(
+      `Pégalo en la pantalla donde quedaste. Caduca en ${args.expiresInMin} minutos.`,
+    ),
+    p(
+      `Si no fuiste tú quien lo pidió, ignora este mensaje — no pasa nada.`,
+    ),
+  ].join("");
   return {
     subject: `Tu código Valiz: ${args.codigo}`,
     html: shell({
       preheader: `Código: ${args.codigo}`,
-      title: "Tu código de verificación",
-      intro: "Estamos vinculando este correo a tu bitácora.",
+      title: "Tu código de verificación.",
+      intro: "Estamos sumando este correo a tu equipaje.",
       body,
     }),
   };
@@ -215,23 +292,28 @@ export function tplCompraValidada(args: {
   ptsOtorgados: number;
   yoUrl: string;
 }): { subject: string; html: string } {
-  const ptsTxt =
+  const colorTxt = args.colorValiz
+    ? ` <em>${escape(args.colorValiz)}</em>`
+    : "";
+  const ptsLine =
     args.ptsOtorgados > 0
-      ? `Te dimos <strong>${nf.format(args.ptsOtorgados)} pts</strong> retroactivos.`
-      : "Sin puntos retroactivos esta vez, pero la pieza queda registrada.";
-  const body = `
-    <p class="body">
-      Validamos tu <strong>${escape(args.familiaName)}</strong>${
-        args.colorValiz ? ` <em>${escape(args.colorValiz)}</em>` : ""
-      }. Ya forma parte oficial de tu equipaje.
-    </p>
-    <p class="body">${ptsTxt}</p>
-  `;
+      ? p(
+          `Te dimos <strong>${nf.format(args.ptsOtorgados)} pts</strong> retroactivos por esta pieza, a tu saldo.`,
+        )
+      : p(
+          `Sin puntos retroactivos esta vez, pero queda registrada en tu bitácora.`,
+        );
+  const body = [
+    p(
+      `Validamos tu <strong>${escape(args.familiaName)}</strong>${colorTxt}. Ya forma parte oficial de tu equipaje.`,
+    ),
+    ptsLine,
+  ].join("");
   return {
     subject: `Validamos tu ${args.familiaName}`,
     html: shell({
       preheader: `Tu ${args.familiaName} ${args.colorValiz} fue validada`,
-      title: "Pieza confirmada",
+      title: "Pieza confirmada.",
       intro: "Bienvenida oficial a tu equipaje Valiz.",
       body,
       cta: { label: "Ver mi equipaje", url: args.yoUrl },

@@ -1,0 +1,112 @@
+<!--
+Template HTML para Supabase Auth → Magic Link.
+
+Cómo aplicarlo:
+1. Ir a https://supabase.com/dashboard/project/osjgmlmwderyxgclbrjv/auth/templates
+2. Seleccionar "Magic Link" en el menú izquierdo.
+3. Pestaña "Source" (vista HTML).
+4. Copiar el contenido de este archivo (sin este comentario) y pegarlo.
+5. Subject: "Tu link para entrar a Valiz"
+6. Save.
+
+Variables Supabase usadas:
+  {{ .ConfirmationURL }} — el link mágico que loguea al usuario.
+
+Si querés ajustar tipografías/colores, edita inline styles abajo. No
+usar @import de Google Fonts — muchos clientes (Gmail mobile) los
+ignoran y queda fallback feo.
+-->
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
+    <title>Tu link para entrar a Valiz</title>
+  </head>
+  <body style="margin:0; padding:0; background:#f7f6f2; color:#1a1a1a; -webkit-font-smoothing:antialiased; font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;">
+    <span style="display:none; max-height:0; overflow:hidden; opacity:0; color:transparent; font-size:0; line-height:0;">Tu link para entrar a tu bitácora Valiz.</span>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f7f6f2;">
+      <tr>
+        <td align="center" style="padding:48px 16px 24px 16px;">
+          <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px; width:100%;">
+
+            <tr>
+              <td align="center" style="padding:0 0 32px 0;">
+                <img src="https://bitacora.valiz.cl/images/valiz-logo.png" alt="Valiz" width="64" height="64" style="display:block; width:64px; height:64px;" />
+              </td>
+            </tr>
+
+            <tr>
+              <td align="center" style="padding:0 0 24px 0;">
+                <p style="margin:0; font-size:11px; font-weight:600; letter-spacing:0.22em; text-transform:uppercase; color:#7a3b1f;">
+                  Valiz · Bitácora
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:0 8px;">
+                <h1 style="margin:0 0 20px 0; font-family:Georgia,'Times New Roman',serif; font-size:34px; line-height:1.08; letter-spacing:-0.015em; font-weight:400; color:#1a1a1a;">
+                  Tu link para entrar.
+                </h1>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:0 8px 28px 8px;">
+                <p style="margin:0; font-family:Georgia,'Times New Roman',serif; font-style:italic; font-size:18px; line-height:1.5; color:#666666;">
+                  Aprieta el botón y caes directo en tu equipaje. El link caduca en una hora.
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:0 8px;">
+                <p style="margin:0 0 16px 0; font-family:Georgia,'Times New Roman',serif; font-size:17px; line-height:1.55; color:#1a1a1a;">
+                  Si compraste con nosotros antes con este mismo correo, tu historial Valiz ya está esperándote adentro: piezas, horas de taller, cuero rescatado.
+                </p>
+                <p style="margin:0 0 16px 0; font-family:Georgia,'Times New Roman',serif; font-size:17px; line-height:1.55; color:#1a1a1a;">
+                  Si no fuiste tú, ignora este correo — no pasa nada.
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:32px 8px 0 8px;">
+                <a href="{{ .ConfirmationURL }}" style="display:inline-block; padding:14px 28px; background:#1a1a1a; color:#f7f6f2; font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif; font-size:11px; font-weight:600; letter-spacing:0.22em; text-transform:uppercase; text-decoration:none;">
+                  Entrar a mi equipaje &rarr;
+                </a>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:24px 8px 0 8px;">
+                <p style="margin:0; font-family:Georgia,'Times New Roman',serif; font-size:13px; line-height:1.55; color:#666666;">
+                  Si el botón no funciona, copiá este link en tu browser:<br/>
+                  <span style="word-break:break-all; color:#7a3b1f;">{{ .ConfirmationURL }}</span>
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:56px 8px 0 8px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #d4d2cb;">
+                  <tr>
+                    <td style="padding:20px 0 0 0;">
+                      <p style="margin:0; font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:#666666; line-height:1.6;">
+                        Cuero, madera y manos chilenas. Valiz · MMXXVI · bitacora.valiz.cl
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
