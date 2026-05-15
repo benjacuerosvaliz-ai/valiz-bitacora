@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 
 const nf = new Intl.NumberFormat("es-CL");
 
-const DENOMINACIONES = [5_000, 10_000, 20_000, 50_000];
+const DENOMINACIONES = [5_000, 10_000, 15_000];
 
 type Stock = { denominacion_clp: number };
 
