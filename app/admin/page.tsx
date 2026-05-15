@@ -25,14 +25,7 @@ export default async function AdminPage() {
 
   const admin = createAdminClient();
 
-  const [
-    pendientesRes,
-    bitsRes,
-    canjesRes,
-    profilesRes,
-    codigosRes,
-    movimientosRes,
-  ] = await Promise.all([
+  const [pendientesRes, bitsRes, canjesRes, profilesRes] = await Promise.all([
     admin
       .from("compras_manuales")
       .select("*")
@@ -41,7 +34,9 @@ export default async function AdminPage() {
       .limit(50),
     admin
       .from("bitacora_entries")
-      .select("id, user_id, sku, foto_url, lugar, texto, created_at, points_awarded, invalidated")
+      .select(
+        "id, user_id, sku, foto_url, lugar, texto, created_at, points_awarded, invalidated",
+      )
       .order("created_at", { ascending: false })
       .limit(30),
     admin
@@ -49,22 +44,10 @@ export default async function AdminPage() {
       .select("id, user_id, monto_clp, shopify_discount_code, created_at")
       .order("created_at", { ascending: false })
       .limit(20),
-    admin.from("user_profiles").select("id, email, display_name, puntos_actuales, created_at"),
-    admin.from("codigos_disponibles").select("denominacion_clp, assigned_to_user_id"),
-    admin.from("puntos_movimientos").select("id"),
+    admin
+      .from("user_profiles")
+      .select("id, email, display_name, puntos_actuales, created_at"),
   ]);
-
-  const codigos = (codigosRes.data ?? []) as { denominacion_clp: number; assigned_to_user_id: string | null }[];
-  const stockByDenom = new Map<number, number>();
-  const usadosByDenom = new Map<number, number>();
-  for (const c of codigos) {
-    if (c.assigned_to_user_id === null) {
-      stockByDenom.set(c.denominacion_clp, (stockByDenom.get(c.denominacion_clp) ?? 0) + 1);
-    } else {
-      usadosByDenom.set(c.denominacion_clp, (usadosByDenom.get(c.denominacion_clp) ?? 0) + 1);
-    }
-  }
-  const allDenoms = [...new Set([...stockByDenom.keys(), ...usadosByDenom.keys()])].sort((a, b) => a - b);
 
   return (
     <main className="flex min-h-screen flex-col bg-fondo">
@@ -82,32 +65,9 @@ export default async function AdminPage() {
           </h1>
           <div className="mt-8 grid grid-cols-2 gap-x-10 gap-y-6 sm:grid-cols-4">
             <Stat label="Usuarios" big={profilesRes.data?.length ?? 0} />
-            <Stat label="Compras manuales pendientes" big={pendientesRes.data?.length ?? 0} />
+            <Stat label="Por validar" big={pendientesRes.data?.length ?? 0} />
             <Stat label="Bitácoras" big={bitsRes.data?.length ?? 0} />
             <Stat label="Canjes hechos" big={canjesRes.data?.length ?? 0} />
-          </div>
-
-          <div className="mt-12">
-            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-              Códigos de canje
-            </p>
-            {allDenoms.length === 0 ? (
-              <p className="mt-3 font-serif italic text-niebla">
-                Sin códigos cargados. Genera lote en Shopify y corre{" "}
-                <code className="font-mono text-sm">scripts/cargar_codigos.py</code>.
-              </p>
-            ) : (
-              <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-                {allDenoms.map((d) => (
-                  <li key={d} className="border border-piedra p-3">
-                    <p className="font-serif text-2xl">${d.toLocaleString("es-CL")}</p>
-                    <p className="font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
-                      {stockByDenom.get(d) ?? 0} libres · {usadosByDenom.get(d) ?? 0} usados
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
         </div>
       </section>

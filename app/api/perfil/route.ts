@@ -5,11 +5,30 @@ import { createClient } from "@/lib/supabase/server";
 
 /**
  * POST /api/perfil
- * Body: { display_name, country, city, bio, marketing_optin }
+ * Body: { display_name, country, city, bio, instagram_handle,
+ *         tiktok_handle }
  *
  * Actualiza los campos editables del propio user_profile. Limpia strings
- * vacíos a null para que las queries puedan distinguir "vacío" de "set".
+ * vacíos a null. Sanitiza handles de IG/TikTok (quita @, URL completa,
+ * trailing slash). marketing_optin se asume true por default — al
+ * registrarse aceptan recibir comunicaciones; no exponemos toggle.
  */
+function cleanString(v: unknown, max = 280): string | null {
+  if (v == null) return null;
+  const s = String(v).trim().slice(0, max);
+  return s.length > 0 ? s : null;
+}
+
+function cleanHandle(v: unknown): string | null {
+  const s = cleanString(v, 60);
+  if (!s) return null;
+  return s
+    .replace(/^https?:\/\/(www\.)?(instagram|tiktok)\.com\//i, "")
+    .replace(/^@/, "")
+    .replace(/\/$/, "")
+    .split(/[?#]/)[0];
+}
+
 export async function POST(request: NextRequest) {
   const sb = await createClient();
   const {
@@ -18,18 +37,14 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "no_session" }, { status: 401 });
 
   const body = await request.json().catch(() => null);
-  const cleanString = (v: unknown, max = 280): string | null => {
-    if (v == null) return null;
-    const s = String(v).trim().slice(0, max);
-    return s.length > 0 ? s : null;
-  };
 
   const update = {
     display_name: cleanString(body?.display_name, 60),
     country: cleanString(body?.country, 60),
     city: cleanString(body?.city, 80),
     bio: cleanString(body?.bio, 280),
-    marketing_optin: Boolean(body?.marketing_optin),
+    instagram_handle: cleanHandle(body?.instagram_handle),
+    tiktok_handle: cleanHandle(body?.tiktok_handle),
   };
 
   const admin = createAdminClient();

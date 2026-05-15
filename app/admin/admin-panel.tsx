@@ -89,7 +89,7 @@ export function AdminPanel({
       <section className="border-b border-piedra px-8 py-16 sm:px-16">
         <div className="mx-auto max-w-6xl">
           <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-            Compras pendientes ({pendientes.length})
+            Compras por validar ({pendientes.length})
           </p>
           {pendientes.length === 0 ? (
             <p className="mt-3 font-serif italic text-niebla">Nada por validar.</p>

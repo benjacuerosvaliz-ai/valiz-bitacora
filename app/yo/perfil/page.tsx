@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { BrandMark } from "@/components/brand-mark";
+import { getPhotoBySku } from "@/lib/product-photos";
 import { createClient } from "@/lib/supabase/server";
 
 import { PerfilForm } from "./perfil-form";
@@ -13,6 +14,14 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+type EquipajeRow = { sku: string; source: string };
+type ProductoRow = {
+  sku: string;
+  color_valiz: string | null;
+  familia_id: string | null;
+};
+type FamiliaRow = { id: string; slug: string; name: string };
+
 export default async function PerfilPage() {
   const sb = await createClient();
   const {
@@ -22,9 +31,36 @@ export default async function PerfilPage() {
 
   const { data: profile } = await sb
     .from("user_profiles")
-    .select("email, display_name, country, city, bio, marketing_optin")
+    .select(
+      "email, display_name, country, city, bio, instagram_handle, tiktok_handle",
+    )
     .eq("id", user.id)
     .single();
+
+  // Equipaje del user — para mostrar como medallas/thumbnails
+  const { data: equipajeRaw } = await sb
+    .from("user_equipaje")
+    .select("sku, source")
+    .order("adquirido_at", { ascending: false });
+  const equipaje = (equipajeRaw ?? []) as EquipajeRow[];
+  const skus = [...new Set(equipaje.map((e) => e.sku))];
+
+  let productos: ProductoRow[] = [];
+  let familias: FamiliaRow[] = [];
+  if (skus.length > 0) {
+    const [pRes, fRes] = await Promise.all([
+      sb
+        .from("productos")
+        .select("sku, color_valiz, familia_id")
+        .in("sku", skus),
+      sb.from("familias").select("id, slug, name"),
+    ]);
+    productos = (pRes.data ?? []) as ProductoRow[];
+    familias = (fRes.data ?? []) as FamiliaRow[];
+  }
+  const productoBySku = new Map(productos.map((p) => [p.sku, p]));
+  const familiaById = new Map(familias.map((f) => [f.id, f]));
+  const photoBySku = getPhotoBySku();
 
   return (
     <main className="flex min-h-screen flex-col bg-fondo">
@@ -36,7 +72,7 @@ export default async function PerfilPage() {
       </header>
 
       <section className="flex flex-1 items-start px-8 sm:px-16">
-        <div className="mx-auto w-full max-w-xl py-16 sm:py-24">
+        <div className="mx-auto w-full max-w-xl py-12 sm:py-20">
           <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
             Tu perfil
           </p>
@@ -44,8 +80,9 @@ export default async function PerfilPage() {
             Cómo te ven los demás.
           </h1>
           <p className="mt-6 font-serif italic leading-relaxed text-niebla">
-            Tu correo es {profile?.email} (no se puede cambiar acá). El nombre
-            que pongas es lo que aparece en tus bitácoras públicas.
+            Tu correo es <strong>{profile?.email}</strong> (no se puede
+            cambiar acá). El nombre que pongas es lo que aparece en tus
+            bitácoras públicas.
           </p>
 
           <div className="mt-10">
@@ -55,10 +92,62 @@ export default async function PerfilPage() {
                 country: profile?.country ?? "",
                 city: profile?.city ?? "",
                 bio: profile?.bio ?? "",
-                marketing_optin: profile?.marketing_optin ?? false,
+                instagram_handle: profile?.instagram_handle ?? "",
+                tiktok_handle: profile?.tiktok_handle ?? "",
               }}
             />
           </div>
+
+          {/* Tus Valiz como medallas */}
+          {equipaje.length > 0 && (
+            <div className="mt-16 border-t border-piedra pt-10">
+              <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+                Tus Valiz
+              </p>
+              <p className="mt-2 font-serif italic leading-relaxed text-niebla">
+                {equipaje.length === 1
+                  ? "Una pieza a tu nombre."
+                  : `${equipaje.length} piezas a tu nombre.`}
+              </p>
+              <ul className="mt-6 grid grid-cols-3 gap-x-3 gap-y-6 sm:grid-cols-4">
+                {equipaje.map((e, i) => {
+                  const p = productoBySku.get(e.sku);
+                  const fam = p?.familia_id
+                    ? familiaById.get(p.familia_id)
+                    : null;
+                  const foto = photoBySku.get(e.sku);
+                  return (
+                    <li
+                      key={`${e.sku}-${i}`}
+                      className="flex flex-col items-center"
+                    >
+                      <Link
+                        href={fam ? `/piezas/${fam.slug}` : "/yo"}
+                        className="group flex h-16 w-16 items-center justify-center rounded-full border border-piedra bg-fondo transition-colors hover:border-cuero sm:h-20 sm:w-20"
+                        title={`${fam?.name ?? e.sku}${p?.color_valiz ? " · " + p.color_valiz : ""}`}
+                      >
+                        {foto ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={foto}
+                            alt={fam?.name ?? e.sku}
+                            className="h-[78%] w-[78%] rounded-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <span className="font-serif text-[10px] italic text-niebla">
+                            {e.sku}
+                          </span>
+                        )}
+                      </Link>
+                      <p className="mt-2 text-center font-sans text-[9px] uppercase tracking-[0.15em] text-niebla leading-tight">
+                        {fam?.name ?? e.sku}
+                      </p>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
 
           <div className="mt-16 border-t border-piedra pt-8">
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">

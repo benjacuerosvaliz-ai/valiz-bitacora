@@ -8,8 +8,19 @@ type Initial = {
   country: string;
   city: string;
   bio: string;
-  marketing_optin: boolean;
+  instagram_handle: string;
+  tiktok_handle: string;
 };
+
+// Normaliza @user, https://instagram.com/user, etc. → "user"
+function cleanHandle(raw: string): string {
+  return raw
+    .trim()
+    .replace(/^https?:\/\/(www\.)?(instagram|tiktok)\.com\//i, "")
+    .replace(/^@/, "")
+    .replace(/\/$/, "")
+    .split(/[?#]/)[0];
+}
 
 export function PerfilForm({ initial }: { initial: Initial }) {
   const router = useRouter();
@@ -26,10 +37,15 @@ export function PerfilForm({ initial }: { initial: Initial }) {
   async function submit() {
     setError(null);
     setLoading(true);
+    const payload = {
+      ...data,
+      instagram_handle: cleanHandle(data.instagram_handle),
+      tiktok_handle: cleanHandle(data.tiktok_handle),
+    };
     const res = await fetch("/api/perfil", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
     setLoading(false);
     if (!res.ok) {
@@ -37,6 +53,7 @@ export function PerfilForm({ initial }: { initial: Initial }) {
       setError(json.error ?? "No se pudo guardar.");
       return;
     }
+    setData(payload);
     setDone(true);
     router.refresh();
   }
@@ -54,7 +71,7 @@ export function PerfilForm({ initial }: { initial: Initial }) {
         />
       </Field>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-4 sm:gap-6">
         <Field label="País">
           <input
             type="text"
@@ -62,7 +79,7 @@ export function PerfilForm({ initial }: { initial: Initial }) {
             onChange={(e) => update("country", e.target.value)}
             placeholder="Chile"
             maxLength={60}
-            className="border-b border-tinta bg-transparent px-1 py-2 font-serif text-lg outline-none focus:border-cuero"
+            className="border-b border-tinta bg-transparent px-1 py-2 font-serif text-base outline-none focus:border-cuero sm:text-lg"
           />
         </Field>
         <Field label="Ciudad">
@@ -72,8 +89,41 @@ export function PerfilForm({ initial }: { initial: Initial }) {
             onChange={(e) => update("city", e.target.value)}
             placeholder="Santiago"
             maxLength={80}
-            className="border-b border-tinta bg-transparent px-1 py-2 font-serif text-lg outline-none focus:border-cuero"
+            className="border-b border-tinta bg-transparent px-1 py-2 font-serif text-base outline-none focus:border-cuero sm:text-lg"
           />
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 sm:gap-6">
+        <Field label="Instagram">
+          <div className="flex items-baseline gap-1 border-b border-tinta px-1 py-2 focus-within:border-cuero">
+            <span className="font-serif text-base text-niebla sm:text-lg">@</span>
+            <input
+              type="text"
+              value={data.instagram_handle}
+              onChange={(e) => update("instagram_handle", e.target.value)}
+              placeholder="tuusuario"
+              maxLength={60}
+              autoCapitalize="off"
+              autoComplete="off"
+              className="flex-1 bg-transparent font-serif text-base outline-none placeholder:text-niebla/40 sm:text-lg"
+            />
+          </div>
+        </Field>
+        <Field label="TikTok">
+          <div className="flex items-baseline gap-1 border-b border-tinta px-1 py-2 focus-within:border-cuero">
+            <span className="font-serif text-base text-niebla sm:text-lg">@</span>
+            <input
+              type="text"
+              value={data.tiktok_handle}
+              onChange={(e) => update("tiktok_handle", e.target.value)}
+              placeholder="tuusuario"
+              maxLength={60}
+              autoCapitalize="off"
+              autoComplete="off"
+              className="flex-1 bg-transparent font-serif text-base outline-none placeholder:text-niebla/40 sm:text-lg"
+            />
+          </div>
         </Field>
       </div>
 
@@ -87,19 +137,6 @@ export function PerfilForm({ initial }: { initial: Initial }) {
           className="resize-none border-b border-tinta bg-transparent px-1 py-2 font-serif text-base outline-none focus:border-cuero"
         />
       </Field>
-
-      <label className="flex cursor-pointer items-start gap-3">
-        <input
-          type="checkbox"
-          checked={data.marketing_optin}
-          onChange={(e) => update("marketing_optin", e.target.checked)}
-          className="mt-1 h-4 w-4 cursor-pointer accent-tinta"
-        />
-        <span className="font-serif text-sm leading-relaxed text-niebla">
-          Quiero recibir avisos de novedades, drops privados y resultados de
-          concursos. (Sin spam, sin cesión a terceros.)
-        </span>
-      </label>
 
       {error && (
         <p className="font-sans text-[11px] uppercase tracking-[0.18em] text-[#a83a1f]">
