@@ -95,12 +95,12 @@ export function BitacoraForm({
   const calificaParaPuntos = !!file && !!coords && textoLen >= 30;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <Field label="¿Qué pieza?">
         <select
           value={sku}
           onChange={(e) => setSku(e.target.value)}
-          className="border-b border-tinta bg-transparent px-1 py-2 font-serif text-xl outline-none focus:border-cuero"
+          className="border-b border-tinta bg-transparent px-1 py-2 font-serif text-base outline-none focus:border-cuero sm:text-lg"
         >
           <option value="">— Elige una pieza —</option>
           {piezas.map((p) => (
@@ -111,58 +111,59 @@ export function BitacoraForm({
         </select>
       </Field>
 
+      {/* Lugar + ubicación en 2 columnas */}
+      <div className="grid grid-cols-[1.5fr_1fr] gap-3 sm:gap-5">
+        <Field label="¿Dónde?">
+          <input
+            type="text"
+            value={lugar}
+            onChange={(e) => setLugar(e.target.value)}
+            placeholder="Cajón del Maipo, Berlín…"
+            className="border-b border-tinta bg-transparent px-1 py-2 font-serif text-base outline-none focus:border-cuero"
+          />
+        </Field>
+        <div className="flex flex-col gap-2">
+          <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-niebla">
+            Ubicación
+          </span>
+          {geoStatus === "ok" && coords ? (
+            <p className="font-serif text-sm italic text-musgo">
+              ✓ {coords.lat.toFixed(3)}, {coords.lng.toFixed(3)}
+            </p>
+          ) : geoStatus === "loading" ? (
+            <p className="font-serif text-sm italic text-niebla">Localizando…</p>
+          ) : geoStatus === "denied" ? (
+            <p className="font-serif text-sm italic text-niebla">
+              Denegada — sin mapa.
+            </p>
+          ) : (
+            <button
+              onClick={pickLocation}
+              className="self-start border border-tinta px-3 py-2 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
+            >
+              Usar mi GPS
+            </button>
+          )}
+        </div>
+      </div>
+
       <Field label={`Foto (max ${MAX_FILE_MB} MB)`}>
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          className="font-sans text-sm file:mr-3 file:cursor-pointer file:border file:border-tinta file:bg-transparent file:px-4 file:py-2 file:font-sans file:text-[11px] file:uppercase file:tracking-[0.18em] file:text-tinta hover:file:bg-tinta hover:file:text-fondo"
+          className="font-sans text-sm file:mr-3 file:cursor-pointer file:border file:border-tinta file:bg-transparent file:px-3 file:py-2 file:font-sans file:text-[10px] file:uppercase file:tracking-[0.18em] file:text-tinta hover:file:bg-tinta hover:file:text-fondo"
         />
         {preview && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={preview}
             alt="preview"
-            className="mt-3 max-h-72 border border-piedra object-contain"
+            className="mt-3 max-h-56 border border-piedra object-contain sm:max-h-72"
           />
         )}
       </Field>
-
-      <Field label="¿Dónde fue? (texto libre)">
-        <input
-          type="text"
-          value={lugar}
-          onChange={(e) => setLugar(e.target.value)}
-          placeholder="Cajón del Maipo, Cerro San Cristóbal, Berlín…"
-          className="border-b border-tinta bg-transparent px-1 py-2 font-serif text-lg outline-none focus:border-cuero"
-        />
-      </Field>
-
-      <div className="flex flex-col gap-2">
-        <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-niebla">
-          Coordenadas (opcional, para el mapa)
-        </span>
-        {geoStatus === "ok" && coords ? (
-          <p className="font-serif italic text-musgo">
-            ✓ {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
-          </p>
-        ) : geoStatus === "loading" ? (
-          <p className="font-serif italic text-niebla">Localizando…</p>
-        ) : geoStatus === "denied" ? (
-          <p className="font-serif italic text-niebla">
-            Ubicación denegada. Igual puedes subir, pero no aparece en el mapa
-            colectivo.
-          </p>
-        ) : (
-          <button
-            onClick={pickLocation}
-            className="self-start border border-tinta px-4 py-2 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
-          >
-            Usar mi ubicación
-          </button>
-        )}
-      </div>
 
       <Field label={`Tu historia (${textoLen}/30 mínimo para 200 pts)`}>
         <textarea

@@ -80,65 +80,73 @@ export function AddPiezaForm({
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <Field label="Pieza" required>
-        <select
-          value={familiaSlug}
-          onChange={(e) => setFamiliaSlug(e.target.value)}
-          className="border-b border-tinta bg-transparent px-1 py-2 font-serif text-xl outline-none focus:border-cuero"
-        >
-          <option value="">— Elige una familia —</option>
-          {familias.map((f) => (
-            <option key={f.slug} value={f.slug}>
-              {f.name}
-            </option>
-          ))}
-        </select>
-      </Field>
+    <div className="flex flex-col gap-5">
+      {/* Pieza + Color en 2 columnas (en mobile también) */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-5">
+        <Field label="Pieza" required>
+          <select
+            value={familiaSlug}
+            onChange={(e) => setFamiliaSlug(e.target.value)}
+            className="border-b border-tinta bg-transparent px-1 py-2 font-serif text-base outline-none focus:border-cuero sm:text-lg"
+          >
+            <option value="">— Elige —</option>
+            {familias.map((f) => (
+              <option key={f.slug} value={f.slug}>
+                {f.name}
+              </option>
+            ))}
+          </select>
+        </Field>
 
-      <Field label="Color del cuero" required>
-        <select
-          value={color}
-          onChange={(e) => setColor(e.target.value)}
-          className="border-b border-tinta bg-transparent px-1 py-2 font-serif text-xl outline-none focus:border-cuero"
-        >
-          <option value="">— Elige un color —</option>
-          {cueros.map((c) => (
-            <option key={c.display_name} value={c.display_name}>
-              {c.display_name}
-            </option>
-          ))}
-          <option value="__otro__">Otro (escribir)</option>
-        </select>
-        {color === "__otro__" && (
+        <Field label="Color del cuero" required>
+          <select
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+            className="border-b border-tinta bg-transparent px-1 py-2 font-serif text-base outline-none focus:border-cuero sm:text-lg"
+          >
+            <option value="">— Elige —</option>
+            {cueros.map((c) => (
+              <option key={c.display_name} value={c.display_name}>
+                {c.display_name}
+              </option>
+            ))}
+            <option value="__otro__">Otro</option>
+          </select>
+        </Field>
+      </div>
+
+      {color === "__otro__" && (
+        <Field label="Especifica el color">
           <input
             type="text"
             value={colorOtro}
             onChange={(e) => setColorOtro(e.target.value)}
             placeholder="Ej: Café desconocido"
-            className="mt-2 border-b border-tinta bg-transparent px-1 py-2 font-serif text-lg outline-none focus:border-cuero"
+            className="border-b border-tinta bg-transparent px-1 py-2 font-serif text-base outline-none focus:border-cuero"
           />
-        )}
-      </Field>
+        </Field>
+      )}
 
-      <Field label="¿Dónde la conseguiste?" required>
-        <input
-          type="text"
-          value={lugar}
-          onChange={(e) => setLugar(e.target.value)}
-          placeholder="Feria, regalo, otra tienda…"
-          className="border-b border-tinta bg-transparent px-1 py-2 font-serif text-lg outline-none focus:border-cuero"
-        />
-      </Field>
-
-      <Field label="¿Cuándo?" required>
-        <input
-          type="date"
-          value={fecha}
-          onChange={(e) => setFecha(e.target.value)}
-          className="border-b border-tinta bg-transparent px-1 py-2 font-serif text-lg outline-none focus:border-cuero"
-        />
-      </Field>
+      {/* Lugar + Fecha en 2 columnas */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-5">
+        <Field label="¿Dónde?" required>
+          <input
+            type="text"
+            value={lugar}
+            onChange={(e) => setLugar(e.target.value)}
+            placeholder="Feria, regalo…"
+            className="border-b border-tinta bg-transparent px-1 py-2 font-serif text-base outline-none focus:border-cuero"
+          />
+        </Field>
+        <Field label="¿Cuándo?" required>
+          <input
+            type="date"
+            value={fecha}
+            onChange={(e) => setFecha(e.target.value)}
+            className="border-b border-tinta bg-transparent px-1 py-2 font-serif text-base outline-none focus:border-cuero"
+          />
+        </Field>
+      </div>
 
       <Field label={`Foto de la pieza (max ${MAX_FILE_MB} MB)`} required>
         <input
@@ -146,18 +154,18 @@ export function AddPiezaForm({
           type="file"
           accept="image/*"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          className="font-sans text-sm file:mr-3 file:cursor-pointer file:border file:border-tinta file:bg-transparent file:px-4 file:py-2 file:font-sans file:text-[11px] file:uppercase file:tracking-[0.18em] file:text-tinta hover:file:bg-tinta hover:file:text-fondo"
+          className="font-sans text-sm file:mr-3 file:cursor-pointer file:border file:border-tinta file:bg-transparent file:px-3 file:py-2 file:font-sans file:text-[10px] file:uppercase file:tracking-[0.18em] file:text-tinta hover:file:bg-tinta hover:file:text-fondo"
         />
         {preview && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={preview}
             alt="preview"
-            className="mt-3 max-h-64 border border-piedra object-contain"
+            className="mt-3 max-h-48 border border-piedra object-contain sm:max-h-64"
           />
         )}
-        <p className="mt-2 font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
-          Necesitamos verla para validarla. Foto del cuero, no de stock.
+        <p className="mt-2 font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
+          Foto del cuero, no de stock — para validar.
         </p>
       </Field>
 
