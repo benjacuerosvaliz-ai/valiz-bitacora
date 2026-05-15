@@ -4,10 +4,12 @@ import Link from "next/link";
 import { BrandMark } from "@/components/brand-mark";
 import { createStaticClient } from "@/lib/supabase/static";
 
+import { MapaColectivo, type Point } from "./mapa/mapa";
+
 export const metadata: Metadata = {
   title: "Bitácora colectiva · Valiz",
   description:
-    "Las Valiz andando por el mundo — fotos, lugares e historias de quienes las llevan.",
+    "Las Valiz andando por el mundo — fotos, lugares e historias de las piezas en uso.",
 };
 
 export const revalidate = 60;
@@ -32,8 +34,13 @@ type ProductoRow = {
   familia_id: string | null;
 };
 
-type FamiliaRow = { id: string; name: string };
+type FamiliaRow = { id: string; name: string; hours_per_unit: number | string | null };
 type ProfileRow = { id: string; display_name: string | null; email: string };
+type ProductoStats = {
+  p2: number | string | null;
+  sales_total: number | null;
+  familia_id: string | null;
+};
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("es-CL", {
@@ -52,42 +59,75 @@ function authorLabel(p: ProfileRow | undefined): string {
 export default async function BitacoraColectivaPage() {
   const sb = createStaticClient();
 
-  const { data: bitsRaw } = await sb
-    .from("bitacora_entries")
-    .select("id, user_id, sku, foto_url, lat, lng, lugar, texto, created_at")
-    .eq("invalidated", false)
-    .order("created_at", { ascending: false })
-    .limit(60);
-  const bitacoras = (bitsRaw ?? []) as BitacoraRow[];
-
-  const conGeo = bitacoras.filter(
-    (b) => b.lat !== null && b.lng !== null,
-  ).length;
-  const skus = [...new Set(bitacoras.map((b) => b.sku).filter(Boolean) as string[])];
-  const userIds = [...new Set(bitacoras.map((b) => b.user_id))];
-
-  const [pRes, fRes, profRes] = await Promise.all([
-    skus.length > 0
-      ? sb
-          .from("productos")
-          .select("sku, color_valiz, familia_id")
-          .in("sku", skus)
-      : Promise.resolve({ data: [] }),
-    sb.from("familias").select("id, name"),
-    userIds.length > 0
-      ? sb
-          .from("user_profiles")
-          .select("id, display_name, email")
-          .in("id", userIds)
-      : Promise.resolve({ data: [] }),
+  const [bitsRes, prodsRes, famsRes, profsRes, prodsStatsRes] = await Promise.all([
+    sb
+      .from("bitacora_entries")
+      .select("id, user_id, sku, foto_url, lat, lng, lugar, texto, created_at")
+      .eq("invalidated", false)
+      .order("created_at", { ascending: false })
+      .limit(60),
+    sb.from("productos").select("sku, color_valiz, familia_id"),
+    sb.from("familias").select("id, name, hours_per_unit"),
+    sb.from("user_profiles").select("id, display_name, email"),
+    sb
+      .from("productos")
+      .select("p2, sales_total, familia_id")
+      .eq("status", "active"),
   ]);
-  const productos = (pRes.data ?? []) as ProductoRow[];
-  const familias = (fRes.data ?? []) as FamiliaRow[];
-  const profiles = (profRes.data ?? []) as ProfileRow[];
+
+  const bitacoras = (bitsRes.data ?? []) as BitacoraRow[];
+  const productos = (prodsRes.data ?? []) as ProductoRow[];
+  const familias = (famsRes.data ?? []) as FamiliaRow[];
+  const profiles = (profsRes.data ?? []) as ProfileRow[];
+  const productosStats = (prodsStatsRes.data ?? []) as ProductoStats[];
 
   const productoBySku = new Map(productos.map((p) => [p.sku, p]));
-  const familiaById = new Map(familias.map((f) => [f.id, f.name]));
+  const familiaNameById = new Map(familias.map((f) => [f.id, f.name]));
   const profileByUser = new Map(profiles.map((p) => [p.id, p]));
+
+  // Stats del overlay del globo (mismo cálculo que /bitacora/mapa)
+  const hoursByFamilia = new Map(
+    familias.map((f) => [f.id, Number(f.hours_per_unit ?? 0)]),
+  );
+  const horasTotal = Math.round(
+    productosStats.reduce(
+      (s, p) =>
+        s +
+        Number(p.sales_total ?? 0) *
+          (hoursByFamilia.get(p.familia_id ?? "") ?? 0),
+      0,
+    ),
+  );
+  const piesTotal = Math.round(
+    productosStats.reduce(
+      (s, p) => s + Number(p.p2 ?? 0) * Number(p.sales_total ?? 0),
+      0,
+    ),
+  );
+  const piezasTotal = productosStats.reduce(
+    (s, p) => s + Number(p.sales_total ?? 0),
+    0,
+  );
+
+  // Puntos para el mapa (solo bitácoras con coords)
+  const points: Point[] = bitacoras
+    .filter((b) => b.lat !== null && b.lng !== null)
+    .map((b) => {
+      const p = b.sku ? productoBySku.get(b.sku) : null;
+      const fam = p?.familia_id ? familiaNameById.get(p.familia_id) : null;
+      return {
+        id: b.id,
+        lat: Number(b.lat),
+        lng: Number(b.lng),
+        foto: b.foto_url,
+        lugar: b.lugar,
+        texto: b.texto,
+        familia: fam ?? null,
+        colorValiz: p?.color_valiz ?? null,
+      };
+    });
+
+  const personasUnicas = new Set(bitacoras.map((b) => b.user_id)).size;
 
   return (
     <main className="flex min-h-screen flex-col bg-fondo">
@@ -98,73 +138,116 @@ export default async function BitacoraColectivaPage() {
         </p>
       </header>
 
-      <section className="border-b border-piedra px-8 py-20 sm:px-16 sm:py-28">
-        <div className="mx-auto max-w-5xl">
-          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-            Vida futura
-          </p>
-          <h1 className="mt-4 font-serif text-5xl leading-[1.04] tracking-[-0.022em] sm:text-7xl">
-            Las Valiz por el mundo.
-          </h1>
-          <p className="mt-8 max-w-2xl font-serif text-xl italic leading-relaxed text-niebla">
-            Cada Valiz tiene su propia historia después del taller. Quienes la
-            llevan suben fotos, lugares y relatos. Esto es lo que va llegando.
-          </p>
-          <div className="mt-10 flex flex-wrap gap-x-10 gap-y-4">
-            <Stat label="Entradas" big={nf.format(bitacoras.length)} />
-            <Stat label="Con ubicación" big={nf.format(conGeo)} />
-            <Stat label="Personas" big={nf.format(userIds.length)} />
-          </div>
-          {conGeo > 0 && (
-            <Link
-              href="/bitacora/mapa"
-              className="mt-10 inline-flex items-center gap-3 border border-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
-            >
-              Ver mapa colectivo →
-            </Link>
-          )}
+      {/* GLOBO COMO HERO -------------------------------------------------- */}
+      <section className="relative overflow-hidden border-b border-piedra bg-fondo">
+        <div className="h-[calc(100vh-72px)] min-h-[600px] w-full sm:h-[calc(100vh-78px)]">
+          <MapaColectivo points={points} />
         </div>
+
+        <div className="pointer-events-none absolute left-6 top-6 max-w-md sm:left-12 sm:top-12">
+          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+            Valiz por el mundo
+          </p>
+          <h1 className="mt-3 font-serif text-4xl leading-[1.04] tracking-[-0.022em] text-tinta sm:text-5xl">
+            El cuero anda solo.
+          </h1>
+          <p className="mt-3 max-w-xs font-serif text-sm italic leading-relaxed text-niebla sm:text-base">
+            Cada pieza después del taller deja huella en algún lugar. Esto es
+            lo que vamos viendo.
+          </p>
+        </div>
+
+        <div className="pointer-events-none absolute bottom-6 left-6 grid grid-cols-2 gap-x-8 gap-y-4 sm:bottom-12 sm:left-12 sm:grid-cols-4 sm:gap-x-12">
+          <Stat label="Horas de artesanos" big={nf.format(horasTotal)} />
+          <Stat label="Pies² rescatados" big={nf.format(piesTotal)} />
+          <Stat label="Piezas viajando" big={nf.format(piezasTotal)} />
+          <Stat
+            label="Bitácoras"
+            big={nf.format(points.length)}
+            small={
+              personasUnicas > 0
+                ? `de ${personasUnicas} ${personasUnicas === 1 ? "persona" : "personas"}`
+                : undefined
+            }
+          />
+        </div>
+
+        <div className="pointer-events-none absolute bottom-6 right-6 flex flex-col items-end gap-3 sm:bottom-12 sm:right-12">
+          <Link
+            href="#feed"
+            className="pointer-events-auto inline-flex items-center gap-3 border border-tinta bg-fondo/85 px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta backdrop-blur-sm transition-colors hover:bg-tinta hover:text-fondo"
+          >
+            Ver entradas ↓
+          </Link>
+        </div>
+
+        {points.length === 0 && (
+          <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 translate-y-32 text-center sm:translate-y-40">
+            <p className="bg-fondo/85 px-5 py-3 font-serif text-sm italic text-niebla backdrop-blur-sm sm:text-base">
+              Aún no hay puntos. Sube la primera bitácora con ubicación.
+            </p>
+          </div>
+        )}
       </section>
 
-      <section className="px-8 py-20 sm:px-16">
+      {/* FEED DE ENTRADAS ------------------------------------------------- */}
+      <section id="feed" className="px-8 py-20 sm:px-16">
         <div className="mx-auto max-w-6xl">
+          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+            Últimas entradas
+          </p>
+          <h2 className="mt-3 font-serif text-3xl leading-[1.1] tracking-[-0.015em] sm:text-4xl">
+            {bitacoras.length === 0
+              ? "Todavía no hay entradas."
+              : `${bitacoras.length} ${bitacoras.length === 1 ? "entrada" : "entradas"}.`}
+          </h2>
           {bitacoras.length === 0 ? (
-            <p className="font-serif text-2xl italic text-niebla">
-              Todavía no hay entradas. Si llevas una Valiz, sé el primero.
+            <p className="mt-6 font-serif italic leading-relaxed text-niebla">
+              Si llevas una Valiz, sé la primera. Sube tu pieza con ubicación
+              y queda en el mapa.
             </p>
           ) : (
-            <ul className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {bitacoras.map((b) => {
                 const p = b.sku ? productoBySku.get(b.sku) : null;
-                const fam = p?.familia_id ? familiaById.get(p.familia_id) : null;
+                const fam = p?.familia_id
+                  ? familiaNameById.get(p.familia_id)
+                  : null;
                 const author = profileByUser.get(b.user_id);
                 return (
-                  <li key={b.id} className="border border-piedra bg-fondo transition-colors hover:border-cuero">
+                  <li
+                    key={b.id}
+                    className="border border-piedra bg-fondo transition-colors hover:border-cuero"
+                  >
                     <Link href={`/bitacora/${b.id}`} className="block">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={b.foto_url}
-                        alt={b.lugar ?? "Bitácora Valiz"}
+                        alt={fam ?? "Bitácora Valiz"}
                         className="aspect-[4/5] w-full object-cover"
                       />
                       <div className="px-5 py-5">
+                        {fam && (
+                          <p className="font-serif text-lg text-tinta">
+                            {fam}
+                            {p?.color_valiz && (
+                              <span className="ml-2 italic text-cuero">
+                                · {p.color_valiz}
+                              </span>
+                            )}
+                          </p>
+                        )}
                         {b.lugar && (
-                          <p className="font-serif text-lg italic text-cuero">
+                          <p className="mt-1 font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
                             {b.lugar}
                           </p>
                         )}
-                        {fam && (
-                          <p className="mt-1 font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
-                            {fam}
-                            {p?.color_valiz && ` · ${p.color_valiz}`}
-                          </p>
-                        )}
                         {b.texto && (
-                          <p className="mt-3 line-clamp-3 font-serif text-base leading-relaxed">
+                          <p className="mt-3 line-clamp-3 font-serif text-base italic leading-relaxed text-niebla">
                             {b.texto}
                           </p>
                         )}
-                        <p className="mt-4 font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
+                        <p className="mt-4 font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
                           {authorLabel(author)} · {formatDate(b.created_at)}
                         </p>
                       </div>
@@ -180,15 +263,28 @@ export default async function BitacoraColectivaPage() {
   );
 }
 
-function Stat({ label, big }: { label: string; big: string }) {
+function Stat({
+  label,
+  big,
+  small,
+}: {
+  label: string;
+  big: string;
+  small?: string;
+}) {
   return (
     <div>
       <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-niebla">
         {label}
       </p>
-      <p className="mt-2 font-serif text-4xl leading-none tracking-[-0.02em]">
+      <p className="mt-1 font-serif text-3xl leading-none tracking-[-0.02em] text-tinta sm:text-4xl">
         {big}
       </p>
+      {small && (
+        <p className="mt-1 font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
+          {small}
+        </p>
+      )}
     </div>
   );
 }
