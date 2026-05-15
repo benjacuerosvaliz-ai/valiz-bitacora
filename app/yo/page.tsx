@@ -62,6 +62,7 @@ type MovimientoRow = {
 
 type CompraManualRow = {
   id: string;
+  sku: string | null;
   familia_slug: string | null;
   color_valiz: string | null;
   lugar_compra: string | null;
@@ -184,7 +185,7 @@ export default async function YoPage({
   const { data: pendientesRaw } = await sb
     .from("compras_manuales")
     .select(
-      "id, familia_slug, color_valiz, lugar_compra, fecha_compra, foto_url, verified, created_at",
+      "id, sku, familia_slug, color_valiz, lugar_compra, fecha_compra, foto_url, verified, created_at",
     )
     .order("created_at", { ascending: false });
   const compras = (pendientesRaw ?? []) as CompraManualRow[];
@@ -372,36 +373,43 @@ export default async function YoPage({
                 Las revisamos y otorgamos puntos retroactivos cuando confirmemos.
               </p>
               <ul className="mt-6 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
-                {pendientes.map((p) => (
-                  <li key={p.id} className="flex flex-col items-center">
-                    <div className="relative flex h-28 w-28 items-center justify-center rounded-full border border-dashed border-niebla bg-fondo sm:h-32 sm:w-32">
-                      {p.foto_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={p.foto_url}
-                          alt={p.color_valiz ?? "Pieza"}
-                          className="h-[78%] w-[78%] rounded-full object-cover opacity-60 grayscale"
-                        />
-                      ) : (
-                        <span className="font-serif text-xs italic text-niebla">
-                          Sin foto
+                {pendientes.map((p) => {
+                  // Fallback chain: foto subida → PNG del producto si hay SKU match
+                  // → "Sin foto".
+                  const fotoSubida = p.foto_url;
+                  const fotoProducto = p.sku ? photoBySku.get(p.sku) : null;
+                  const foto = fotoSubida ?? fotoProducto ?? null;
+                  return (
+                    <li key={p.id} className="flex flex-col items-center">
+                      <div className="relative flex h-28 w-28 items-center justify-center rounded-full border border-dashed border-niebla bg-fondo sm:h-32 sm:w-32">
+                        {foto ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={foto}
+                            alt={p.color_valiz ?? "Pieza"}
+                            className="h-[78%] w-[78%] rounded-full object-cover opacity-60 grayscale"
+                          />
+                        ) : (
+                          <span className="font-serif text-xs italic text-niebla">
+                            Sin foto
+                          </span>
+                        )}
+                        <span className="absolute -bottom-1 right-1 bg-fondo px-1 font-sans text-[9px] uppercase tracking-[0.18em] text-cuero">
+                          Pendiente
                         </span>
-                      )}
-                      <span className="absolute -bottom-1 right-1 bg-fondo px-1 font-sans text-[9px] uppercase tracking-[0.18em] text-cuero">
-                        Pendiente
-                      </span>
-                    </div>
-                    <p className="mt-3 text-center font-serif text-sm leading-tight text-niebla">
-                      {familiaNamesBySlug.get(p.familia_slug ?? "") ??
-                        p.familia_slug}
-                    </p>
-                    {p.color_valiz && (
-                      <p className="text-center font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
-                        {p.color_valiz}
+                      </div>
+                      <p className="mt-3 text-center font-serif text-sm leading-tight text-niebla">
+                        {familiaNamesBySlug.get(p.familia_slug ?? "") ??
+                          p.familia_slug}
                       </p>
-                    )}
-                  </li>
-                ))}
+                      {p.color_valiz && (
+                        <p className="text-center font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
+                          {p.color_valiz}
+                        </p>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
