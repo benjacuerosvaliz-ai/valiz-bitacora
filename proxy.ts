@@ -2,15 +2,16 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
- * Middleware de Supabase Auth: refresca el access token en cada request
- * para que la sesión no expire mientras el usuario navega. Necesario para
- * que las cookies de auth (`sb-...`) viajen consistentes entre Server
- * Components, Route Handlers y el browser.
+ * Proxy de Supabase Auth (en Next 16 reemplaza al `middleware` legacy):
+ * refresca el access token en cada request para que la sesión no expire
+ * mientras el usuario navega. Necesario para que las cookies de auth
+ * (`sb-...`) viajen consistentes entre Server Components, Route Handlers
+ * y el browser.
  *
  * No protege rutas — eso lo hacen las páginas individuales con guards
  * (ver app/yo/page.tsx).
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
