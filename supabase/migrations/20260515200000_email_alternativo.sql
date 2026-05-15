@@ -37,16 +37,29 @@ where cm.sku is not null;
 
 grant select on public.user_equipaje to authenticated;
 
--- 3. RLS policy de orders: ahora también lee si el email está en secondary_emails
+-- 3. Función helper: todos los emails (primary + secundarios) de un user.
+-- Usar SETOF text para que ANY/IN funcionen sin problemas de tipo.
+create or replace function public.user_all_emails(uid uuid)
+returns setof text
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select email from public.user_profiles where id = uid
+  union
+  select unnest(secondary_emails) from public.user_profiles where id = uid
+$$;
+
+grant execute on function public.user_all_emails(uuid) to authenticated, service_role;
+
+-- 4. RLS policies de orders + order_items via la función helper
 drop policy if exists "user reads orders by email match" on public.orders;
 create policy "user reads orders by email match"
   on public.orders for select
   to authenticated
   using (
-    email = (select email from public.user_profiles where id = auth.uid())
-    or email = ANY(
-      (select secondary_emails from public.user_profiles where id = auth.uid())
-    )
+    email in (select public.user_all_emails(auth.uid()))
   );
 
 drop policy if exists "user reads order_items via own orders" on public.order_items;
@@ -56,10 +69,7 @@ create policy "user reads order_items via own orders"
   using (
     order_name in (
       select name from public.orders
-      where email = (select email from public.user_profiles where id = auth.uid())
-         or email = ANY(
-           (select secondary_emails from public.user_profiles where id = auth.uid())
-         )
+      where email in (select public.user_all_emails(auth.uid()))
     )
   );
 
