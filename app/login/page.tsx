@@ -1,0 +1,51 @@
+import type { Metadata } from "next";
+
+import { LoginForm } from "./login-form";
+
+export const metadata: Metadata = {
+  title: "Entrar · Valiz Bitácora",
+  description: "Entra a tu bitácora personal de Valiz.",
+};
+
+export default function LoginPage() {
+  return (
+    <main className="flex min-h-screen flex-col bg-fondo">
+      <header className="flex items-baseline justify-between px-8 py-6 sm:px-16 sm:py-8">
+        <a
+          href="/"
+          className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero hover:text-tinta"
+        >
+          ← Valiz · Bitácora
+        </a>
+        <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
+          Tu equipaje
+        </p>
+      </header>
+
+      <section className="flex flex-1 items-center px-8 sm:px-16">
+        <div className="mx-auto w-full max-w-md py-20">
+          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+            Bitácora personal
+          </p>
+          <h1 className="mt-4 font-serif text-5xl leading-[1.04] tracking-[-0.022em] sm:text-6xl">
+            Entra al equipaje.
+          </h1>
+          <p className="mt-6 font-serif italic leading-relaxed text-niebla">
+            Si ya compraste con nosotros antes, vas a encontrar tu historia
+            armada esperándote.
+          </p>
+
+          <div className="mt-12">
+            <LoginForm />
+          </div>
+        </div>
+      </section>
+
+      <footer className="px-8 py-8 sm:px-16">
+        <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
+          Valiz · MMXXVI
+        </p>
+      </footer>
+    </main>
+  );
+}
