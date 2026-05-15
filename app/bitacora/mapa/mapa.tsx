@@ -18,11 +18,12 @@ type Point = {
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 const MAP_STYLE = "mapbox://styles/mapbox/light-v11";
 
-// Vista inicial: zoom bajo para ver el globo entero
+// Vista inicial: zoom bajísimo para ver el globo completo desde el inicio.
+// Centro en el meridiano que muestra Sudamérica al frente.
 const DEFAULT_VIEW = {
-  longitude: -70.65,
-  latitude: -10, // un poco arriba de Chile para que se vea continente entero
-  zoom: 1.5,
+  longitude: -60,
+  latitude: 15,
+  zoom: 0.6,
 };
 
 // Auto-rotación: grados de longitud por segundo
@@ -36,18 +37,9 @@ export function MapaColectivo({ points }: { points: Point[] }) {
   const mapRef = useRef<MapRef | null>(null);
   const [active, setActive] = useState<Point | null>(null);
 
-  // Vista inicial: con puntos, centro promedio + zoom acercado;
-  // sin puntos, default mundial.
-  const initial = useMemo(() => {
-    if (points.length === 0) return DEFAULT_VIEW;
-    const lat = points.reduce((s, p) => s + p.lat, 0) / points.length;
-    const lng = points.reduce((s, p) => s + p.lng, 0) / points.length;
-    return {
-      latitude: lat,
-      longitude: lng,
-      zoom: points.length === 1 ? 4 : 2,
-    };
-  }, [points]);
+  // Siempre arrancar viendo el globo completo (zoom 0.6). Si hay puntos,
+  // el user puede zoomear, pero la vista de bienvenida es planeta entero.
+  const initial = useMemo(() => DEFAULT_VIEW, []);
 
   // Auto-spin del globo. Pausa al interactuar, reanuda después de RESUME_AFTER_MS.
   useEffect(() => {
