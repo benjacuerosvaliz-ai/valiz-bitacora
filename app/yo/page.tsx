@@ -429,7 +429,7 @@ export default async function YoPage({
                           <img
                             src={foto}
                             alt={p.color_valiz ?? "Pieza"}
-                            className="h-[78%] w-[78%] rounded-full object-cover opacity-60 grayscale"
+                            className="h-[78%] w-[78%] rounded-full object-cover"
                           />
                         ) : (
                           <span className="font-serif text-xs italic text-niebla">
