@@ -4,6 +4,7 @@ import Link from "next/link";
 import { AnimatedNumber } from "@/components/animations/animated-number";
 import { ParallaxImage } from "@/components/animations/parallax-image";
 import { SectionReveal } from "@/components/animations/section-reveal";
+import { BrandMark } from "@/components/brand-mark";
 import {
   FamilyHoverImageProvider,
   FamilyHoverTrigger,
@@ -132,10 +133,8 @@ export default async function Home() {
       {/* HERO ---------------------------------------------------------------- */}
       <section className="grid min-h-[100svh] grid-cols-1 lg:grid-cols-[1.05fr_1fr]">
         <div className="flex flex-col justify-between border-b border-piedra px-8 py-10 sm:px-16 sm:py-14 lg:order-1 lg:border-b-0 lg:border-r">
-          <SectionReveal className="flex items-baseline justify-between">
-            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-              Valiz · Bitácora
-            </p>
+          <SectionReveal className="flex items-center justify-between">
+            <BrandMark />
             <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
               Mayo 2026
             </p>

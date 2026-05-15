@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { BrandMark } from "@/components/brand-mark";
 import { getPhotoBySku } from "@/lib/product-photos";
 import { createClient } from "@/lib/supabase/server";
 
@@ -253,13 +254,8 @@ export default async function YoPage({
         />
       )}
 
-      <header className="flex items-baseline justify-between border-b border-piedra px-8 py-6 sm:px-16 sm:py-8">
-        <Link
-          href="/"
-          className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero hover:text-tinta"
-        >
-          ← Valiz · Bitácora
-        </Link>
+      <header className="flex items-center justify-between border-b border-piedra px-8 py-5 sm:px-16 sm:py-6">
+        <BrandMark variant="back" />
         <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
           Tu equipaje
         </p>

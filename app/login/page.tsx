@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { BrandMark } from "@/components/brand-mark";
+
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = {
@@ -10,13 +12,8 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <main className="flex min-h-screen flex-col bg-fondo">
-      <header className="flex items-baseline justify-between px-8 py-6 sm:px-16 sm:py-8">
-        <a
-          href="/"
-          className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero hover:text-tinta"
-        >
-          ← Valiz · Bitácora
-        </a>
+      <header className="flex items-center justify-between px-8 py-5 sm:px-16 sm:py-6">
+        <BrandMark variant="back" href="/" />
         <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
           Tu equipaje
         </p>

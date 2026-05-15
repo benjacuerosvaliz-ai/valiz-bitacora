@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { BrandMark } from "@/components/brand-mark";
 import { createStaticClient } from "@/lib/supabase/static";
 
 export const metadata: Metadata = {
@@ -90,13 +91,8 @@ export default async function BitacoraColectivaPage() {
 
   return (
     <main className="flex min-h-screen flex-col bg-fondo">
-      <header className="flex items-baseline justify-between border-b border-piedra px-8 py-6 sm:px-16 sm:py-8">
-        <Link
-          href="/"
-          className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero hover:text-tinta"
-        >
-          ← Valiz · Bitácora
-        </Link>
+      <header className="flex items-center justify-between border-b border-piedra px-8 py-5 sm:px-16 sm:py-6">
+        <BrandMark variant="back" href="/" />
         <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
           Bitácora colectiva
         </p>
