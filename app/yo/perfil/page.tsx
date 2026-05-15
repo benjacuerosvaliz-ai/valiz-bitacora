@@ -60,6 +60,22 @@ export default async function PerfilPage() {
               }}
             />
           </div>
+
+          <div className="mt-16 border-t border-piedra pt-8">
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+              Otros correos
+            </p>
+            <p className="mt-3 font-serif italic leading-relaxed text-niebla">
+              Si compraste antes con otro correo, vincúlalo y sumamos tu
+              historial Valiz a esta cuenta.
+            </p>
+            <Link
+              href="/yo/email-alt"
+              className="mt-5 inline-block border border-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
+            >
+              Vincular otro correo →
+            </Link>
+          </div>
         </div>
       </section>
     </main>

@@ -35,7 +35,20 @@ export default function LoginPage() {
             armada esperándote.
           </p>
 
-          <div className="mt-12">
+          <div className="mt-8 border-l-2 border-cuero pl-5">
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+              Si compraste antes
+            </p>
+            <p className="mt-2 font-serif text-base leading-relaxed">
+              Idealmente entra con el correo que usaste para esas compras —
+              ahí encontramos tu equipaje de inmediato. Si usas otro,
+              después puedes <strong>vincular tus correos</strong> con un
+              código de verificación y mover todo tu historial Valiz a tu
+              bitácora.
+            </p>
+          </div>
+
+          <div className="mt-10">
             <LoginForm />
           </div>
         </div>

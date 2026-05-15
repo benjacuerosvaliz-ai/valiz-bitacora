@@ -176,6 +176,37 @@ export function tplCanjeConfirmacion(args: {
 }
 
 // ============================================================================
+// Código de verificación de email alternativo
+// ============================================================================
+export function tplCodigoVerificacion(args: {
+  codigo: string;
+  expiresInMin: number;
+}): { subject: string; html: string } {
+  const body = `
+    <p class="body">
+      Para vincular este correo a tu cuenta Valiz, escribe este código en
+      la página donde quedaste:
+    </p>
+    <p class="body">
+      <code class="codigo">${escape(args.codigo)}</code>
+    </p>
+    <p class="body">
+      Caduca en ${args.expiresInMin} minutos. Si no fuiste tú, ignora este
+      correo — no pasa nada.
+    </p>
+  `;
+  return {
+    subject: `Tu código Valiz: ${args.codigo}`,
+    html: shell({
+      preheader: `Código: ${args.codigo}`,
+      title: "Tu código de verificación",
+      intro: "Estamos vinculando este correo a tu bitácora.",
+      body,
+    }),
+  };
+}
+
+// ============================================================================
 // Notificación al user: su pieza fue validada
 // ============================================================================
 export function tplCompraValidada(args: {

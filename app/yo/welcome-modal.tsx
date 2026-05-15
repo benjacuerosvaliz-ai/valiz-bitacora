@@ -102,23 +102,53 @@ export function WelcomeModal({
                 )}
               </div>
             ) : (
-              <p className="mt-10 font-serif text-lg leading-relaxed text-niebla sm:text-xl">
-                Todavía no encontramos compras a este correo en nuestra historia.
-                Si compraste antes con otro mail, escríbenos y lo vinculamos.
+              <div className="mt-10 space-y-5 font-serif text-lg leading-relaxed text-niebla sm:text-xl">
+                <p>
+                  Todavía no encontramos compras a este correo en nuestra
+                  historia.
+                </p>
+                <p>
+                  Si compraste antes con otro correo, puedes vincularlo en{" "}
+                  <a
+                    href="/yo/email-alt"
+                    className="not-italic text-cuero underline"
+                  >
+                    /yo/email-alt
+                  </a>
+                  : te mandamos un código al correo nuevo y movemos tu
+                  historial Valiz a tu bitácora.
+                </p>
                 {puntos > 0 && (
-                  <span>
-                    {" "}Te dejamos {nf.format(puntos)} puntos de bienvenida igual.
-                  </span>
+                  <p>
+                    Te dejamos{" "}
+                    <strong className="not-italic text-cuero">
+                      {nf.format(puntos)} pts de bienvenida
+                    </strong>{" "}
+                    de todos modos.
+                  </p>
                 )}
-              </p>
+              </div>
             )}
 
-            <button
-              onClick={close}
-              className="mt-12 bg-tinta px-6 py-4 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-fondo transition-colors hover:bg-cuero"
-            >
-              Entrar a mi equipaje →
-            </button>
+            <div className="mt-12 flex flex-wrap gap-3">
+              <button
+                onClick={close}
+                className="bg-tinta px-6 py-4 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-fondo transition-colors hover:bg-cuero"
+              >
+                {piezas > 0 ? "Entrar a mi equipaje" : "Cerrar"} →
+              </button>
+              {piezas === 0 && (
+                <a
+                  href="/yo/email-alt"
+                  className="border border-tinta px-6 py-4 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
+                  onClick={async () => {
+                    await fetch("/api/auth/welcomed", { method: "POST" });
+                  }}
+                >
+                  Vincular otro correo →
+                </a>
+              )}
+            </div>
           </motion.div>
         </motion.div>
       )}

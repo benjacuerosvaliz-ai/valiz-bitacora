@@ -7,6 +7,7 @@ import {
   tplAdminBitacoraNueva,
   tplAdminCompraPendiente,
   tplCanjeConfirmacion,
+  tplCodigoVerificacion,
   tplCompraValidada,
 } from "@/lib/email/templates";
 
@@ -111,6 +112,39 @@ export async function sendCanjeConfirmation(args: {
     subject: t.subject,
     html: t.html,
   });
+}
+
+/**
+ * Manda código de 6 dígitos al email alternativo para verificación.
+ * Si Resend no está configurado, retorna false (caller decide qué hacer).
+ */
+export async function sendCodigoVerificacion(args: {
+  email: string;
+  codigo: string;
+  expiresInMin: number;
+}): Promise<boolean> {
+  const resend = getResend();
+  if (!resend) return false;
+  const t = tplCodigoVerificacion({
+    codigo: args.codigo,
+    expiresInMin: args.expiresInMin,
+  });
+  try {
+    const { error } = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: [args.email],
+      subject: t.subject,
+      html: t.html,
+    });
+    if (error) {
+      console.error("[send codigo verif]", error);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("[send codigo verif fail]", e);
+    return false;
+  }
 }
 
 export async function sendCompraValidada(args: {

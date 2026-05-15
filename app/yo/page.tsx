@@ -316,10 +316,22 @@ export default async function YoPage({
           </div>
 
           {totalPiezas === 0 ? (
-            <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
-              Si compraste antes con otro correo, agrega tus piezas manualmente
-              o escríbenos para vincular el correo.
-            </p>
+            <div className="mt-6 max-w-2xl space-y-3 font-serif italic leading-relaxed text-niebla">
+              <p>
+                Si compraste antes con otro correo,{" "}
+                <Link href="/yo/email-alt" className="not-italic text-cuero underline">
+                  vincúlalo aquí
+                </Link>{" "}
+                — te mandamos un código y movemos tu historial.
+              </p>
+              <p>
+                Si compraste fuera de valiz.cl (feria, regalo),{" "}
+                <Link href="/yo/agregar-pieza" className="not-italic text-cuero underline">
+                  agrégala manualmente
+                </Link>
+                .
+              </p>
+            </div>
           ) : (
             <EquipajeGrid
               piezas={equipaje.map<EquipajePieza>((e) => {
