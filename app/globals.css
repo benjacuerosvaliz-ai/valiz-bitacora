@@ -34,3 +34,26 @@ body {
   }
 }
 
+
+/* Mapbox popup customizado para Valiz: sin padding default, fondo del
+   sistema, sin sombra fea. La estructura del Popup la define mapbox-gl
+   en .mapboxgl-popup-content y .mapboxgl-popup-tip. */
+.mapboxgl-popup.valiz-popup .mapboxgl-popup-content {
+  padding: 0;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-piedra);
+  border-radius: 0;
+  box-shadow: 0 6px 24px rgba(26, 26, 26, 0.08);
+  overflow: hidden;
+}
+.mapboxgl-popup.valiz-popup .mapboxgl-popup-tip {
+  border-top-color: var(--color-fondo);
+  border-bottom-color: var(--color-fondo);
+}
+
+/* Controles default de Mapbox (zoom +/-): suavizar para que se vean Valiz */
+.mapboxgl-ctrl-group {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border: 1px solid var(--color-piedra) !important;
+}

@@ -73,7 +73,7 @@ export default async function MapaPage() {
 
       <section className="flex-1 px-8 pb-16 pt-10 sm:px-16">
         <div className="mx-auto max-w-6xl">
-          <div className="aspect-[16/10] w-full border border-piedra bg-fondo">
+          <div className="h-[70vh] w-full overflow-hidden border border-piedra bg-fondo sm:h-auto sm:aspect-[16/10]">
             <MapaColectivo points={points} />
           </div>
         </div>
