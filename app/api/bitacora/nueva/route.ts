@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { NextResponse, type NextRequest } from "next/server";
 
+import { notifyAdminBitacoraNueva } from "@/lib/email/notify";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -145,6 +146,15 @@ export async function POST(request: NextRequest) {
       referencia_id: inserted.id,
     });
   }
+
+  // Notificar admin (fire-and-forget)
+  notifyAdminBitacoraNueva({
+    bitacoraId: inserted.id,
+    userEmail: user.email ?? "(sin email)",
+    lugar,
+    texto,
+    fotoUrl,
+  }).catch((e) => console.error("[notify admin bitacora]", e));
 
   return NextResponse.json({
     ok: true,

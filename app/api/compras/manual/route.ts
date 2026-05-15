@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { NextResponse, type NextRequest } from "next/server";
 
+import { notifyAdminCompraPendiente } from "@/lib/email/notify";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -112,6 +113,24 @@ export async function POST(request: NextRequest) {
     await admin.storage.from("bitacora-fotos").remove([filename]);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Resolver nombre familia legible para el email
+  const { data: famName } = await admin
+    .from("familias")
+    .select("name")
+    .eq("slug", familiaSlug)
+    .maybeSingle();
+
+  // Notificar admin (fire-and-forget; no bloquea la respuesta al user)
+  notifyAdminCompraPendiente({
+    userEmail: user.email ?? "(sin email)",
+    familiaName: famName?.name ?? familiaSlug,
+    colorValiz,
+    lugarCompra: lugar,
+    fechaCompra: fecha,
+    fotoUrl,
+    matchedSku,
+  }).catch((e) => console.error("[notify admin compra]", e));
 
   return NextResponse.json({ ok: true, matched_sku: matchedSku });
 }

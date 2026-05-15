@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { sendCanjeConfirmation } from "@/lib/email/notify";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -41,6 +42,21 @@ export async function POST(request: NextRequest) {
   if (error) {
     const friendly = ERROR_MAP[error.code ?? ""] ?? "No se pudo canjear.";
     return NextResponse.json({ error: friendly }, { status: 400 });
+  }
+
+  // Email de confirmación con el código (por si el user lo pierde en la web)
+  const { data: profile } = await admin
+    .from("user_profiles")
+    .select("puntos_actuales")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (user.email && data) {
+    sendCanjeConfirmation({
+      userEmail: user.email,
+      monto: denominacion,
+      codigo: String(data),
+      ptsRestantes: profile?.puntos_actuales ?? 0,
+    }).catch((e) => console.error("[send canje email]", e));
   }
 
   return NextResponse.json({ ok: true, code: data });
