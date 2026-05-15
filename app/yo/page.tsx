@@ -61,6 +61,16 @@ type CompraManualRow = {
   created_at: string;
 };
 
+type BitacoraRow = {
+  id: string;
+  sku: string | null;
+  foto_url: string;
+  lugar: string | null;
+  texto: string | null;
+  created_at: string;
+  points_awarded: number;
+};
+
 const MOTIVO_LABEL: Record<string, string> = {
   compra_shopify: "Compra",
   bono_bienvenida: "Bono de bienvenida",
@@ -165,6 +175,16 @@ export default async function YoPage({
     .order("created_at", { ascending: false });
   const compras = (pendientesRaw ?? []) as CompraManualRow[];
   const pendientes = compras.filter((c) => !c.verified);
+
+  // Bitácoras del user
+  const { data: bitsRaw } = await sb
+    .from("bitacora_entries")
+    .select("id, sku, foto_url, lugar, texto, created_at, points_awarded")
+    .eq("user_id", user.id)
+    .eq("invalidated", false)
+    .order("created_at", { ascending: false })
+    .limit(12);
+  const bitacoras = (bitsRaw ?? []) as BitacoraRow[];
 
   // Map slug → name para mostrar nombres
   const familiaNamesBySlug = new Map(familias.map((f) => [f.slug, f.name]));
@@ -337,6 +357,68 @@ export default async function YoPage({
                 ))}
               </ul>
             </div>
+          )}
+        </div>
+      </section>
+
+      <section className="border-b border-piedra px-8 py-20 sm:px-16">
+        <div className="mx-auto max-w-5xl">
+          <div className="flex flex-col items-baseline justify-between gap-3 sm:flex-row">
+            <div>
+              <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+                Tu bitácora
+              </p>
+              <h2 className="mt-3 font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
+                {bitacoras.length === 0
+                  ? "Tu bitácora está en blanco."
+                  : bitacoras.length === 1
+                    ? "1 entrada."
+                    : `${nf.format(bitacoras.length)} entradas.`}
+              </h2>
+            </div>
+            {totalPiezas > 0 && (
+              <Link
+                href="/yo/bitacora/nueva"
+                className="border border-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
+              >
+                + Subir bitácora
+              </Link>
+            )}
+          </div>
+          {bitacoras.length === 0 ? (
+            <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
+              Cuando llevas tu Valiz a algún lado, súbele una foto y la
+              historia. 200 pts por la primera del mes de cada pieza.
+            </p>
+          ) : (
+            <ul className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {bitacoras.map((b) => (
+                <li key={b.id} className="border border-piedra bg-fondo">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={b.foto_url}
+                    alt={b.lugar ?? ""}
+                    className="aspect-square w-full object-cover"
+                  />
+                  <div className="px-4 py-4">
+                    {b.lugar && (
+                      <p className="font-serif text-base italic text-cuero">
+                        {b.lugar}
+                      </p>
+                    )}
+                    {b.texto && (
+                      <p className="mt-2 line-clamp-3 font-serif text-sm leading-relaxed">
+                        {b.texto}
+                      </p>
+                    )}
+                    <p className="mt-3 font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
+                      {formatDate(b.created_at)}
+                      {b.points_awarded > 0 && ` · +${b.points_awarded} pts`}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </section>
