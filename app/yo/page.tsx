@@ -51,6 +51,16 @@ type MovimientoRow = {
   created_at: string;
 };
 
+type CompraManualRow = {
+  id: string;
+  familia_slug: string | null;
+  color_valiz: string | null;
+  lugar_compra: string | null;
+  fecha_compra: string | null;
+  verified: boolean;
+  created_at: string;
+};
+
 const MOTIVO_LABEL: Record<string, string> = {
   compra_shopify: "Compra",
   bono_bienvenida: "Bono de bienvenida",
@@ -60,7 +70,14 @@ const MOTIVO_LABEL: Record<string, string> = {
   ajuste_admin: "Ajuste",
 };
 
-export default async function YoPage() {
+export default async function YoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ added?: string; bitacora?: string }>;
+}) {
+  const params = await searchParams;
+  const flashAdded = params.added === "1";
+  const flashBitacora = params.bitacora === "1";
   const sb = await createClient();
   const {
     data: { user },
@@ -88,24 +105,25 @@ export default async function YoPage() {
   const equipaje = (equipajeRaw ?? []) as EquipajeRow[];
   const skus = [...new Set(equipaje.map((e) => e.sku))];
 
-  // Hidratar productos + familias + talleristas
+  // Familias y talleristas siempre se cargan (también las uso para mostrar
+  // pendientes y para el header en otras secciones).
+  const [fRes, tRes] = await Promise.all([
+    sb.from("familias").select("id, slug, name, hours_per_unit"),
+    sb.from("talleristas").select("id, name"),
+  ]);
+  const familias = (fRes.data ?? []) as FamiliaRow[];
+  const talleristas = (tRes.data ?? []) as TalleristaRow[];
+
+  // Productos solo cuando hay piezas en equipaje
   let productos: ProductoRow[] = [];
-  let familias: FamiliaRow[] = [];
-  let talleristas: TalleristaRow[] = [];
   if (skus.length > 0) {
-    const [pRes, fRes, tRes] = await Promise.all([
-      sb
-        .from("productos")
-        .select(
-          "sku, color_valiz, p2, familia_id, precio, shopify_handle, tallerista_id",
-        )
-        .in("sku", skus),
-      sb.from("familias").select("id, slug, name, hours_per_unit"),
-      sb.from("talleristas").select("id, name"),
-    ]);
-    productos = (pRes.data ?? []) as ProductoRow[];
-    familias = (fRes.data ?? []) as FamiliaRow[];
-    talleristas = (tRes.data ?? []) as TalleristaRow[];
+    const { data } = await sb
+      .from("productos")
+      .select(
+        "sku, color_valiz, p2, familia_id, precio, shopify_handle, tallerista_id",
+      )
+      .in("sku", skus);
+    productos = (data ?? []) as ProductoRow[];
   }
 
   const productoBySku = new Map(productos.map((p) => [p.sku, p]));
@@ -140,6 +158,17 @@ export default async function YoPage() {
     .limit(20);
   const movs = (movsRaw ?? []) as MovimientoRow[];
 
+  // Compras manuales pendientes (verified=false)
+  const { data: pendientesRaw } = await sb
+    .from("compras_manuales")
+    .select("id, familia_slug, color_valiz, lugar_compra, fecha_compra, verified, created_at")
+    .order("created_at", { ascending: false });
+  const compras = (pendientesRaw ?? []) as CompraManualRow[];
+  const pendientes = compras.filter((c) => !c.verified);
+
+  // Map slug → name para mostrar nombres
+  const familiaNamesBySlug = new Map(familias.map((f) => [f.slug, f.name]));
+
   const nombre = profile.display_name || profile.email.split("@")[0];
   const primerLogin = !profile.welcomed_at;
 
@@ -167,6 +196,16 @@ export default async function YoPage() {
           Tu equipaje
         </p>
       </header>
+
+      {(flashAdded || flashBitacora) && (
+        <div className="border-b border-musgo bg-musgo/5 px-8 py-4 sm:px-16">
+          <p className="mx-auto max-w-5xl font-serif italic text-musgo">
+            {flashAdded
+              ? "Pieza agregada a tu equipaje. Te avisamos cuando la validemos para sumar puntos."
+              : "Bitácora subida. Gracias por seguir contando la historia."}
+          </p>
+        </div>
+      )}
 
       <section className="border-b border-piedra px-8 py-20 sm:px-16 sm:py-28">
         <div className="mx-auto max-w-5xl">
@@ -213,22 +252,31 @@ export default async function YoPage() {
 
       <section className="border-b border-piedra px-8 py-20 sm:px-16">
         <div className="mx-auto max-w-5xl">
-          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-            Tu equipaje
-          </p>
-          <h2 className="mt-3 font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
-            {totalPiezas === 0
-              ? "Todavía no hay piezas a tu nombre."
-              : totalPiezas === 1
-                ? "Una pieza."
-                : `${nf.format(totalPiezas)} piezas.`}
-          </h2>
+          <div className="flex flex-col items-baseline justify-between gap-3 sm:flex-row">
+            <div>
+              <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+                Tu equipaje
+              </p>
+              <h2 className="mt-3 font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
+                {totalPiezas === 0
+                  ? "Todavía no hay piezas a tu nombre."
+                  : totalPiezas === 1
+                    ? "Una pieza."
+                    : `${nf.format(totalPiezas)} piezas.`}
+              </h2>
+            </div>
+            <Link
+              href="/yo/agregar-pieza"
+              className="border border-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
+            >
+              + Agregar pieza
+            </Link>
+          </div>
 
           {totalPiezas === 0 ? (
             <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
-              Si compraste antes con otro correo, mándanos un mensaje y lo
-              vinculamos. Si compraste fuera de la tienda, agregalo manualmente
-              (próximamente).
+              Si compraste antes con otro correo, agrega tus piezas manualmente
+              o escríbenos para vincular el correo.
             </p>
           ) : (
             <ul className="mt-12 grid grid-cols-1 gap-x-10 gap-y-2">
@@ -244,15 +292,51 @@ export default async function YoPage() {
                           <span className="italic text-cuero"> · {p.color_valiz}</span>
                         )}
                       </span>
-                      <span className="font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
-                        {e.source === "manual" ? "Manual" : "Shopify"}
-                        {e.adquirido_at ? ` · ${formatDate(e.adquirido_at)}` : ""}
+                      <span className="flex items-center gap-3">
+                        <Link
+                          href={`/yo/bitacora/nueva?sku=${encodeURIComponent(e.sku)}`}
+                          className="font-sans text-[11px] uppercase tracking-[0.18em] text-cuero hover:text-tinta"
+                        >
+                          + Bitácora
+                        </Link>
+                        <span className="font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
+                          {e.source === "manual" ? "Manual" : "Shopify"}
+                          {e.adquirido_at ? ` · ${formatDate(e.adquirido_at)}` : ""}
+                        </span>
                       </span>
                     </div>
                   </li>
                 );
               })}
             </ul>
+          )}
+
+          {pendientes.length > 0 && (
+            <div className="mt-12 border-t border-piedra pt-8">
+              <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+                Pendiente de validación
+              </p>
+              <p className="mt-2 font-serif italic text-niebla">
+                Estas piezas aún no suman puntos. Las revisamos y otorgamos
+                puntos retroactivos cuando confirmemos.
+              </p>
+              <ul className="mt-6 grid grid-cols-1 gap-y-2">
+                {pendientes.map((p) => (
+                  <li key={p.id} className="border-b border-piedra py-3">
+                    <div className="flex flex-col items-baseline justify-between gap-1 sm:flex-row sm:gap-6">
+                      <span className="font-serif text-lg italic text-niebla">
+                        {familiaNamesBySlug.get(p.familia_slug ?? "") ?? p.familia_slug}
+                        {p.color_valiz && ` · ${p.color_valiz}`}
+                      </span>
+                      <span className="font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
+                        {p.lugar_compra ? `${p.lugar_compra} · ` : ""}
+                        Pendiente
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
       </section>
