@@ -147,7 +147,7 @@ export function BitacoraForm({
         </div>
       </div>
 
-      <Field label={`Foto (max ${MAX_FILE_MB} MB)`}>
+      <Field label={`Foto del producto (max ${MAX_FILE_MB} MB)`}>
         <input
           ref={fileInputRef}
           type="file"
@@ -163,6 +163,10 @@ export function BitacoraForm({
             className="mt-3 max-h-56 border border-piedra object-contain sm:max-h-72"
           />
         )}
+        <p className="mt-2 font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
+          La foto tiene que mostrar la pieza Valiz claramente. Si no
+          aparece el producto, no la publicamos.
+        </p>
       </Field>
 
       <Field label={`Tu historia (${textoLen}/30 mínimo para 200 pts)`}>

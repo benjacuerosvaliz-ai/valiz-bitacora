@@ -67,7 +67,7 @@ export default async function NuevaBitacoraPage({
       <header className="flex items-center justify-between border-b border-piedra px-8 py-5 sm:px-16 sm:py-6">
         <BrandMark variant="back" href="/yo" />
         <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
-          Nueva bitácora
+          Nueva entrada
         </p>
       </header>
 

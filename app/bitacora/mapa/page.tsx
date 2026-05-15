@@ -19,12 +19,21 @@ const nf = new Intl.NumberFormat("es-CL");
 type BitacoraRow = {
   id: string;
   user_id: string;
+  sku: string | null;
   foto_url: string;
   lat: number | string | null;
   lng: number | string | null;
   lugar: string | null;
   texto: string | null;
 };
+
+type ProductoLite = {
+  sku: string;
+  color_valiz: string | null;
+  familia_id: string | null;
+};
+
+type FamiliaLite = { id: string; name: string };
 
 type ProductoStats = {
   p2: number | string | null;
@@ -40,10 +49,10 @@ type FamiliaRow = {
 export default async function MapaPage() {
   const sb = createStaticClient();
 
-  const [bitsRes, prodsRes, famsRes] = await Promise.all([
+  const [bitsRes, prodsRes, famsRes, prodsForBitsRes] = await Promise.all([
     sb
       .from("bitacora_entries")
-      .select("id, user_id, foto_url, lat, lng, lugar, texto")
+      .select("id, user_id, sku, foto_url, lat, lng, lugar, texto")
       .eq("invalidated", false)
       .not("lat", "is", null)
       .not("lng", "is", null)
@@ -53,12 +62,20 @@ export default async function MapaPage() {
       .from("productos")
       .select("p2, sales_total, familia_id")
       .eq("status", "active"),
-    sb.from("familias").select("id, hours_per_unit"),
+    sb.from("familias").select("id, hours_per_unit, name"),
+    sb.from("productos").select("sku, color_valiz, familia_id"),
   ]);
 
   const bitacoras = (bitsRes.data ?? []) as BitacoraRow[];
   const productos = (prodsRes.data ?? []) as ProductoStats[];
-  const familias = (famsRes.data ?? []) as FamiliaRow[];
+  const familias = (famsRes.data ?? []) as (FamiliaRow & { name?: string })[];
+  const productosLite = (prodsForBitsRes.data ?? []) as ProductoLite[];
+
+  // Mapas para enriquecer cada bitácora con familia + color
+  const productoBySku = new Map(productosLite.map((p) => [p.sku, p]));
+  const familiaById = new Map(
+    familias.map((f) => [f.id, (f as FamiliaLite).name ?? ""]),
+  );
 
   // Stats agregadas para el overlay del globo
   const hoursByFamilia = new Map(
@@ -84,14 +101,20 @@ export default async function MapaPage() {
     0,
   );
 
-  const points = bitacoras.map((b) => ({
-    id: b.id,
-    lat: Number(b.lat),
-    lng: Number(b.lng),
-    foto: b.foto_url,
-    lugar: b.lugar,
-    texto: b.texto,
-  }));
+  const points = bitacoras.map((b) => {
+    const p = b.sku ? productoBySku.get(b.sku) : null;
+    const fam = p?.familia_id ? familiaById.get(p.familia_id) : null;
+    return {
+      id: b.id,
+      lat: Number(b.lat),
+      lng: Number(b.lng),
+      foto: b.foto_url,
+      lugar: b.lugar,
+      texto: b.texto,
+      familia: fam ?? null,
+      colorValiz: p?.color_valiz ?? null,
+    };
+  });
 
   const personas = new Set(bitacoras.map((b) => b.user_id)).size;
 
