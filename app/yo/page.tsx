@@ -230,9 +230,17 @@ export default async function YoPage({
 
       <section className="border-b border-piedra px-8 py-20 sm:px-16 sm:py-28">
         <div className="mx-auto max-w-5xl">
-          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-            Hola
-          </p>
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+              Hola
+            </p>
+            <Link
+              href="/yo/perfil"
+              className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla hover:text-cuero"
+            >
+              Editar perfil
+            </Link>
+          </div>
           <h1 className="mt-4 font-serif text-5xl leading-[1.04] tracking-[-0.022em] sm:text-7xl">
             {nombre}.
           </h1>
