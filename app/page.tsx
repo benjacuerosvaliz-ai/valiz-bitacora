@@ -27,6 +27,8 @@ type Tallerista = {
 type Cuero = {
   id: string;
   display_name: string;
+  tipo: "carryover" | "moda" | null;
+  coleccion: string | null;
 };
 
 type ProductoStats = {
@@ -62,7 +64,10 @@ export default async function Home() {
         .from("talleristas")
         .select("id, name, role, bio, specialties, manos_count")
         .order("display_order"),
-      sb.from("cueros").select("id, display_name").order("display_name"),
+      sb
+        .from("cueros")
+        .select("id, display_name, tipo, coleccion")
+        .order("display_name"),
       sb
         .from("productos")
         .select("p2, sales_total, familia_id")
@@ -118,6 +123,10 @@ export default async function Home() {
   const familiasActivas = familias
     .map((f) => ({ ...f, colores: productosPorFamilia.get(f.id) ?? 0 }))
     .filter((f) => f.colores > 0);
+
+  const cuerosCarryover = cueros.filter((c) => c.tipo !== "moda");
+  const cuerosModa = cueros.filter((c) => c.tipo === "moda");
+  const coleccionActual = cuerosModa.find((c) => c.coleccion)?.coleccion;
 
   // Imagen hero por familia para el efecto cursor-reveal en "Las piezas".
   // Por ahora solo mochila-alforja tiene fotos editadas; el resto se va
@@ -207,8 +216,9 @@ export default async function Home() {
             <p className="mt-12 max-w-xl font-serif text-lg leading-relaxed sm:text-xl">
               Curtido localmente con procesos cuidadosos — agua tratada,
               químicos certificados, residuos controlados. Lo trabajamos en{" "}
-              {nf.format(cueros.length)} cueros con nombre propio, cada uno con
-              su carácter, su tacto, su origen.
+              {nf.format(cuerosCarryover.length)} cueros base que siempre vas
+              a encontrar, y {cuerosModa.length} cueros de colección que
+              pasan o se quedan.
             </p>
           </SectionReveal>
 
@@ -390,23 +400,68 @@ export default async function Home() {
               Los cueros
             </p>
             <h2 className="font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
-              {nf.format(cueros.length)} cueros con nombre propio.
+              {nf.format(cuerosCarryover.length)} cueros base
+              {coleccionActual && (
+                <>
+                  {" "}· Colección{" "}
+                  <span className="italic text-cuero">{coleccionActual}</span>
+                </>
+              )}
+              .
             </h2>
             <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
-              Curtidos en Chile, cada uno con su carácter. Los conoces por su
-              tacto antes que por su nombre.
+              Los cueros base son los que siempre vas a encontrar. Las
+              colecciones traen cueros distintos por temporada — algunos
+              pasan, otros se quedan.
             </p>
           </SectionReveal>
 
-          <ul className="mt-16 grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
-            {cueros.map((c, i) => (
-              <SectionReveal key={c.id} delay={i * 0.03}>
-                <li className="border-b border-piedra pb-3 font-serif text-xl leading-tight">
-                  {c.display_name}
-                </li>
-              </SectionReveal>
-            ))}
-          </ul>
+          <div className="mt-16">
+            <p className="mb-4 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-niebla">
+              Base permanente
+            </p>
+            <ul className="grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+              {cuerosCarryover.map((c, i) => (
+                <SectionReveal key={c.id} delay={i * 0.02}>
+                  <li className="border-b border-piedra pb-3 font-serif text-xl leading-tight">
+                    {c.display_name}
+                  </li>
+                </SectionReveal>
+              ))}
+            </ul>
+
+            {cuerosModa.length > 0 && (
+              <>
+                <p className="mb-4 mt-16 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-niebla">
+                  De colección
+                </p>
+                <ul className="grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {cuerosModa.map((c, i) => (
+                    <SectionReveal key={c.id} delay={i * 0.02}>
+                      <li className="border-b border-piedra pb-3 font-serif text-xl leading-tight">
+                        {c.display_name}
+                        {c.coleccion && (
+                          <span className="ml-3 font-sans text-[10px] uppercase tracking-[0.18em] text-cuero">
+                            {c.coleccion}
+                          </span>
+                        )}
+                      </li>
+                    </SectionReveal>
+                  ))}
+                </ul>
+              </>
+            )}
+
+            <div className="mt-12">
+              <Link
+                href="/colecciones"
+                className="inline-flex items-center gap-3 border border-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
+              >
+                Historial de colecciones
+                <span>→</span>
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
