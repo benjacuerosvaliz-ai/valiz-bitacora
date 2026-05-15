@@ -204,6 +204,39 @@ export default async function YoPage({
   // Map slug → name para mostrar nombres
   const familiaNamesBySlug = new Map(familias.map((f) => [f.slug, f.name]));
 
+  // Resolver SKU de pendientes que tienen familia_slug + color_valiz pero
+  // no tienen sku guardado, para usar el PNG del producto. Tiramos una
+  // query corta a productos por las familias presentes en pendientes
+  // sin sku.
+  const familiaIdBySlug = new Map(familias.map((f) => [f.slug, f.id]));
+  const skuBySlugColor = new Map<string, string>();
+  const pendientesSinSku = pendientes.filter(
+    (p) => !p.sku && p.familia_slug && p.color_valiz,
+  );
+  if (pendientesSinSku.length > 0) {
+    const famIds = [
+      ...new Set(
+        pendientesSinSku
+          .map((p) => familiaIdBySlug.get(p.familia_slug ?? ""))
+          .filter((x): x is string => !!x),
+      ),
+    ];
+    if (famIds.length > 0) {
+      const { data: prodMatch } = await sb
+        .from("productos")
+        .select("sku, color_valiz, familia_id")
+        .in("familia_id", famIds)
+        .eq("status", "active");
+      for (const p of prodMatch ?? []) {
+        if (!p.familia_id || !p.color_valiz) continue;
+        const fam = familias.find((f) => f.id === p.familia_id);
+        if (!fam) continue;
+        const key = `${fam.slug}|${p.color_valiz.toLowerCase()}`;
+        skuBySlugColor.set(key, p.sku);
+      }
+    }
+  }
+
   const nombre = profile.display_name || profile.email.split("@")[0];
   const primerLogin = !profile.welcomed_at;
 
@@ -374,10 +407,19 @@ export default async function YoPage({
               </p>
               <ul className="mt-6 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
                 {pendientes.map((p) => {
-                  // Fallback chain: foto subida → PNG del producto si hay SKU match
-                  // → "Sin foto".
+                  // Fallback chain: foto subida → PNG del producto por SKU →
+                  // PNG del producto resuelto via familia+color → "Sin foto".
                   const fotoSubida = p.foto_url;
-                  const fotoProducto = p.sku ? photoBySku.get(p.sku) : null;
+                  const skuResolved =
+                    p.sku ??
+                    (p.familia_slug && p.color_valiz
+                      ? skuBySlugColor.get(
+                          `${p.familia_slug}|${p.color_valiz.toLowerCase()}`,
+                        ) ?? null
+                      : null);
+                  const fotoProducto = skuResolved
+                    ? photoBySku.get(skuResolved)
+                    : null;
                   const foto = fotoSubida ?? fotoProducto ?? null;
                   return (
                     <li key={p.id} className="flex flex-col items-center">
