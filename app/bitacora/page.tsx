@@ -143,34 +143,36 @@ export default async function BitacoraColectivaPage() {
                 const fam = p?.familia_id ? familiaById.get(p.familia_id) : null;
                 const author = profileByUser.get(b.user_id);
                 return (
-                  <li key={b.id} className="border border-piedra bg-fondo">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={b.foto_url}
-                      alt={b.lugar ?? "Bitácora Valiz"}
-                      className="aspect-[4/5] w-full object-cover"
-                    />
-                    <div className="px-5 py-5">
-                      {b.lugar && (
-                        <p className="font-serif text-lg italic text-cuero">
-                          {b.lugar}
+                  <li key={b.id} className="border border-piedra bg-fondo transition-colors hover:border-cuero">
+                    <Link href={`/bitacora/${b.id}`} className="block">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={b.foto_url}
+                        alt={b.lugar ?? "Bitácora Valiz"}
+                        className="aspect-[4/5] w-full object-cover"
+                      />
+                      <div className="px-5 py-5">
+                        {b.lugar && (
+                          <p className="font-serif text-lg italic text-cuero">
+                            {b.lugar}
+                          </p>
+                        )}
+                        {fam && (
+                          <p className="mt-1 font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
+                            {fam}
+                            {p?.color_valiz && ` · ${p.color_valiz}`}
+                          </p>
+                        )}
+                        {b.texto && (
+                          <p className="mt-3 line-clamp-3 font-serif text-base leading-relaxed">
+                            {b.texto}
+                          </p>
+                        )}
+                        <p className="mt-4 font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
+                          {authorLabel(author)} · {formatDate(b.created_at)}
                         </p>
-                      )}
-                      {fam && (
-                        <p className="mt-1 font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
-                          {fam}
-                          {p?.color_valiz && ` · ${p.color_valiz}`}
-                        </p>
-                      )}
-                      {b.texto && (
-                        <p className="mt-3 font-serif text-base leading-relaxed">
-                          {b.texto}
-                        </p>
-                      )}
-                      <p className="mt-4 font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
-                        {authorLabel(author)} · {formatDate(b.created_at)}
-                      </p>
-                    </div>
+                      </div>
+                    </Link>
                   </li>
                 );
               })}

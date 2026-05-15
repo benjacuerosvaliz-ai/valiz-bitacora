@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 
+import { BitacoraCard } from "./bitacora-card";
 import { WelcomeModal } from "./welcome-modal";
 
 const nf = new Intl.NumberFormat("es-CL");
@@ -393,30 +394,15 @@ export default async function YoPage({
           ) : (
             <ul className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {bitacoras.map((b) => (
-                <li key={b.id} className="border border-piedra bg-fondo">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={b.foto_url}
-                    alt={b.lugar ?? ""}
-                    className="aspect-square w-full object-cover"
-                  />
-                  <div className="px-4 py-4">
-                    {b.lugar && (
-                      <p className="font-serif text-base italic text-cuero">
-                        {b.lugar}
-                      </p>
-                    )}
-                    {b.texto && (
-                      <p className="mt-2 line-clamp-3 font-serif text-sm leading-relaxed">
-                        {b.texto}
-                      </p>
-                    )}
-                    <p className="mt-3 font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
-                      {formatDate(b.created_at)}
-                      {b.points_awarded > 0 && ` · +${b.points_awarded} pts`}
-                    </p>
-                  </div>
-                </li>
+                <BitacoraCard
+                  key={b.id}
+                  id={b.id}
+                  fotoUrl={b.foto_url}
+                  lugar={b.lugar}
+                  texto={b.texto}
+                  created_at={b.created_at}
+                  pointsAwarded={b.points_awarded}
+                />
               ))}
             </ul>
           )}
