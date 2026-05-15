@@ -50,47 +50,87 @@ export type SalaShelving = {
   name: string;
   variants: SalaVariant[];
   wall: "N" | "E" | "S" | "W";
+  slotIndex: number;
+  totalInWall: number;
 };
 
-type FocusWall = SalaShelving["wall"] | null;
+type Wall = SalaShelving["wall"];
 
-const WALL_TRANSFORMS: Record<
-  Exclude<FocusWall, null>,
-  { shelving: [number, number, number]; rotation: number; cameraNear: [number, number, number]; yaw: number }
-> = {
-  N: {
-    shelving: [0, 1.7, -9.79],
-    rotation: 0,
-    cameraNear: [0, 1.65, -4],
-    yaw: 0,
-  },
-  E: {
-    shelving: [9.79, 1.7, 0],
-    rotation: -Math.PI / 2,
-    cameraNear: [4, 1.65, 0],
-    yaw: -Math.PI / 2,
-  },
-  S: {
-    shelving: [0, 1.7, 9.79],
-    rotation: Math.PI,
-    cameraNear: [0, 1.65, 4],
-    yaw: Math.PI,
-  },
-  W: {
-    shelving: [-9.79, 1.7, 0],
-    rotation: Math.PI / 2,
-    cameraNear: [-4, 1.65, 0],
-    yaw: Math.PI / 2,
-  },
+type Transform = {
+  shelving: [number, number, number];
+  rotation: number;
+  cameraNear: [number, number, number];
+  yaw: number;
 };
+
+// Habitación: 24m × 24m, paredes en ±12.
+// Shelving backboard se posiciona a WALL_DIST del centro para quedar
+// pegado a la pared. CAM_DIST = cuán adentro se acerca la cámara al
+// hacer focus dolly.
+const WALL_DIST = 11.79;
+const CAM_DIST = 5;
+const WALL_HALF = 12;
+const CORNER_MARGIN = 3; // mínimo desde el centro a la esquina
+
+function offsetAlongWall(slotIndex: number, totalInWall: number): number {
+  if (totalInWall <= 1) return 0;
+  const usableSpan = (WALL_HALF - CORNER_MARGIN) * 2;
+  const spacing = usableSpan / (totalInWall - 1);
+  return -usableSpan / 2 + slotIndex * spacing;
+}
+
+function transformFor(
+  wall: Wall,
+  slotIndex: number,
+  totalInWall: number,
+): Transform {
+  const o = offsetAlongWall(slotIndex, totalInWall);
+  switch (wall) {
+    case "N":
+      return {
+        shelving: [o, 1.7, -WALL_DIST],
+        rotation: 0,
+        cameraNear: [o, 1.65, -WALL_DIST + CAM_DIST],
+        yaw: 0,
+      };
+    case "S":
+      return {
+        shelving: [o, 1.7, WALL_DIST],
+        rotation: Math.PI,
+        cameraNear: [o, 1.65, WALL_DIST - CAM_DIST],
+        yaw: Math.PI,
+      };
+    case "E":
+      return {
+        shelving: [WALL_DIST, 1.7, o],
+        rotation: -Math.PI / 2,
+        cameraNear: [WALL_DIST - CAM_DIST, 1.65, o],
+        yaw: -Math.PI / 2,
+      };
+    case "W":
+      return {
+        shelving: [-WALL_DIST, 1.7, o],
+        rotation: Math.PI / 2,
+        cameraNear: [-WALL_DIST + CAM_DIST, 1.65, o],
+        yaw: Math.PI / 2,
+      };
+  }
+}
 
 export default function Sala({ shelvings }: { shelvings: SalaShelving[] }) {
   const router = useRouter();
-  const [focus, setFocus] = useState<FocusWall>(null);
+  const [focusSlug, setFocusSlug] = useState<string | null>(null);
   const [preview, setPreview] = useState<{
     variant: SalaVariant;
     familyName: string;
   } | null>(null);
+
+  const focusTransform = useMemo(() => {
+    if (!focusSlug) return null;
+    const s = shelvings.find((x) => x.slug === focusSlug);
+    if (!s) return null;
+    return transformFor(s.wall, s.slotIndex, s.totalInWall);
+  }, [focusSlug, shelvings]);
 
   return (
     <div className="fixed inset-0 bg-fondo">
@@ -102,8 +142,8 @@ export default function Sala({ shelvings }: { shelvings: SalaShelving[] }) {
         <Suspense fallback={null}>
           <Scene
             shelvings={shelvings}
-            focus={focus}
-            onSignClick={(wall) => setFocus(wall)}
+            focusTransform={focusTransform}
+            onSignClick={(slug) => setFocusSlug(slug)}
             onVariantClick={(variant, familyName) => {
               setPreview({ variant, familyName });
             }}
@@ -126,16 +166,16 @@ export default function Sala({ shelvings }: { shelvings: SalaShelving[] }) {
           </a>
         </div>
         <div className="flex flex-col items-center gap-3">
-          {focus && (
+          {focusSlug && (
             <button
-              onClick={() => setFocus(null)}
+              onClick={() => setFocusSlug(null)}
               className="pointer-events-auto border border-tinta bg-fondo/80 px-5 py-2 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta backdrop-blur-sm transition-colors hover:bg-tinta hover:text-fondo"
             >
               ← Volver al centro
             </button>
           )}
           <p className="text-center font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
-            {focus
+            {focusSlug
               ? "Click en una pieza para verla en detalle"
               : "Mueve el cursor para mirar · click en el letrero para acercarte"}
           </p>
@@ -155,18 +195,18 @@ export default function Sala({ shelvings }: { shelvings: SalaShelving[] }) {
 
 function Scene({
   shelvings,
-  focus,
+  focusTransform,
   onSignClick,
   onVariantClick,
 }: {
   shelvings: SalaShelving[];
-  focus: FocusWall;
-  onSignClick: (wall: Exclude<FocusWall, null>) => void;
+  focusTransform: Transform | null;
+  onSignClick: (slug: string) => void;
   onVariantClick: (variant: SalaVariant, familyName: string) => void;
 }) {
   return (
     <>
-      <CameraRig focus={focus} />
+      <CameraRig focusTransform={focusTransform} />
       {/* Environment HDR — da reflejos y ambient lighting realistic; sin
           esto las superficies se ven plásticas. 'apartment' es cálido
           tipo boutique. background=false porque tenemos paredes propias. */}
@@ -174,14 +214,14 @@ function Scene({
       <Lighting />
       <Room />
       {shelvings.map((s) => {
-        const t = WALL_TRANSFORMS[s.wall];
+        const t = transformFor(s.wall, s.slotIndex, s.totalInWall);
         return (
           <ShelvingUnit
             key={s.slug}
             shelving={s}
             position={t.shelving}
             rotationY={t.rotation}
-            onSignClick={() => onSignClick(s.wall)}
+            onSignClick={() => onSignClick(s.slug)}
             onVariantClick={(variant) => onVariantClick(variant, s.name)}
           />
         );
@@ -199,7 +239,7 @@ function Scene({
  *  - Cuando focus != null: la cámara se anima a una posición cerca de
  *    esa pared y mira a esa pared, ignorando input del cursor.
  */
-function CameraRig({ focus }: { focus: FocusWall }) {
+function CameraRig({ focusTransform }: { focusTransform: Transform | null }) {
   const { camera, gl } = useThree();
   const yawTarget = useRef(0);
   const pitchTarget = useRef(0);
@@ -282,19 +322,18 @@ function CameraRig({ focus }: { focus: FocusWall }) {
 
   // Cuando cambia el focus, calcular nuevo target de cámara
   useEffect(() => {
-    if (focus) {
-      const t = WALL_TRANSFORMS[focus];
-      posTarget.current = t.cameraNear;
-      yawTarget.current = t.yaw;
+    if (focusTransform) {
+      posTarget.current = focusTransform.cameraNear;
+      yawTarget.current = focusTransform.yaw;
       pitchTarget.current = 0;
     } else {
       posTarget.current = [0, 1.65, 0];
     }
-  }, [focus]);
+  }, [focusTransform]);
 
   useFrame((_, delta) => {
     // Si no estamos enfocados, el cursor (desktop) o el drag (mobile) maneja
-    if (!focus && isHoverDevice.current && cursor.current.inside) {
+    if (!focusTransform && isHoverDevice.current && cursor.current.inside) {
       const cx = cursor.current.x;
       const cy = cursor.current.y;
       // Solo rota si el cursor está fuera del dead-zone
@@ -348,35 +387,61 @@ function CameraRig({ focus }: { focus: FocusWall }) {
 function Lighting() {
   return (
     <>
-      <ambientLight intensity={0.85} color="#fff5e6" />
-      <hemisphereLight args={["#fff2d8", "#3a2418", 0.6]} />
-      {[0, 1, 2, 3].map((i) => {
-        const a = (i / 4) * Math.PI * 2;
-        const r = 5;
-        return (
-          <pointLight
-            key={i}
-            position={[Math.sin(a) * r, 4.0, -Math.cos(a) * r]}
-            intensity={3.0}
-            color="#fff0d0"
-            distance={18}
-            decay={1.4}
-          />
-        );
-      })}
-      <directionalLight position={[3, 8, 4]} intensity={0.6} color="#fff5e6" />
+      <ambientLight intensity={0.9} color="#fff5e6" />
+      <hemisphereLight args={["#fff2d8", "#3a2418", 0.55]} />
+      {/* 4 luces en esquinas (cubren los 4 muros con shelvings) */}
+      {[
+        [8, 4.0, 8],
+        [-8, 4.0, 8],
+        [8, 4.0, -8],
+        [-8, 4.0, -8],
+      ].map((p, i) => (
+        <pointLight
+          key={`corner-${i}`}
+          position={p as [number, number, number]}
+          intensity={5}
+          color="#fff0d0"
+          distance={24}
+          decay={1.4}
+        />
+      ))}
+      {/* 4 luces mid-muro para iluminar shelvings de cerca */}
+      {[
+        [0, 3.5, -9],
+        [0, 3.5, 9],
+        [9, 3.5, 0],
+        [-9, 3.5, 0],
+      ].map((p, i) => (
+        <pointLight
+          key={`wall-${i}`}
+          position={p as [number, number, number]}
+          intensity={3}
+          color="#fff2d8"
+          distance={14}
+          decay={1.5}
+        />
+      ))}
+      {/* Plafón central */}
+      <pointLight
+        position={[0, 4.3, 0]}
+        intensity={3}
+        color="#fff2d8"
+        distance={20}
+        decay={1.5}
+      />
+      <directionalLight position={[3, 8, 4]} intensity={0.55} color="#fff5e6" />
     </>
   );
 }
 
 function Room() {
-  const floor = usePBR("wood_floor", 4, 4);
-  const wall = usePBR("wall_plaster", 3, 1.5);
+  const floor = usePBR("wood_floor", 5, 5);
+  const wall = usePBR("wall_plaster", 4, 1.5);
 
   return (
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[20, 20]} />
+        <planeGeometry args={[24, 24]} />
         <meshStandardMaterial
           map={floor.diff}
           normalMap={floor.nor}
@@ -385,17 +450,17 @@ function Room() {
         />
       </mesh>
       <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 4.5, 0]}>
-        <planeGeometry args={[20, 20]} />
+        <planeGeometry args={[24, 24]} />
         <meshStandardMaterial color={COL.techo} roughness={1} />
       </mesh>
       {[
-        { pos: [0, 2.25, -10] as const, rot: [0, 0, 0] as const },
-        { pos: [0, 2.25, 10] as const, rot: [0, Math.PI, 0] as const },
-        { pos: [-10, 2.25, 0] as const, rot: [0, Math.PI / 2, 0] as const },
-        { pos: [10, 2.25, 0] as const, rot: [0, -Math.PI / 2, 0] as const },
+        { pos: [0, 2.25, -12] as const, rot: [0, 0, 0] as const },
+        { pos: [0, 2.25, 12] as const, rot: [0, Math.PI, 0] as const },
+        { pos: [-12, 2.25, 0] as const, rot: [0, Math.PI / 2, 0] as const },
+        { pos: [12, 2.25, 0] as const, rot: [0, -Math.PI / 2, 0] as const },
       ].map((w, i) => (
         <mesh key={i} position={w.pos} rotation={w.rot} receiveShadow>
-          <planeGeometry args={[20, 4.5]} />
+          <planeGeometry args={[24, 4.5]} />
           <meshStandardMaterial
             map={wall.diff}
             normalMap={wall.nor}
