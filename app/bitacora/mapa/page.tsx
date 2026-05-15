@@ -33,17 +33,16 @@ type ProductoLite = {
   familia_id: string | null;
 };
 
-type FamiliaLite = { id: string; name: string };
+type FamiliaRow = {
+  id: string;
+  name: string;
+  hours_per_unit: number | string | null;
+};
 
 type ProductoStats = {
   p2: number | string | null;
   sales_total: number | null;
   familia_id: string | null;
-};
-
-type FamiliaRow = {
-  id: string;
-  hours_per_unit: number | string | null;
 };
 
 export default async function MapaPage() {
@@ -62,22 +61,18 @@ export default async function MapaPage() {
       .from("productos")
       .select("p2, sales_total, familia_id")
       .eq("status", "active"),
-    sb.from("familias").select("id, hours_per_unit, name"),
+    sb.from("familias").select("id, name, hours_per_unit"),
     sb.from("productos").select("sku, color_valiz, familia_id"),
   ]);
 
   const bitacoras = (bitsRes.data ?? []) as BitacoraRow[];
   const productos = (prodsRes.data ?? []) as ProductoStats[];
-  const familias = (famsRes.data ?? []) as (FamiliaRow & { name?: string })[];
+  const familias = (famsRes.data ?? []) as FamiliaRow[];
   const productosLite = (prodsForBitsRes.data ?? []) as ProductoLite[];
 
-  // Mapas para enriquecer cada bitácora con familia + color
   const productoBySku = new Map(productosLite.map((p) => [p.sku, p]));
-  const familiaById = new Map(
-    familias.map((f) => [f.id, (f as FamiliaLite).name ?? ""]),
-  );
+  const familiaById = new Map(familias.map((f) => [f.id, f.name]));
 
-  // Stats agregadas para el overlay del globo
   const hoursByFamilia = new Map(
     familias.map((f) => [f.id, Number(f.hours_per_unit ?? 0)]),
   );
@@ -127,28 +122,66 @@ export default async function MapaPage() {
         </p>
       </header>
 
-      {/* GLOBO FULL-BLEED ---------------------------------------------------- */}
-      <section className="relative flex-1 overflow-hidden bg-fondo">
-        <div className="h-[calc(100vh-72px)] min-h-[600px] w-full sm:h-[calc(100vh-78px)]">
-          <MapaColectivo points={points} />
-        </div>
-
-        {/* Overlay top-left: título grande */}
-        <div className="pointer-events-none absolute left-6 top-6 max-w-md sm:left-12 sm:top-12">
+      {/* MOBILE: layout vertical normal */}
+      <section className="flex flex-col bg-fondo sm:hidden">
+        <div className="px-6 pt-8">
           <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
             Valiz por el mundo
           </p>
-          <h1 className="mt-3 font-serif text-4xl leading-[1.04] tracking-[-0.022em] text-tinta sm:text-5xl">
+          <h1 className="mt-3 font-serif text-4xl leading-[1.04] tracking-[-0.022em] text-tinta">
             El cuero anda solo.
           </h1>
-          <p className="mt-3 max-w-xs font-serif text-sm italic leading-relaxed text-niebla sm:text-base">
+        </div>
+
+        <div className="mt-6 aspect-square w-full overflow-hidden">
+          <MapaColectivo points={points} />
+        </div>
+
+        <div className="grid grid-cols-2 gap-x-6 gap-y-5 px-6 py-8">
+          <StatCompact label="Horas artesanos" big={nf.format(horasTotal)} />
+          <StatCompact label="Pies² rescatados" big={nf.format(piesTotal)} />
+          <StatCompact label="Piezas viajando" big={nf.format(piezasTotal)} />
+          <StatCompact
+            label="Bitácoras"
+            big={nf.format(points.length)}
+            small={
+              personas > 0
+                ? `de ${personas} ${personas === 1 ? "persona" : "personas"}`
+                : undefined
+            }
+          />
+        </div>
+
+        <div className="px-6 pb-8">
+          <Link
+            href="/bitacora"
+            className="inline-flex w-full items-center justify-center gap-3 border border-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
+          >
+            Ver feed de entradas →
+          </Link>
+        </div>
+      </section>
+
+      {/* DESKTOP: full-bleed con overlays */}
+      <section className="relative hidden flex-1 overflow-hidden bg-fondo sm:block">
+        <div className="h-[calc(100vh-78px)] w-full">
+          <MapaColectivo points={points} />
+        </div>
+
+        <div className="pointer-events-none absolute left-12 top-12 max-w-md">
+          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+            Valiz por el mundo
+          </p>
+          <h1 className="mt-3 font-serif text-5xl leading-[1.04] tracking-[-0.022em] text-tinta">
+            El cuero anda solo.
+          </h1>
+          <p className="mt-3 max-w-xs font-serif text-base italic leading-relaxed text-niebla">
             Cada pieza después del taller deja huella en algún lugar. Esto es
             lo que vamos viendo.
           </p>
         </div>
 
-        {/* Overlay bottom-left: stats Valiz */}
-        <div className="pointer-events-none absolute bottom-6 left-6 grid grid-cols-2 gap-x-8 gap-y-4 sm:bottom-12 sm:left-12 sm:grid-cols-4 sm:gap-x-12">
+        <div className="pointer-events-none absolute bottom-12 left-12 grid grid-cols-4 gap-x-12">
           <Stat label="Horas de artesanos" big={nf.format(horasTotal)} />
           <Stat label="Pies² rescatados" big={nf.format(piesTotal)} />
           <Stat label="Piezas viajando" big={nf.format(piezasTotal)} />
@@ -163,20 +196,18 @@ export default async function MapaPage() {
           />
         </div>
 
-        {/* Overlay bottom-right: link a lista */}
-        <div className="pointer-events-none absolute bottom-6 right-6 sm:bottom-12 sm:right-12">
+        <div className="pointer-events-none absolute bottom-12 right-12">
           <Link
             href="/bitacora"
             className="pointer-events-auto inline-flex items-center gap-3 border border-tinta bg-fondo/85 px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta backdrop-blur-sm transition-colors hover:bg-tinta hover:text-fondo"
           >
-            Ver entradas
-            <span>→</span>
+            Ver feed de entradas →
           </Link>
         </div>
 
         {points.length === 0 && (
-          <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 translate-y-32 text-center sm:translate-y-40">
-            <p className="bg-fondo/85 px-5 py-3 font-serif text-sm italic text-niebla backdrop-blur-sm sm:text-base">
+          <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 translate-y-40 text-center">
+            <p className="bg-fondo/85 px-5 py-3 font-serif text-base italic text-niebla backdrop-blur-sm">
               Aún no hay puntos. Sube la primera bitácora con ubicación.
             </p>
           </div>
@@ -205,6 +236,32 @@ function Stat({
       </p>
       {small && (
         <p className="mt-1 font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
+          {small}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function StatCompact({
+  label,
+  big,
+  small,
+}: {
+  label: string;
+  big: string;
+  small?: string;
+}) {
+  return (
+    <div>
+      <p className="font-sans text-[9px] font-semibold uppercase tracking-[0.18em] text-niebla">
+        {label}
+      </p>
+      <p className="mt-1 font-serif text-2xl leading-none tracking-[-0.015em] text-tinta">
+        {big}
+      </p>
+      {small && (
+        <p className="mt-1 font-sans text-[9px] uppercase tracking-[0.15em] text-niebla">
           {small}
         </p>
       )}

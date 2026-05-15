@@ -138,26 +138,71 @@ export default async function BitacoraColectivaPage() {
         </p>
       </header>
 
-      {/* GLOBO COMO HERO -------------------------------------------------- */}
-      <section className="relative overflow-hidden border-b border-piedra bg-fondo">
-        <div className="h-[calc(100vh-72px)] min-h-[600px] w-full sm:h-[calc(100vh-78px)]">
-          <MapaColectivo points={points} />
-        </div>
-
-        <div className="pointer-events-none absolute left-6 top-6 max-w-md sm:left-12 sm:top-12">
+      {/* GLOBO COMO HERO ------------------------------------------------- */}
+      {/* MOBILE: layout vertical normal (título → globo → stats → CTA) */}
+      <section className="border-b border-piedra bg-fondo sm:hidden">
+        <div className="px-6 pt-8">
           <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
             Valiz por el mundo
           </p>
-          <h1 className="mt-3 font-serif text-4xl leading-[1.04] tracking-[-0.022em] text-tinta sm:text-5xl">
+          <h1 className="mt-3 font-serif text-4xl leading-[1.04] tracking-[-0.022em] text-tinta">
             El cuero anda solo.
           </h1>
-          <p className="mt-3 max-w-xs font-serif text-sm italic leading-relaxed text-niebla sm:text-base">
+          <p className="mt-3 font-serif text-sm italic leading-relaxed text-niebla">
             Cada pieza después del taller deja huella en algún lugar. Esto es
             lo que vamos viendo.
           </p>
         </div>
 
-        <div className="pointer-events-none absolute bottom-6 left-6 grid grid-cols-2 gap-x-8 gap-y-4 sm:bottom-12 sm:left-12 sm:grid-cols-4 sm:gap-x-12">
+        <div className="mt-6 aspect-square w-full overflow-hidden">
+          <MapaColectivo points={points} />
+        </div>
+
+        <div className="grid grid-cols-2 gap-x-6 gap-y-5 px-6 py-8">
+          <StatCompact label="Horas artesanos" big={nf.format(horasTotal)} />
+          <StatCompact label="Pies² rescatados" big={nf.format(piesTotal)} />
+          <StatCompact label="Piezas viajando" big={nf.format(piezasTotal)} />
+          <StatCompact
+            label="Bitácoras"
+            big={nf.format(points.length)}
+            small={
+              personasUnicas > 0
+                ? `de ${personasUnicas} ${personasUnicas === 1 ? "persona" : "personas"}`
+                : undefined
+            }
+          />
+        </div>
+
+        <div className="px-6 pb-8">
+          <Link
+            href="#feed"
+            className="inline-flex w-full items-center justify-center gap-3 border border-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
+          >
+            Ver entradas ↓
+          </Link>
+        </div>
+      </section>
+
+      {/* DESKTOP: full-bleed con overlays absolutos */}
+      <section className="relative hidden overflow-hidden border-b border-piedra bg-fondo sm:block">
+        <div className="h-[calc(100vh-78px)] w-full">
+          <MapaColectivo points={points} />
+        </div>
+
+        <div className="pointer-events-none absolute left-12 top-12 max-w-md">
+          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+            Valiz por el mundo
+          </p>
+          <h1 className="mt-3 font-serif text-5xl leading-[1.04] tracking-[-0.022em] text-tinta">
+            El cuero anda solo.
+          </h1>
+          <p className="mt-3 max-w-xs font-serif text-base italic leading-relaxed text-niebla">
+            Cada pieza después del taller deja huella en algún lugar. Esto es
+            lo que vamos viendo.
+          </p>
+        </div>
+
+        <div className="pointer-events-none absolute bottom-12 left-12 grid grid-cols-4 gap-x-12">
           <Stat label="Horas de artesanos" big={nf.format(horasTotal)} />
           <Stat label="Pies² rescatados" big={nf.format(piesTotal)} />
           <Stat label="Piezas viajando" big={nf.format(piezasTotal)} />
@@ -172,7 +217,7 @@ export default async function BitacoraColectivaPage() {
           />
         </div>
 
-        <div className="pointer-events-none absolute bottom-6 right-6 flex flex-col items-end gap-3 sm:bottom-12 sm:right-12">
+        <div className="pointer-events-none absolute bottom-12 right-12">
           <Link
             href="#feed"
             className="pointer-events-auto inline-flex items-center gap-3 border border-tinta bg-fondo/85 px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta backdrop-blur-sm transition-colors hover:bg-tinta hover:text-fondo"
@@ -182,8 +227,8 @@ export default async function BitacoraColectivaPage() {
         </div>
 
         {points.length === 0 && (
-          <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 translate-y-32 text-center sm:translate-y-40">
-            <p className="bg-fondo/85 px-5 py-3 font-serif text-sm italic text-niebla backdrop-blur-sm sm:text-base">
+          <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 translate-y-40 text-center">
+            <p className="bg-fondo/85 px-5 py-3 font-serif text-base italic text-niebla backdrop-blur-sm">
               Aún no hay puntos. Sube la primera bitácora con ubicación.
             </p>
           </div>
@@ -282,6 +327,32 @@ function Stat({
       </p>
       {small && (
         <p className="mt-1 font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
+          {small}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function StatCompact({
+  label,
+  big,
+  small,
+}: {
+  label: string;
+  big: string;
+  small?: string;
+}) {
+  return (
+    <div>
+      <p className="font-sans text-[9px] font-semibold uppercase tracking-[0.18em] text-niebla">
+        {label}
+      </p>
+      <p className="mt-1 font-serif text-2xl leading-none tracking-[-0.015em] text-tinta">
+        {big}
+      </p>
+      {small && (
+        <p className="mt-1 font-sans text-[9px] uppercase tracking-[0.15em] text-niebla">
           {small}
         </p>
       )}
