@@ -53,7 +53,7 @@ export default function LoginPage() {
 
       <footer className="px-8 py-8 sm:px-16">
         <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
-          Valiz · MMXXVI
+          Valiz · Since 2018
         </p>
       </footer>
     </main>

@@ -106,7 +106,7 @@ function shell(opts: {
                   <tr>
                     <td style="padding:20px 0 0 0;">
                       <p style="margin:0; font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:${NIEBLA}; line-height:1.6;">
-                        ${footer ?? "Cuero, madera y manos chilenas. Valiz · MMXXVI · bitacora.valiz.cl"}
+                        ${footer ?? "Cuero artesano. Manos chilenas. Valiz · Since 2018 · bitacora.valiz.cl"}
                       </p>
                     </td>
                   </tr>

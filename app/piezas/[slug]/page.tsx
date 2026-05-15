@@ -220,7 +220,7 @@ export default async function FamiliaPage({
             ← Volver a la Bitácora
           </Link>
           <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
-            Valiz · MMXXVI
+            Valiz · Since 2018
           </p>
         </div>
       </footer>

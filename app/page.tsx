@@ -246,7 +246,7 @@ export default async function Home() {
             <div className="lg:sticky lg:top-12 lg:h-[calc(100svh-6rem)] lg:self-start">
               <ParallaxImage
                 src="/images/vida-presente.jpg"
-                alt="Manos cortando cuero sobre mesa de madera con hilos de colores"
+                alt="Manos cortando cuero artesano con hilos de colores"
                 sizes="(min-width: 1024px) 45vw, 100vw"
                 intensity={8}
                 className="h-full w-full"
@@ -453,7 +453,7 @@ export default async function Home() {
           <SectionReveal delay={0.15}>
             <ParallaxImage
               src="/images/vida-futura.jpg"
-              alt="Mochila Valiz apoyada en un pasamanos de madera, bosque con nieve"
+              alt="Mochila Valiz en un bosque con nieve"
               sizes="(min-width: 1024px) 40vw, 100vw"
               intensity={8}
               className="aspect-[3/4] w-full"
@@ -465,10 +465,10 @@ export default async function Home() {
       <footer className="px-8 py-10 sm:px-16">
         <div className="flex flex-col items-baseline justify-between gap-3 sm:flex-row">
           <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
-            Cuero, madera y manos chilenas
+            Cuero artesano · Manos chilenas
           </p>
           <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
-            Valiz · MMXXVI
+            Valiz · Since 2018
           </p>
         </div>
       </footer>
