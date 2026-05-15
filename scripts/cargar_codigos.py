@@ -50,7 +50,9 @@ def parse_codes_from(source: str) -> list[str]:
         path = Path(source)
         if not path.exists():
             sys.exit(f"❌ No existe {path}")
-        raw_lines = path.read_text(encoding="utf-8").splitlines()
+        # utf-8-sig descarta el BOM si lo hay (Shopify y Excel a veces lo
+        # incluyen al inicio del CSV).
+        raw_lines = path.read_text(encoding="utf-8-sig").splitlines()
 
     codes = []
     for line in raw_lines:
@@ -59,7 +61,13 @@ def parse_codes_from(source: str) -> list[str]:
         if not first:
             continue
         # Skip headers obvios
-        if first.lower() in {"code", "código", "codigo", "discount code"}:
+        if first.lower() in {
+            "code",
+            "código",
+            "codigo",
+            "discount code",
+            "discount codes",  # Shopify exporta así (con s)
+        }:
             continue
         codes.append(first)
     return codes
