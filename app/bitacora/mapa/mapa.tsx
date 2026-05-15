@@ -2,6 +2,7 @@
 
 import "mapbox-gl/dist/mapbox-gl.css";
 
+import type { Map as MapboxMap } from "mapbox-gl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Map, Marker, Popup, type MapRef } from "react-map-gl/mapbox";
 
@@ -17,39 +18,95 @@ type Point = {
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 const MAP_STYLE = "mapbox://styles/mapbox/light-v11";
 
-// Defaults: Santiago de Chile
+// Vista inicial: zoom bajo para ver el globo entero
 const DEFAULT_VIEW = {
   longitude: -70.65,
-  latitude: -33.45,
-  zoom: 3,
+  latitude: -10, // un poco arriba de Chile para que se vea continente entero
+  zoom: 1.5,
 };
+
+// Auto-rotación: grados de longitud por segundo
+const SPIN_DEGREES_PER_SECOND = 6;
+// Tiempo de pausa después de interacción del user antes de reanudar
+const RESUME_AFTER_MS = 3000;
+// No spinear si el user zoomeó adentro (visiblemente investigando)
+const SPIN_MAX_ZOOM = 4;
 
 export function MapaColectivo({ points }: { points: Point[] }) {
   const mapRef = useRef<MapRef | null>(null);
   const [active, setActive] = useState<Point | null>(null);
 
-  // Estado inicial: si hay puntos, centro promedio + zoom acercado;
-  // si no, default Santiago.
+  // Vista inicial: con puntos, centro promedio + zoom acercado;
+  // sin puntos, default mundial.
   const initial = useMemo(() => {
     if (points.length === 0) return DEFAULT_VIEW;
     const lat = points.reduce((s, p) => s + p.lat, 0) / points.length;
     const lng = points.reduce((s, p) => s + p.lng, 0) / points.length;
-    return { latitude: lat, longitude: lng, zoom: points.length === 1 ? 6 : 3 };
+    return {
+      latitude: lat,
+      longitude: lng,
+      zoom: points.length === 1 ? 4 : 2,
+    };
   }, [points]);
 
-  // Cuando hay >1 punto, ajustar bounds para que todos sean visibles.
+  // Auto-spin del globo. Pausa al interactuar, reanuda después de RESUME_AFTER_MS.
   useEffect(() => {
-    if (!mapRef.current || points.length < 2) return;
-    const lats = points.map((p) => p.lat);
-    const lngs = points.map((p) => p.lng);
-    const sw: [number, number] = [Math.min(...lngs), Math.min(...lats)];
-    const ne: [number, number] = [Math.max(...lngs), Math.max(...lats)];
-    mapRef.current.fitBounds([sw, ne], {
-      padding: 60,
-      duration: 800,
-      maxZoom: 10,
+    if (!mapRef.current) return;
+    const map = mapRef.current.getMap() as MapboxMap;
+    let userInteracting = false;
+    let resumeTimer: ReturnType<typeof setTimeout> | null = null;
+    let lastTimestamp = performance.now();
+    let rafId: number | null = null;
+
+    const tick = (ts: number) => {
+      const dt = (ts - lastTimestamp) / 1000;
+      lastTimestamp = ts;
+      if (!userInteracting) {
+        const z = map.getZoom();
+        if (z < SPIN_MAX_ZOOM) {
+          const center = map.getCenter();
+          center.lng -= SPIN_DEGREES_PER_SECOND * dt;
+          map.setCenter(center);
+        }
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+
+    const onInteractStart = () => {
+      userInteracting = true;
+      if (resumeTimer) clearTimeout(resumeTimer);
+    };
+    const onInteractEnd = () => {
+      if (resumeTimer) clearTimeout(resumeTimer);
+      resumeTimer = setTimeout(() => {
+        userInteracting = false;
+        lastTimestamp = performance.now();
+      }, RESUME_AFTER_MS);
+    };
+
+    map.on("mousedown", onInteractStart);
+    map.on("touchstart", onInteractStart);
+    map.on("wheel", onInteractStart);
+    map.on("mouseup", onInteractEnd);
+    map.on("touchend", onInteractEnd);
+    // Después de zoom/pan via wheel también esperar
+    map.on("moveend", () => {
+      if (!userInteracting) return;
+      onInteractEnd();
     });
-  }, [points]);
+
+    rafId = requestAnimationFrame(tick);
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (resumeTimer) clearTimeout(resumeTimer);
+      map.off("mousedown", onInteractStart);
+      map.off("touchstart", onInteractStart);
+      map.off("wheel", onInteractStart);
+      map.off("mouseup", onInteractEnd);
+      map.off("touchend", onInteractEnd);
+    };
+  }, []);
 
   if (!TOKEN) {
     return (
@@ -63,22 +120,13 @@ export function MapaColectivo({ points }: { points: Point[] }) {
     );
   }
 
-  if (points.length === 0) {
-    return (
-      <div className="flex h-full w-full items-center justify-center border border-piedra bg-fondo p-10 text-center">
-        <p className="max-w-md font-serif italic text-niebla">
-          Todavía no hay bitácoras con ubicación. Sube la primera y aparece acá.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <Map
       ref={mapRef}
       mapboxAccessToken={TOKEN}
       mapStyle={MAP_STYLE}
       initialViewState={initial}
+      projection={{ name: "globe" }}
       style={{ width: "100%", height: "100%" }}
       attributionControl={false}
       reuseMaps
@@ -98,7 +146,7 @@ export function MapaColectivo({ points }: { points: Point[] }) {
             aria-label={p.lugar ?? "Bitácora"}
             className="group relative cursor-pointer"
           >
-            <span className="block h-3 w-3 rounded-full border-2 border-fondo bg-cuero shadow-md transition-transform duration-200 group-hover:scale-125" />
+            <span className="block h-3 w-3 rounded-full border-2 border-fondo bg-cuero shadow-md transition-transform duration-200 group-hover:scale-150" />
           </button>
         </Marker>
       ))}
