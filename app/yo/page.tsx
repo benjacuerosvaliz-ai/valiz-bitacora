@@ -425,12 +425,24 @@ export default async function YoPage({
 
       <section className="border-b border-piedra px-8 py-20 sm:px-16">
         <div className="mx-auto max-w-5xl">
-          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-            Movimiento de puntos
-          </p>
-          <h2 className="mt-3 font-serif text-3xl leading-[1.1] tracking-[-0.015em] sm:text-4xl">
-            Tu saldo: {nf.format(profile.puntos_actuales)} pts.
-          </h2>
+          <div className="flex flex-col items-baseline justify-between gap-3 sm:flex-row">
+            <div>
+              <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+                Movimiento de puntos
+              </p>
+              <h2 className="mt-3 font-serif text-3xl leading-[1.1] tracking-[-0.015em] sm:text-4xl">
+                Tu saldo: {nf.format(profile.puntos_actuales)} pts.
+              </h2>
+            </div>
+            {profile.puntos_actuales >= 5000 && (
+              <Link
+                href="/yo/canje"
+                className="bg-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-fondo transition-colors hover:bg-cuero"
+              >
+                Canjear pts →
+              </Link>
+            )}
+          </div>
           {movs.length === 0 ? (
             <p className="mt-6 font-serif italic text-niebla">Sin movimientos todavía.</p>
           ) : (
