@@ -11,6 +11,7 @@ type CompraManual = {
   lugar_compra: string | null;
   fecha_compra: string | null;
   descripcion: string | null;
+  foto_url: string | null;
   sku: string | null;
   created_at: string;
 };
@@ -98,29 +99,50 @@ export function AdminPanel({
                 const u = profileById.get(c.user_id);
                 return (
                   <li key={c.id} className="border border-piedra p-4">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between">
-                      <div>
-                        <p className="font-serif text-lg">
-                          {c.familia_slug ?? "(sin familia)"}{" "}
-                          {c.color_valiz && (
-                            <span className="italic text-cuero">· {c.color_valiz}</span>
-                          )}
-                        </p>
-                        <p className="mt-1 font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
-                          {u?.email ?? c.user_id} ·{" "}
-                          {c.lugar_compra && `${c.lugar_compra} · `}
-                          {c.fecha_compra && `${c.fecha_compra} · `}
-                          SKU match: {c.sku ?? "—"}
-                        </p>
-                        {c.descripcion && (
-                          <p className="mt-2 font-serif text-sm italic text-niebla">
-                            {c.descripcion}
+                    <div className="flex flex-col gap-4 sm:flex-row">
+                      {c.foto_url && (
+                        <a
+                          href={c.foto_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-shrink-0"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={c.foto_url}
+                            alt="Foto de la pieza"
+                            className="h-32 w-32 border border-piedra object-cover sm:h-40 sm:w-40"
+                          />
+                        </a>
+                      )}
+                      <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <p className="font-serif text-lg">
+                            {c.familia_slug ?? "(sin familia)"}{" "}
+                            {c.color_valiz && (
+                              <span className="italic text-cuero">
+                                · {c.color_valiz}
+                              </span>
+                            )}
                           </p>
-                        )}
+                          <p className="mt-1 font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
+                            {u?.email ?? c.user_id}
+                          </p>
+                          <p className="mt-1 font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
+                            {c.lugar_compra && `${c.lugar_compra} · `}
+                            {c.fecha_compra && `${c.fecha_compra} · `}
+                            SKU match: {c.sku ?? "—"}
+                          </p>
+                          {c.descripcion && (
+                            <p className="mt-2 font-serif text-sm italic text-niebla">
+                              {c.descripcion}
+                            </p>
+                          )}
+                        </div>
+                        <CompraActions
+                          onValidar={(pts) => validarCompra(c.id, pts)}
+                        />
                       </div>
-                      <CompraActions
-                        onValidar={(pts) => validarCompra(c.id, pts)}
-                      />
                     </div>
                   </li>
                 );

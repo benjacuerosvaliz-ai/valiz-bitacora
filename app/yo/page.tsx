@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { getPhotoBySku } from "@/lib/product-photos";
 import { createClient } from "@/lib/supabase/server";
 
 import { BitacoraCard } from "./bitacora-card";
+import { EquipajeGrid, type EquipajePieza } from "./equipaje-grid";
 import { WelcomeModal } from "./welcome-modal";
 
 const nf = new Intl.NumberFormat("es-CL");
@@ -33,7 +35,13 @@ type ProductoRow = {
   precio: number | null;
   shopify_handle: string | null;
   tallerista_id: string | null;
+  cuero: { display_name: string } | { display_name: string }[] | null;
 };
+
+function pickOne<T>(value: T | T[] | null | undefined): T | null {
+  if (!value) return null;
+  return Array.isArray(value) ? (value[0] ?? null) : value;
+}
 
 type FamiliaRow = {
   id: string;
@@ -58,6 +66,7 @@ type CompraManualRow = {
   color_valiz: string | null;
   lugar_compra: string | null;
   fecha_compra: string | null;
+  foto_url: string | null;
   verified: boolean;
   created_at: string;
 };
@@ -131,11 +140,13 @@ export default async function YoPage({
     const { data } = await sb
       .from("productos")
       .select(
-        "sku, color_valiz, p2, familia_id, precio, shopify_handle, tallerista_id",
+        "sku, color_valiz, p2, familia_id, precio, shopify_handle, tallerista_id, cuero:cueros(display_name)",
       )
       .in("sku", skus);
     productos = (data ?? []) as ProductoRow[];
   }
+
+  const photoBySku = getPhotoBySku();
 
   const productoBySku = new Map(productos.map((p) => [p.sku, p]));
   const familiaById = new Map(familias.map((f) => [f.id, f]));
@@ -172,7 +183,9 @@ export default async function YoPage({
   // Compras manuales pendientes (verified=false)
   const { data: pendientesRaw } = await sb
     .from("compras_manuales")
-    .select("id, familia_slug, color_valiz, lugar_compra, fecha_compra, verified, created_at")
+    .select(
+      "id, familia_slug, color_valiz, lugar_compra, fecha_compra, foto_url, verified, created_at",
+    )
     .order("created_at", { ascending: false });
   const compras = (pendientesRaw ?? []) as CompraManualRow[];
   const pendientes = compras.filter((c) => !c.verified);
@@ -308,60 +321,73 @@ export default async function YoPage({
               o escríbenos para vincular el correo.
             </p>
           ) : (
-            <ul className="mt-12 grid grid-cols-1 gap-x-10 gap-y-2">
-              {equipaje.map((e) => {
+            <EquipajeGrid
+              piezas={equipaje.map<EquipajePieza>((e) => {
                 const p = productoBySku.get(e.sku);
                 const fam = p?.familia_id ? familiaById.get(p.familia_id) : null;
-                return (
-                  <li key={e.referencia + e.sku} className="border-b border-piedra py-4">
-                    <div className="flex flex-col items-baseline justify-between gap-1 sm:flex-row sm:gap-6">
-                      <span className="font-serif text-2xl leading-tight">
-                        {fam?.name ?? e.sku}
-                        {p?.color_valiz && (
-                          <span className="italic text-cuero"> · {p.color_valiz}</span>
-                        )}
-                      </span>
-                      <span className="flex items-center gap-3">
-                        <Link
-                          href={`/yo/bitacora/nueva?sku=${encodeURIComponent(e.sku)}`}
-                          className="font-sans text-[11px] uppercase tracking-[0.18em] text-cuero hover:text-tinta"
-                        >
-                          + Bitácora
-                        </Link>
-                        <span className="font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
-                          {e.source === "manual" ? "Manual" : "Shopify"}
-                          {e.adquirido_at ? ` · ${formatDate(e.adquirido_at)}` : ""}
-                        </span>
-                      </span>
-                    </div>
-                  </li>
-                );
+                const tName = p?.tallerista_id
+                  ? talleristaById.get(p.tallerista_id)?.name ?? null
+                  : null;
+                const cuero = pickOne(p?.cuero ?? null);
+                return {
+                  sku: e.sku,
+                  source: e.source as EquipajePieza["source"],
+                  adquiridoAt: e.adquirido_at,
+                  fotoUrl: photoBySku.get(e.sku) ?? null,
+                  fotoFallback: null,
+                  familiaName: fam?.name ?? null,
+                  familiaSlug: fam?.slug ?? null,
+                  colorValiz: p?.color_valiz ?? null,
+                  cueroName: cuero?.display_name ?? null,
+                  precio: (p?.precio as number | null) ?? null,
+                  pies2: p?.p2 != null ? Number(p.p2) : null,
+                  talleristaName: tName,
+                  horasPorUnidad: fam?.hours_per_unit
+                    ? Number(fam.hours_per_unit)
+                    : null,
+                  shopifyHandle: p?.shopify_handle ?? null,
+                };
               })}
-            </ul>
+            />
           )}
 
           {pendientes.length > 0 && (
-            <div className="mt-12 border-t border-piedra pt-8">
+            <div className="mt-16 border-t border-piedra pt-10">
               <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
                 Pendiente de validación
               </p>
               <p className="mt-2 font-serif italic text-niebla">
-                Estas piezas aún no suman puntos. Las revisamos y otorgamos
-                puntos retroactivos cuando confirmemos.
+                Las revisamos y otorgamos puntos retroactivos cuando confirmemos.
               </p>
-              <ul className="mt-6 grid grid-cols-1 gap-y-2">
+              <ul className="mt-6 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
                 {pendientes.map((p) => (
-                  <li key={p.id} className="border-b border-piedra py-3">
-                    <div className="flex flex-col items-baseline justify-between gap-1 sm:flex-row sm:gap-6">
-                      <span className="font-serif text-lg italic text-niebla">
-                        {familiaNamesBySlug.get(p.familia_slug ?? "") ?? p.familia_slug}
-                        {p.color_valiz && ` · ${p.color_valiz}`}
-                      </span>
-                      <span className="font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
-                        {p.lugar_compra ? `${p.lugar_compra} · ` : ""}
+                  <li key={p.id} className="flex flex-col items-center">
+                    <div className="relative flex h-28 w-28 items-center justify-center rounded-full border border-dashed border-niebla bg-fondo sm:h-32 sm:w-32">
+                      {p.foto_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={p.foto_url}
+                          alt={p.color_valiz ?? "Pieza"}
+                          className="h-[78%] w-[78%] rounded-full object-cover opacity-60 grayscale"
+                        />
+                      ) : (
+                        <span className="font-serif text-xs italic text-niebla">
+                          Sin foto
+                        </span>
+                      )}
+                      <span className="absolute -bottom-1 right-1 bg-fondo px-1 font-sans text-[9px] uppercase tracking-[0.18em] text-cuero">
                         Pendiente
                       </span>
                     </div>
+                    <p className="mt-3 text-center font-serif text-sm leading-tight text-niebla">
+                      {familiaNamesBySlug.get(p.familia_slug ?? "") ??
+                        p.familia_slug}
+                    </p>
+                    {p.color_valiz && (
+                      <p className="text-center font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
+                        {p.color_valiz}
+                      </p>
+                    )}
                   </li>
                 ))}
               </ul>
