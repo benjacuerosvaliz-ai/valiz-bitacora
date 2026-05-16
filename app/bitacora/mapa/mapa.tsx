@@ -3,6 +3,7 @@
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import type { Map as MapboxMap } from "mapbox-gl";
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Map, Marker, Popup, type MapRef } from "react-map-gl/mapbox";
 import Supercluster, { type AnyProps, type ClusterFeature, type PointFeature } from "supercluster";
@@ -31,6 +32,10 @@ type PointProps = AnyProps & { point: Point };
 export function MapaColectivo({ points }: { points: Point[] }) {
   const mapRef = useRef<MapRef | null>(null);
   const [active, setActive] = useState<Point | null>(null);
+  const [clusterDetail, setClusterDetail] = useState<{
+    points: Point[];
+    label: string;
+  } | null>(null);
   const [bounds, setBounds] = useState<[number, number, number, number]>([
     -180, -85, 180, 85,
   ]);
@@ -121,7 +126,20 @@ export function MapaColectivo({ points }: { points: Point[] }) {
     setZoomState(map.getZoom());
   }
 
-  function flyToCluster(c: ClusterFeature<PointProps>) {
+  function openCluster(c: ClusterFeature<PointProps>) {
+    const leaves = cluster.getLeaves(c.id as number, Infinity, 0);
+    const ps = leaves.map((l) => (l.properties as PointProps).point);
+    // Label: si todos tienen el mismo `lugar`, úsalo; si no, "X piezas en
+    // esta zona".
+    const lugaresUnicos = new Set(ps.map((p) => p.lugar).filter(Boolean));
+    const label =
+      lugaresUnicos.size === 1
+        ? (ps[0].lugar ?? `${ps.length} piezas en esta zona`)
+        : `${ps.length} piezas en esta zona`;
+    setClusterDetail({ points: ps, label });
+  }
+
+  function flyToClusterCenter(c: ClusterFeature<PointProps>) {
     if (!mapRef.current) return;
     const expansion = cluster.getClusterExpansionZoom(c.id as number);
     const [lng, lat] = c.geometry.coordinates;
@@ -132,6 +150,16 @@ export function MapaColectivo({ points }: { points: Point[] }) {
       essential: true,
     });
   }
+
+  // ESC cierra el modal de cluster
+  useEffect(() => {
+    if (!clusterDetail) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setClusterDetail(null);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [clusterDetail]);
 
   if (!TOKEN) {
     return (
@@ -144,6 +172,7 @@ export function MapaColectivo({ points }: { points: Point[] }) {
   }
 
   return (
+    <>
     <Map
       ref={mapRef}
       mapboxAccessToken={TOKEN}
@@ -172,7 +201,7 @@ export function MapaColectivo({ points }: { points: Point[] }) {
               anchor="center"
               onClick={(e) => {
                 e.originalEvent.stopPropagation();
-                flyToCluster(cf);
+                openCluster(cf);
               }}
             >
               <button
@@ -266,5 +295,87 @@ export function MapaColectivo({ points }: { points: Point[] }) {
         </Popup>
       )}
     </Map>
+
+    {/* Modal de cluster: grid de las bitácoras de la zona */}
+    <AnimatePresence>
+      {clusterDetail && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25 }}
+          onClick={() => setClusterDetail(null)}
+          className="fixed inset-0 z-50 flex items-end justify-center bg-tinta/40 backdrop-blur-sm sm:items-center"
+        >
+          <motion.div
+            initial={{ y: 40, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 40, opacity: 0 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-h-[85vh] w-full max-w-4xl overflow-hidden border border-piedra bg-fondo sm:max-h-[80vh]"
+          >
+            <header className="flex items-baseline justify-between gap-4 border-b border-piedra px-6 py-5 sm:px-10 sm:py-6">
+              <div>
+                <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+                  En esta zona
+                </p>
+                <h2 className="mt-2 font-serif text-2xl leading-tight tracking-[-0.015em] sm:text-3xl">
+                  {clusterDetail.label}
+                </h2>
+              </div>
+              <button
+                onClick={() => setClusterDetail(null)}
+                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-piedra font-serif text-2xl text-niebla transition-colors hover:border-cuero hover:text-cuero"
+                aria-label="Cerrar"
+              >
+                ×
+              </button>
+            </header>
+
+            <div className="max-h-[calc(85vh-120px)] overflow-y-auto px-6 py-6 sm:max-h-[calc(80vh-130px)] sm:px-10 sm:py-8">
+              <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6">
+                {clusterDetail.points.map((p) => (
+                  <li
+                    key={p.id}
+                    className="border border-piedra bg-fondo transition-colors hover:border-cuero"
+                  >
+                    <a
+                      href={`/bitacora/${p.id}`}
+                      className="block no-underline"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={p.foto}
+                        alt={p.familia ?? "Bitácora"}
+                        className="aspect-square w-full object-cover"
+                      />
+                      <div className="p-3">
+                        {p.familia && (
+                          <p className="font-serif text-sm text-tinta">
+                            {p.familia}
+                            {p.colorValiz && (
+                              <span className="ml-1 italic text-cuero">
+                                · {p.colorValiz}
+                              </span>
+                            )}
+                          </p>
+                        )}
+                        {p.lugar && (
+                          <p className="mt-1 font-sans text-[9px] uppercase tracking-[0.18em] text-niebla">
+                            {p.lugar}
+                          </p>
+                        )}
+                      </div>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+    </>
   );
 }
