@@ -35,7 +35,11 @@ type ProductoRow = {
 };
 
 type FamiliaRow = { id: string; name: string; hours_per_unit: number | string | null };
-type ProfileRow = { id: string; display_name: string | null; email: string };
+type ProfileRow = {
+  id: string;
+  display_name: string | null;
+  handle: string | null;
+};
 type ProductoStats = {
   p2: number | string | null;
   sales_total: number | null;
@@ -52,8 +56,7 @@ function formatDate(iso: string): string {
 
 function authorLabel(p: ProfileRow | undefined): string {
   if (!p) return "Anónimo";
-  if (p.display_name) return p.display_name;
-  return p.email.split("@")[0];
+  return p.display_name ?? p.handle ?? "Anónimo";
 }
 
 export default async function BitacoraColectivaPage() {
@@ -68,7 +71,7 @@ export default async function BitacoraColectivaPage() {
       .limit(60),
     sb.from("productos").select("sku, color_valiz, familia_id"),
     sb.from("familias").select("id, name, hours_per_unit"),
-    sb.from("user_profiles").select("id, display_name, email"),
+    sb.from("user_profiles_public").select("id, display_name, handle"),
     sb
       .from("productos")
       .select("p2, sales_total, familia_id")
@@ -297,6 +300,14 @@ export default async function BitacoraColectivaPage() {
                         </p>
                       </div>
                     </Link>
+                    {author?.handle && (
+                      <Link
+                        href={`/u/${author.handle}`}
+                        className="block border-t border-piedra px-5 py-3 font-sans text-[10px] uppercase tracking-[0.18em] text-cuero transition-colors hover:bg-tinta hover:text-fondo"
+                      >
+                        Ver perfil de {authorLabel(author)} →
+                      </Link>
+                    )}
                   </li>
                 );
               })}

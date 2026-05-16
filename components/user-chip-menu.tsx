@@ -15,11 +15,13 @@ export function UserChipMenu({
   pts,
   pendientes,
   esAdmin,
+  handle,
 }: {
   nombre: string;
   pts: number;
   pendientes: number;
   esAdmin: boolean;
+  handle: string | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -85,8 +87,16 @@ export function UserChipMenu({
               Tu equipaje
             </MenuItem>
             <MenuItem href="/yo/perfil" onClick={() => setOpen(false)}>
-              Perfil personal
+              Editar perfil
             </MenuItem>
+            {handle && (
+              <MenuItem
+                href={`/u/${handle}`}
+                onClick={() => setOpen(false)}
+              >
+                Mi perfil público
+              </MenuItem>
+            )}
             <MenuItem href="/bitacora" onClick={() => setOpen(false)}>
               Valiz colectivo
             </MenuItem>

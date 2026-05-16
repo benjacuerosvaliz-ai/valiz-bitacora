@@ -29,7 +29,7 @@ export async function UserChip() {
 
   const { data: profile } = await sb
     .from("user_profiles")
-    .select("display_name, email, puntos_actuales")
+    .select("display_name, email, puntos_actuales, handle")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -38,6 +38,7 @@ export async function UserChip() {
     profile?.email?.split("@")[0] ||
     "Tu equipaje";
   const pts = profile?.puntos_actuales ?? 0;
+  const handle = profile?.handle ?? null;
 
   // Si soy admin, contar pendientes para mostrar badge.
   let pendientes = 0;
@@ -57,6 +58,7 @@ export async function UserChip() {
       pts={pts}
       pendientes={pendientes}
       esAdmin={esAdmin}
+      handle={handle}
     />
   );
 }

@@ -50,8 +50,8 @@ export default async function BitacoraDetailPage({ params }: Props) {
 
   const [profileRes, prodRes] = await Promise.all([
     sb
-      .from("user_profiles")
-      .select("display_name, email")
+      .from("user_profiles_public")
+      .select("display_name, handle")
       .eq("id", b.user_id)
       .maybeSingle(),
     b.sku
@@ -62,7 +62,9 @@ export default async function BitacoraDetailPage({ params }: Props) {
           .maybeSingle()
       : Promise.resolve({ data: null }),
   ]);
-  const author = profileRes.data as { display_name: string | null; email: string } | null;
+  const author = profileRes.data as
+    | { display_name: string | null; handle: string | null }
+    | null;
   const prod = prodRes.data as
     | {
         color_valiz: string | null;
@@ -78,7 +80,8 @@ export default async function BitacoraDetailPage({ params }: Props) {
       : prod.familias
     : null;
 
-  const authorLabel = author?.display_name ?? author?.email?.split("@")[0] ?? "Anónimo";
+  const authorLabel =
+    author?.display_name ?? author?.handle ?? "Anónimo";
 
   return (
     <main className="flex min-h-screen flex-col bg-fondo">
@@ -120,7 +123,17 @@ export default async function BitacoraDetailPage({ params }: Props) {
 
             <div className="mt-12 border-t border-piedra pt-6">
               <p className="font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
-                {authorLabel} ·{" "}
+                {author?.handle ? (
+                  <Link
+                    href={`/u/${author.handle}`}
+                    className="text-cuero hover:text-tinta"
+                  >
+                    {authorLabel}
+                  </Link>
+                ) : (
+                  authorLabel
+                )}{" "}
+                ·{" "}
                 {new Date(b.created_at).toLocaleDateString("es-CL", {
                   day: "numeric",
                   month: "long",
