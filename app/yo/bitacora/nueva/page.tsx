@@ -62,6 +62,19 @@ export default async function NuevaBitacoraPage({
     return { sku, label };
   });
 
+  // Concurso vigente para ofrecer postular después de subir
+  const nowIso = new Date().toISOString();
+  const { data: concursoRaw } = await sb
+    .from("concursos")
+    .select("id, slug, titulo")
+    .lte("inicia_at", nowIso)
+    .gte("termina_at", nowIso)
+    .limit(1)
+    .maybeSingle();
+  const concursoVigente = concursoRaw as
+    | { id: string; slug: string; titulo: string }
+    | null;
+
   return (
     <main className="flex min-h-screen flex-col bg-fondo">
       <header className="flex items-center justify-between border-b border-piedra px-8 py-5 sm:px-16 sm:py-6">
@@ -100,7 +113,11 @@ export default async function NuevaBitacoraPage({
                 </p>
               </div>
             ) : (
-              <BitacoraForm piezas={piezas} skuPreSelected={skuPreSelected} />
+              <BitacoraForm
+                piezas={piezas}
+                skuPreSelected={skuPreSelected}
+                concurso={concursoVigente}
+              />
             )}
           </div>
         </div>

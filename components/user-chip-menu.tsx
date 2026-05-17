@@ -100,6 +100,9 @@ export function UserChipMenu({
             <MenuItem href="/bitacora" onClick={() => setOpen(false)}>
               Valiz colectivo
             </MenuItem>
+            <MenuItem href="/concursos" onClick={() => setOpen(false)}>
+              Concursos
+            </MenuItem>
             <MenuItem href="/yo/canje" onClick={() => setOpen(false)}>
               Canjear puntos
             </MenuItem>

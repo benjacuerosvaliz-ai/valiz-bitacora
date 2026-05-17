@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { BrandMark } from "@/components/brand-mark";
@@ -68,6 +69,15 @@ export default async function AdminPage() {
             <Stat label="Por validar" big={pendientesRes.data?.length ?? 0} />
             <Stat label="Bitácoras" big={bitsRes.data?.length ?? 0} />
             <Stat label="Canjes hechos" big={canjesRes.data?.length ?? 0} />
+          </div>
+
+          <div className="mt-10 flex flex-wrap gap-3">
+            <Link
+              href="/admin/concursos"
+              className="inline-flex items-center gap-3 border border-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
+            >
+              Gestionar concursos →
+            </Link>
           </div>
         </div>
       </section>

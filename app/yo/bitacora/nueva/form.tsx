@@ -4,15 +4,18 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 type Pieza = { sku: string; label: string };
+type Concurso = { id: string; slug: string; titulo: string };
 
 const MAX_FILE_MB = 8;
 
 export function BitacoraForm({
   piezas,
   skuPreSelected,
+  concurso,
 }: {
   piezas: Pieza[];
   skuPreSelected: string | null;
+  concurso: Concurso | null;
 }) {
   const router = useRouter();
   const [sku, setSku] = useState(
@@ -26,6 +29,7 @@ export function BitacoraForm({
   const [texto, setTexto] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoStatus, setGeoStatus] = useState<"idle" | "loading" | "ok" | "denied">("idle");
+  const [postular, setPostular] = useState(!!concurso);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -82,12 +86,30 @@ export function BitacoraForm({
       body: fd,
     });
     const json = await res.json().catch(() => ({}));
-    setLoading(false);
     if (!res.ok) {
+      setLoading(false);
       setError(json.error ?? "No se pudo subir la bitácora.");
       return;
     }
-    router.push("/yo?bitacora=1");
+
+    // Postular al concurso si correspondía
+    if (postular && concurso && json.bitacora_id) {
+      try {
+        await fetch("/api/concursos/postular", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            concurso_id: concurso.id,
+            bitacora_id: json.bitacora_id,
+          }),
+        });
+      } catch {
+        // No bloquea — la bitácora ya está subida
+      }
+    }
+
+    setLoading(false);
+    router.push(postular && concurso ? `/concursos/${concurso.slug}` : "/yo?bitacora=1");
     router.refresh();
   }
 
@@ -184,6 +206,25 @@ export function BitacoraForm({
           ? "✓ Califica para 200 pts (si es la primera del mes para esta pieza)."
           : "Para 200 pts: foto + ubicación + 30 caracteres de historia."}
       </p>
+
+      {concurso && (
+        <label className="flex cursor-pointer items-start gap-3 border border-piedra bg-fondo/70 p-4">
+          <input
+            type="checkbox"
+            checked={postular}
+            onChange={(e) => setPostular(e.target.checked)}
+            className="mt-1 h-4 w-4 cursor-pointer accent-tinta"
+          />
+          <span className="font-serif text-sm leading-relaxed">
+            <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+              Concurso vigente
+            </span>
+            <br />
+            Postular esta bitácora al concurso{" "}
+            <strong>«{concurso.titulo}»</strong>.
+          </span>
+        </label>
+      )}
 
       {error && (
         <p className="font-sans text-[11px] uppercase tracking-[0.18em] text-[#a83a1f]">
