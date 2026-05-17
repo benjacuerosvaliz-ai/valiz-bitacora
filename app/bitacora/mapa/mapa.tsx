@@ -126,6 +126,23 @@ export function MapaColectivo({ points }: { points: Point[] }) {
     setZoomState(map.getZoom());
   }
 
+  // Al cargar el mapa: pintar el "espacio" (alrededor del globo) del mismo
+  // color que la página para que parezca flotando en vez de en un cuadrado
+  // blanco. También suaviza el horizonte para que el borde del globo se
+  // funda con el fondo.
+  function onLoad() {
+    if (!mapRef.current) return;
+    const map = mapRef.current.getMap() as MapboxMap;
+    map.setFog({
+      "space-color": "#f7f6f2",
+      "star-intensity": 0,
+      "horizon-blend": 0.08,
+      color: "#f7f6f2",
+      "high-color": "#f7f6f2",
+    });
+    onMoveEnd();
+  }
+
   function openCluster(c: ClusterFeature<PointProps>) {
     const leaves = cluster.getLeaves(c.id as number, Infinity, 0);
     const ps = leaves.map((l) => (l.properties as PointProps).point);
@@ -181,7 +198,7 @@ export function MapaColectivo({ points }: { points: Point[] }) {
       projection={{ name: "globe" }}
       style={{ width: "100%", height: "100%" }}
       attributionControl={false}
-      onLoad={onMoveEnd}
+      onLoad={onLoad}
       onMoveEnd={onMoveEnd}
       reuseMaps
     >
