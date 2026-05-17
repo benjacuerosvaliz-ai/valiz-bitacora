@@ -4,9 +4,11 @@ import { redirect } from "next/navigation";
 
 import { BrandMark } from "@/components/brand-mark";
 import { getPhotoBySku } from "@/lib/product-photos";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-import { BitacoraCard } from "./bitacora-card";
+import { MapaColectivo, type Point } from "../bitacora/mapa/mapa";
+
 import { EquipajeGrid, type EquipajePieza } from "./equipaje-grid";
 import { WelcomeModal } from "./welcome-modal";
 
@@ -17,7 +19,7 @@ export const metadata: Metadata = {
   description: "Tu bitácora personal de Valiz.",
 };
 
-export const dynamic = "force-dynamic"; // siempre fresh, hay datos por user
+export const dynamic = "force-dynamic";
 
 type EquipajeRow = {
   user_id: string;
@@ -53,14 +55,6 @@ type FamiliaRow = {
 
 type TalleristaRow = { id: string; name: string };
 
-type MovimientoRow = {
-  id: string;
-  delta: number;
-  motivo: string;
-  referencia_id: string | null;
-  created_at: string;
-};
-
 type CompraManualRow = {
   id: string;
   sku: string | null;
@@ -77,30 +71,14 @@ type BitacoraRow = {
   id: string;
   sku: string | null;
   foto_url: string;
+  lat: number | string | null;
+  lng: number | string | null;
   lugar: string | null;
   texto: string | null;
   created_at: string;
-  points_awarded: number;
 };
 
-const MOTIVO_LABEL: Record<string, string> = {
-  compra_shopify: "Compra",
-  bono_bienvenida: "Bono de bienvenida",
-  bono_familia_nueva: "Bono por familia nueva",
-  bitacora: "Entrada de bitácora",
-  canje_descuento: "Canje de puntos",
-  referido: "Venta referida",
-  ajuste_admin: "Ajuste",
-};
-
-export default async function YoPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ added?: string; bitacora?: string }>;
-}) {
-  const params = await searchParams;
-  const flashAdded = params.added === "1";
-  const flashBitacora = params.bitacora === "1";
+export default async function YoPage() {
   const sb = await createClient();
   const {
     data: { user },
@@ -110,15 +88,12 @@ export default async function YoPage({
   const { data: profile } = await sb
     .from("user_profiles")
     .select(
-      "id, email, display_name, puntos_actuales, welcomed_at, pin_hash",
+      "id, email, display_name, country, city, bio, puntos_actuales, welcomed_at, pin_hash, handle, instagram_handle, tiktok_handle",
     )
     .eq("id", user.id)
     .single();
 
-  if (!profile) {
-    // El callback debió crearlo; si no, hay un problema upstream.
-    redirect("/login?error=no_profile");
-  }
+  if (!profile) redirect("/login?error=no_profile");
 
   // Equipaje
   const { data: equipajeRaw } = await sb
@@ -128,8 +103,7 @@ export default async function YoPage({
   const equipaje = (equipajeRaw ?? []) as EquipajeRow[];
   const skus = [...new Set(equipaje.map((e) => e.sku))];
 
-  // Familias y talleristas siempre se cargan (también las uso para mostrar
-  // pendientes y para el header en otras secciones).
+  // Familias + talleristas
   const [fRes, tRes] = await Promise.all([
     sb.from("familias").select("id, slug, name, hours_per_unit"),
     sb.from("talleristas").select("id, name"),
@@ -137,7 +111,7 @@ export default async function YoPage({
   const familias = (fRes.data ?? []) as FamiliaRow[];
   const talleristas = (tRes.data ?? []) as TalleristaRow[];
 
-  // Productos solo cuando hay piezas en equipaje
+  // Productos del equipaje
   let productos: ProductoRow[] = [];
   if (skus.length > 0) {
     const { data } = await sb
@@ -150,16 +124,15 @@ export default async function YoPage({
   }
 
   const photoBySku = getPhotoBySku();
-
   const productoBySku = new Map(productos.map((p) => [p.sku, p]));
   const familiaById = new Map(familias.map((f) => [f.id, f]));
   const talleristaById = new Map(talleristas.map((t) => [t.id, t]));
 
-  // Cálculo de impacto personal
+  // Impacto personal
   let totalHoras = 0;
   let totalPies = 0;
   const horasPorTallerista = new Map<string, number>();
-
+  const cuerosUnicos = new Set<string>();
   for (const e of equipaje) {
     const p = productoBySku.get(e.sku);
     if (!p) continue;
@@ -168,6 +141,8 @@ export default async function YoPage({
     const pies = Number(p.p2 ?? 0);
     totalHoras += h;
     totalPies += pies;
+    const cuero = pickOne(p.cuero);
+    if (cuero?.display_name) cuerosUnicos.add(cuero.display_name);
     if (p.tallerista_id && h > 0) {
       const tName = talleristaById.get(p.tallerista_id)?.name ?? "?";
       horasPorTallerista.set(tName, (horasPorTallerista.get(tName) ?? 0) + h);
@@ -175,15 +150,7 @@ export default async function YoPage({
   }
   const totalPiezas = equipaje.length;
 
-  // Historial de puntos (últimos 20)
-  const { data: movsRaw } = await sb
-    .from("puntos_movimientos")
-    .select("id, delta, motivo, referencia_id, created_at")
-    .order("created_at", { ascending: false })
-    .limit(20);
-  const movs = (movsRaw ?? []) as MovimientoRow[];
-
-  // Compras manuales pendientes (verified=false)
+  // Compras manuales pendientes
   const { data: pendientesRaw } = await sb
     .from("compras_manuales")
     .select(
@@ -193,23 +160,22 @@ export default async function YoPage({
   const compras = (pendientesRaw ?? []) as CompraManualRow[];
   const pendientes = compras.filter((c) => !c.verified);
 
-  // Bitácoras del user
+  // Bitácoras del user (con coords para el mapa personal)
   const { data: bitsRaw } = await sb
     .from("bitacora_entries")
-    .select("id, sku, foto_url, lugar, texto, created_at, points_awarded")
+    .select("id, sku, foto_url, lat, lng, lugar, texto, created_at")
     .eq("user_id", user.id)
     .eq("invalidated", false)
-    .order("created_at", { ascending: false })
-    .limit(12);
+    .order("created_at", { ascending: false });
   const bitacoras = (bitsRaw ?? []) as BitacoraRow[];
+  const bitacorasConGeo = bitacoras.filter(
+    (b) => b.lat !== null && b.lng !== null,
+  );
 
-  // Map slug → name para mostrar nombres
+  // Map slug → name
   const familiaNamesBySlug = new Map(familias.map((f) => [f.slug, f.name]));
 
-  // Resolver SKU de pendientes que tienen familia_slug + color_valiz pero
-  // no tienen sku guardado, para usar el PNG del producto. Tiramos una
-  // query corta a productos por las familias presentes en pendientes
-  // sin sku.
+  // Resolver SKU para pendientes sin sku via familia+color
   const familiaIdBySlug = new Map(familias.map((f) => [f.slug, f.id]));
   const skuBySlugColor = new Map<string, string>();
   const pendientesSinSku = pendientes.filter(
@@ -239,6 +205,46 @@ export default async function YoPage({
     }
   }
 
+  // Puntos por referidos (resumen para card)
+  const admin = createAdminClient();
+  const { data: refMovs } = await admin
+    .from("puntos_movimientos")
+    .select("delta")
+    .eq("user_id", user.id)
+    .eq("motivo", "referido");
+  const ptsReferidos = (refMovs ?? []).reduce(
+    (s, m) => s + (m.delta as number),
+    0,
+  );
+
+  // Concurso vigente
+  const nowIso = new Date().toISOString();
+  const { data: concursoVigente } = await sb
+    .from("concursos")
+    .select("slug, titulo, premio_descripcion, termina_at")
+    .lte("inicia_at", nowIso)
+    .gte("termina_at", nowIso)
+    .limit(1)
+    .maybeSingle();
+
+  // Puntos para el mapa personal
+  const pointsPersonal: Point[] = bitacorasConGeo.map((b) => {
+    const p = b.sku ? productoBySku.get(b.sku) : null;
+    const fam = p?.familia_id ? familiaById.get(p.familia_id) : null;
+    // Foto del PRODUCTO si existe, fallback a la subida
+    const fotoProducto = b.sku ? photoBySku.get(b.sku) : null;
+    return {
+      id: b.id,
+      lat: Number(b.lat),
+      lng: Number(b.lng),
+      foto: fotoProducto ?? b.foto_url,
+      lugar: b.lugar,
+      texto: b.texto,
+      familia: fam?.name ?? null,
+      colorValiz: p?.color_valiz ?? null,
+    };
+  });
+
   const nombre = profile.display_name || profile.email.split("@")[0];
   const primerLogin = !profile.welcomed_at;
 
@@ -262,92 +268,104 @@ export default async function YoPage({
         </p>
       </header>
 
-      {(flashAdded || flashBitacora) && (
-        <div className="border-b border-musgo bg-musgo/5 px-8 py-4 sm:px-16">
-          <p className="mx-auto max-w-5xl font-serif italic text-musgo">
-            {flashAdded
-              ? "Pieza agregada a tu equipaje. Te avisamos cuando la validemos para sumar puntos."
-              : "Bitácora subida. Gracias por seguir contando la historia."}
-          </p>
-        </div>
-      )}
-
-      <section className="border-b border-piedra px-8 py-20 sm:px-16 sm:py-28">
+      {/* HERO PERSONAL COMPACTO ----------------------------------------- */}
+      <section className="border-b border-piedra px-6 py-10 sm:px-16 sm:py-16">
         <div className="mx-auto max-w-5xl">
-          <div className="flex items-baseline justify-between gap-3">
-            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-              Hola
-            </p>
-            <Link
-              href="/yo/perfil"
-              className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla hover:text-cuero"
-            >
-              Editar perfil
-            </Link>
-          </div>
-          <h1 className="mt-4 font-serif text-5xl leading-[1.04] tracking-[-0.022em] sm:text-7xl">
+          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+            Hola
+          </p>
+          <h1 className="mt-3 font-serif text-4xl leading-[1.04] tracking-[-0.022em] sm:text-6xl">
             {nombre}.
           </h1>
+          {profile.handle && (
+            <p className="mt-2 font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
+              @{profile.handle}
+            </p>
+          )}
 
-          <div className="mt-12 grid grid-cols-1 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat label="Piezas Valiz" big={nf.format(totalPiezas)} />
-            <Stat label="Horas de taller" big={nf.format(Math.round(totalHoras))} />
-            <Stat label="Pies² de cuero" big={nf.format(Math.round(totalPies))} />
-            <Stat label="Puntos" big={nf.format(profile.puntos_actuales)} subtle="1 pt = $1 CLP" />
+          {/* Stats inline */}
+          <div className="mt-8 grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4 sm:gap-x-10">
+            <Stat label="Piezas" big={nf.format(totalPiezas)} />
+            <Stat
+              label="Horas de taller"
+              big={nf.format(Math.round(totalHoras))}
+            />
+            <Stat
+              label="Pies² rescatados"
+              big={nf.format(Math.round(totalPies))}
+            />
+            <Stat
+              label="Puntos"
+              big={nf.format(profile.puntos_actuales)}
+              subtle="1 pt = $1 CLP"
+            />
           </div>
 
           {horasPorTallerista.size > 0 && (
-            <p className="mt-10 max-w-2xl font-serif text-lg italic leading-relaxed text-niebla sm:text-xl">
+            <p className="mt-6 max-w-2xl font-serif text-sm italic leading-relaxed text-niebla sm:text-base">
               {Array.from(horasPorTallerista.entries())
-                .map(([name, h]) => `${Math.round(h)}h del taller de ${name}`)
+                .map(([name, h]) => `${Math.round(h)}h de ${name}`)
                 .join(" · ")}
+              {cuerosUnicos.size > 0 &&
+                ` · ${cuerosUnicos.size} ${cuerosUnicos.size === 1 ? "cuero" : "cueros"} distintos`}
               .
             </p>
           )}
+
+          {profile.bio && (
+            <p className="mt-6 max-w-2xl font-serif text-base italic leading-relaxed text-niebla">
+              {profile.bio}
+            </p>
+          )}
+
+          {/* Acciones del perfil */}
+          <div className="mt-8 flex flex-wrap gap-3">
+            {profile.instagram_handle && (
+              <a
+                href={`https://instagram.com/${profile.instagram_handle}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border border-tinta px-4 py-2 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
+              >
+                IG @{profile.instagram_handle} ↗
+              </a>
+            )}
+            {profile.tiktok_handle && (
+              <a
+                href={`https://tiktok.com/@${profile.tiktok_handle}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border border-tinta px-4 py-2 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
+              >
+                TikTok @{profile.tiktok_handle} ↗
+              </a>
+            )}
+            <Link
+              href="/yo/perfil"
+              className="border border-piedra px-4 py-2 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-niebla transition-colors hover:border-cuero hover:text-cuero"
+            >
+              Editar perfil
+            </Link>
+            {profile.handle && (
+              <Link
+                href={`/u/${profile.handle}`}
+                className="border border-piedra px-4 py-2 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-niebla transition-colors hover:border-cuero hover:text-cuero"
+              >
+                Mi perfil público
+              </Link>
+            )}
+          </div>
         </div>
       </section>
 
-      {!profile.pin_hash && (
-        <section className="border-b border-piedra bg-fondo/60 px-8 py-10 sm:px-16">
-          <div className="mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="font-serif text-lg italic text-tinta sm:text-xl">
-              Crea un PIN de 4 dígitos para entrar más rápido la próxima vez.
-            </p>
-            <Link
-              href="/yo/pin"
-              className="border border-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
-            >
-              Crear PIN →
-            </Link>
-          </div>
-        </section>
-      )}
-
-      <section className="border-b border-piedra px-8 py-20 sm:px-16">
+      {/* MEDALLAS DE PIEZAS -------------------------------------------- */}
+      <section className="border-b border-piedra px-6 py-10 sm:px-16 sm:py-16">
         <div className="mx-auto max-w-5xl">
-          <div className="flex flex-col items-baseline justify-between gap-3 sm:flex-row">
-            <div>
-              <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-                Tu equipaje
-              </p>
-              <h2 className="mt-3 font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
-                {totalPiezas === 0
-                  ? "Todavía no hay piezas a tu nombre."
-                  : totalPiezas === 1
-                    ? "Una pieza."
-                    : `${nf.format(totalPiezas)} piezas.`}
-              </h2>
-            </div>
-            <Link
-              href="/yo/agregar-pieza"
-              className="border border-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
-            >
-              + Agregar pieza
-            </Link>
-          </div>
-
+          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+            Tus piezas
+          </p>
           {totalPiezas === 0 ? (
-            <div className="mt-6 max-w-2xl space-y-3 font-serif italic leading-relaxed text-niebla">
+            <div className="mt-6 space-y-3 max-w-2xl font-serif italic leading-relaxed text-niebla">
               <p>
                 Si compraste antes con otro correo,{" "}
                 <Link href="/yo/email-alt" className="not-italic text-cuero underline">
@@ -356,7 +374,7 @@ export default async function YoPage({
                 — te mandamos un código y movemos tu historial.
               </p>
               <p>
-                Si compraste fuera de valiz.cl (feria, regalo),{" "}
+                Si compraste fuera de valiz.cl,{" "}
                 <Link href="/yo/agregar-pieza" className="not-italic text-cuero underline">
                   agrégala manualmente
                 </Link>
@@ -394,18 +412,17 @@ export default async function YoPage({
             />
           )}
 
+          {/* Pendientes por validar */}
           {pendientes.length > 0 && (
-            <div className="mt-16 border-t border-piedra pt-10">
+            <div className="mt-12 border-t border-piedra pt-8">
               <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-                Pendiente de validación
+                Por validar
               </p>
-              <p className="mt-2 font-serif italic text-niebla">
+              <p className="mt-2 font-serif text-sm italic text-niebla">
                 Las revisamos y otorgamos puntos retroactivos cuando confirmemos.
               </p>
-              <ul className="mt-6 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
+              <ul className="mt-6 grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 lg:grid-cols-6">
                 {pendientes.map((p) => {
-                  // Fallback chain: foto subida → PNG del producto por SKU →
-                  // PNG del producto resuelto via familia+color → "Sin foto".
                   const fotoSubida = p.foto_url;
                   const skuResolved =
                     p.sku ??
@@ -420,7 +437,7 @@ export default async function YoPage({
                   const foto = fotoSubida ?? fotoProducto ?? null;
                   return (
                     <li key={p.id} className="flex flex-col items-center">
-                      <div className="relative flex h-28 w-28 items-center justify-center rounded-full border border-dashed border-niebla bg-fondo sm:h-32 sm:w-32">
+                      <div className="relative flex h-16 w-16 items-center justify-center rounded-full border border-dashed border-niebla bg-fondo sm:h-20 sm:w-20">
                         {foto ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -429,23 +446,15 @@ export default async function YoPage({
                             className="h-[78%] w-[78%] rounded-full object-cover"
                           />
                         ) : (
-                          <span className="font-serif text-xs italic text-niebla">
-                            Sin foto
+                          <span className="font-serif text-[9px] italic text-niebla">
+                            sin foto
                           </span>
                         )}
-                        <span className="absolute -bottom-1 right-1 bg-fondo px-1 font-sans text-[9px] uppercase tracking-[0.18em] text-cuero">
-                          Pendiente
-                        </span>
                       </div>
-                      <p className="mt-3 text-center font-serif text-sm leading-tight text-niebla">
+                      <p className="mt-2 text-center font-sans text-[9px] uppercase tracking-[0.15em] text-niebla leading-tight">
                         {familiaNamesBySlug.get(p.familia_slug ?? "") ??
                           p.familia_slug}
                       </p>
-                      {p.color_valiz && (
-                        <p className="text-center font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
-                          {p.color_valiz}
-                        </p>
-                      )}
                     </li>
                   );
                 })}
@@ -455,103 +464,110 @@ export default async function YoPage({
         </div>
       </section>
 
-      <section className="border-b border-piedra px-8 py-20 sm:px-16">
+      {/* TU MUNDO (mapa personal) ------------------------------------- */}
+      <section className="border-b border-piedra px-6 py-10 sm:px-16 sm:py-16">
         <div className="mx-auto max-w-5xl">
-          <div className="flex flex-col items-baseline justify-between gap-3 sm:flex-row">
-            <div>
-              <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-                Tu bitácora
+          <div className="flex items-baseline justify-between gap-4">
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+              Tu mundo
+            </p>
+            {bitacorasConGeo.length > 0 && (
+              <p className="font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
+                {bitacorasConGeo.length}{" "}
+                {bitacorasConGeo.length === 1 ? "viaje" : "viajes"}
               </p>
-              <h2 className="mt-3 font-serif text-4xl leading-[1.1] tracking-[-0.015em] sm:text-5xl">
-                {bitacoras.length === 0
-                  ? "Tu bitácora está en blanco."
-                  : bitacoras.length === 1
-                    ? "1 entrada."
-                    : `${nf.format(bitacoras.length)} entradas.`}
-              </h2>
-            </div>
-            {totalPiezas > 0 && (
+            )}
+          </div>
+          {bitacorasConGeo.length === 0 ? (
+            <div className="mt-6 border border-piedra bg-fondo p-8 text-center">
+              <p className="font-serif italic leading-relaxed text-niebla">
+                Tu mundo está esperándote. Sube tu primer viaje con foto +
+                ubicación y aparece aquí como un punto en el globo.
+              </p>
               <Link
                 href="/yo/bitacora/nueva"
-                className="border border-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
+                className="mt-6 inline-block bg-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-fondo transition-colors hover:bg-cuero"
               >
-                + Subir bitácora
+                + Agregar mi primer viaje
               </Link>
-            )}
-          </div>
-          {bitacoras.length === 0 ? (
-            <p className="mt-6 max-w-2xl font-serif italic leading-relaxed text-niebla">
-              Cuando llevas tu Valiz a algún lado, súbele una foto y la
-              historia. 200 pts por la primera del mes de cada pieza.
-            </p>
-          ) : (
-            <ul className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {bitacoras.map((b) => (
-                <BitacoraCard
-                  key={b.id}
-                  id={b.id}
-                  fotoUrl={b.foto_url}
-                  lugar={b.lugar}
-                  texto={b.texto}
-                  created_at={b.created_at}
-                  pointsAwarded={b.points_awarded}
-                />
-              ))}
-            </ul>
-          )}
-        </div>
-      </section>
-
-      <section className="border-b border-piedra px-8 py-20 sm:px-16">
-        <div className="mx-auto max-w-5xl">
-          <div className="flex flex-col items-baseline justify-between gap-3 sm:flex-row">
-            <div>
-              <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-                Movimiento de puntos
-              </p>
-              <h2 className="mt-3 font-serif text-3xl leading-[1.1] tracking-[-0.015em] sm:text-4xl">
-                Tu saldo: {nf.format(profile.puntos_actuales)} pts.
-              </h2>
             </div>
-            {profile.puntos_actuales >= 5000 && (
-              <Link
-                href="/yo/canje"
-                className="bg-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-fondo transition-colors hover:bg-cuero"
-              >
-                Canjear pts →
-              </Link>
-            )}
-          </div>
-          {movs.length === 0 ? (
-            <p className="mt-6 font-serif italic text-niebla">Sin movimientos todavía.</p>
           ) : (
-            <ul className="mt-10">
-              {movs.map((m) => (
-                <li key={m.id} className="border-b border-piedra py-3">
-                  <div className="flex items-baseline justify-between gap-4">
-                    <span className="font-serif text-base">
-                      {MOTIVO_LABEL[m.motivo] ?? m.motivo}
-                      {m.referencia_id && (
-                        <span className="ml-2 font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
-                          {m.referencia_id}
-                        </span>
-                      )}
-                    </span>
-                    <span
-                      className={`font-serif text-lg ${m.delta >= 0 ? "text-musgo" : "text-cuero"}`}
-                    >
-                      {m.delta >= 0 ? "+" : ""}
-                      {nf.format(m.delta)}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <div className="mt-6 aspect-square w-full overflow-hidden border border-piedra bg-fondo sm:aspect-[16/9]">
+              <MapaColectivo points={pointsPersonal} />
+            </div>
           )}
         </div>
       </section>
 
-      <footer className="px-8 py-8 sm:px-16">
+      {/* ACCIONES PRINCIPALES ----------------------------------------- */}
+      <section className="border-b border-piedra px-6 py-10 sm:px-16 sm:py-12">
+        <div className="mx-auto max-w-5xl">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Link
+              href="/yo/bitacora/nueva"
+              className="flex items-center justify-between gap-4 bg-tinta px-6 py-5 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-fondo transition-colors hover:bg-cuero"
+            >
+              <span>+ Agregar viaje</span>
+              <span>→</span>
+            </Link>
+            <Link
+              href="/yo/agregar-pieza"
+              className="flex items-center justify-between gap-4 border border-tinta px-6 py-5 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
+            >
+              <span>+ Agregar pieza</span>
+              <span>→</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* CARDS DESTACADAS --------------------------------------------- */}
+      <section className="border-b border-piedra px-6 py-10 sm:px-16 sm:py-16">
+        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <DestacadoCard
+            tag="Recomienda Valiz"
+            titulo="Comparte tu link"
+            descripcion={
+              ptsReferidos > 0
+                ? `Has ganado ${nf.format(ptsReferidos)} pts por ventas referidas.`
+                : "Quien compre con tu link tiene 5% off. Tú recibes 5% en pts."
+            }
+            href="/yo/referir"
+            ctaLabel="Ver mi link →"
+          />
+          <DestacadoCard
+            tag="Canjear puntos"
+            titulo={`${nf.format(profile.puntos_actuales)} pts`}
+            descripcion="1 pt = $1 CLP. Canjea por descuento en valiz.cl."
+            href="/yo/canje"
+            ctaLabel="Canjear →"
+          />
+          {concursoVigente ? (
+            <DestacadoCard
+              tag="Concurso vigente"
+              titulo={concursoVigente.titulo}
+              descripcion={
+                concursoVigente.premio_descripcion
+                  ? `Premio: ${concursoVigente.premio_descripcion}`
+                  : "Postula una de tus bitácoras."
+              }
+              href={`/concursos/${concursoVigente.slug}`}
+              ctaLabel="Ver concurso →"
+              accent
+            />
+          ) : (
+            <DestacadoCard
+              tag="Valiz colectivo"
+              titulo="El mundo Valiz"
+              descripcion="Mira todas las bitácoras subidas por la comunidad."
+              href="/bitacora"
+              ctaLabel="Explorar →"
+            />
+          )}
+        </div>
+      </section>
+
+      <footer className="px-8 py-10 sm:px-16">
         <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
           Valiz · Since 2018
         </p>
@@ -574,11 +590,11 @@ function Stat({
       <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-niebla">
         {label}
       </p>
-      <p className="mt-3 font-serif text-5xl leading-none tracking-[-0.02em] sm:text-6xl">
+      <p className="mt-2 font-serif text-3xl leading-none tracking-[-0.02em] sm:text-4xl">
         {big}
       </p>
       {subtle && (
-        <p className="mt-2 font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
+        <p className="mt-1 font-sans text-[9px] uppercase tracking-[0.15em] text-niebla">
           {subtle}
         </p>
       )}
@@ -586,11 +602,60 @@ function Stat({
   );
 }
 
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("es-CL", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+function DestacadoCard({
+  tag,
+  titulo,
+  descripcion,
+  href,
+  ctaLabel,
+  accent,
+}: {
+  tag: string;
+  titulo: string;
+  descripcion: string;
+  href: string;
+  ctaLabel: string;
+  accent?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`group flex flex-col justify-between gap-4 border p-5 transition-colors ${
+        accent
+          ? "border-cuero bg-cuero text-fondo hover:bg-tinta"
+          : "border-piedra bg-fondo hover:border-cuero"
+      }`}
+    >
+      <div>
+        <p
+          className={`font-sans text-[10px] font-semibold uppercase tracking-[0.22em] ${
+            accent ? "text-fondo/70" : "text-cuero"
+          }`}
+        >
+          {tag}
+        </p>
+        <h3
+          className={`mt-3 font-serif text-2xl leading-tight ${
+            accent ? "text-fondo" : "text-tinta"
+          }`}
+        >
+          {titulo}
+        </h3>
+        <p
+          className={`mt-3 font-serif text-sm italic leading-relaxed ${
+            accent ? "text-fondo/85" : "text-niebla"
+          }`}
+        >
+          {descripcion}
+        </p>
+      </div>
+      <p
+        className={`font-sans text-[10px] font-semibold uppercase tracking-[0.22em] transition-transform group-hover:translate-x-1 ${
+          accent ? "text-fondo" : "text-cuero"
+        }`}
+      >
+        {ctaLabel}
+      </p>
+    </Link>
+  );
 }
