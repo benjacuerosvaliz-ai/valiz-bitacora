@@ -89,6 +89,7 @@ const MOTIVO_LABEL: Record<string, string> = {
   bono_familia_nueva: "Bono por familia nueva",
   bitacora: "Entrada de bitácora",
   canje_descuento: "Canje de puntos",
+  referido: "Venta referida",
   ajuste_admin: "Ajuste",
 };
 

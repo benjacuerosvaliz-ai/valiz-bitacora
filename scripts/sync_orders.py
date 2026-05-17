@@ -191,11 +191,92 @@ def main():
     distinct_emails = len({o["email"] for o in orders_list})
     total_revenue = sum(o["total_clp"] for o in orders_list)
     print()
-    print(f"✅ Listo.")
+    print(f"✅ Listo orders/items.")
     print(f"   orders: {len(orders_list)}")
     print(f"   line items: {len(all_items)}")
     print(f"   emails distintos: {distinct_emails}")
     print(f"   revenue total (CLP): {total_revenue:,.0f}")
+
+    # Procesar referidos: para orders con discount_code que matchee un
+    # código de referido asignado, otorgar al referidor 5% del subtotal
+    # como pts. Idempotente vía (motivo='referido', referencia_id=order_name).
+    procesar_referidos(sb, orders_list)
+
+
+def procesar_referidos(sb, orders_list: list[dict]):
+    """Detecta ventas con código de referido y otorga pts al referidor."""
+    REFERIDO_PCT = 0.05  # 5% del subtotal en pts (1 pt = $1 CLP)
+
+    ordenes_con_code = [o for o in orders_list if o.get("discount_code")]
+    if not ordenes_con_code:
+        print()
+        print("ℹ️  Sin orders con discount code, nada que procesar como referido.")
+        return
+
+    codes_usados = list({o["discount_code"] for o in ordenes_con_code})
+    # Buscar cuáles de esos códigos son de referido asignados
+    refs = (
+        sb.table("codigos_referido")
+        .select("code, assigned_to_user_id")
+        .in_("code", codes_usados)
+        .not_.is_("assigned_to_user_id", "null")
+        .execute()
+        .data
+        or []
+    )
+    if not refs:
+        print()
+        print("ℹ️  Ningún discount code coincide con referido asignado.")
+        return
+
+    ref_by_code = {r["code"]: r["assigned_to_user_id"] for r in refs}
+    print()
+    print(f"🤝 {len(ref_by_code)} código(s) de referido activos detectados.")
+
+    otorgados_total = 0
+    pts_total = 0
+    for o in ordenes_con_code:
+        code = o.get("discount_code")
+        referidor_id = ref_by_code.get(code) if code else None
+        if not referidor_id:
+            continue
+        # Solo orders pagadas
+        if o.get("financial_status") not in ("paid", "partially_refunded"):
+            continue
+        # 5% del subtotal (no incluye shipping)
+        subtotal = float(o.get("subtotal_clp") or 0)
+        pts = int(subtotal * REFERIDO_PCT)
+        if pts <= 0:
+            continue
+
+        # Idempotente: skip si ya hay un movimiento referido para esta order
+        existing = (
+            sb.table("puntos_movimientos")
+            .select("id", count="exact", head=True)
+            .eq("user_id", referidor_id)
+            .eq("motivo", "referido")
+            .eq("referencia_id", o["name"])
+            .execute()
+        )
+        if existing.count and existing.count > 0:
+            continue
+
+        sb.table("puntos_movimientos").insert(
+            {
+                "user_id": referidor_id,
+                "delta": pts,
+                "motivo": "referido",
+                "referencia_id": o["name"],
+            }
+        ).execute()
+        otorgados_total += 1
+        pts_total += pts
+        print(f"   ✓ {o['name']} → {pts:,} pts a referidor")
+
+    print()
+    print(
+        f"✅ Referidos: {otorgados_total} nueva(s) acreditación(es), {pts_total:,} pts totales."
+    )
 
 
 if __name__ == "__main__":

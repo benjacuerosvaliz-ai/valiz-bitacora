@@ -106,6 +106,9 @@ export function UserChipMenu({
             <MenuItem href="/yo/canje" onClick={() => setOpen(false)}>
               Canjear puntos
             </MenuItem>
+            <MenuItem href="/yo/referir" onClick={() => setOpen(false)}>
+              Recomendar Valiz
+            </MenuItem>
             {esAdmin && (
               <MenuItem href="/admin" onClick={() => setOpen(false)} accent>
                 Admin
