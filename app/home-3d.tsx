@@ -19,7 +19,7 @@ import type { Point, Producto3D, StatsGlobales } from "./page";
 const nf = new Intl.NumberFormat("es-CL");
 
 /**
- * Preview3D — narrativa Tres Vidas como landing scroll-driven.
+ * Home3D — narrativa Tres Vidas como landing scroll-driven.
  *
  * Paleta Valiz cream/cuero/tinta (NO dark) — coherente con el resto
  * de la app y permite que el globo Mapbox se funda con el fondo.
@@ -32,7 +32,7 @@ const nf = new Intl.NumberFormat("es-CL");
  *  OUTRO         → 1000 pts al crear cuenta + misiones, SOLO CTA crear
  */
 
-export function Preview3D({
+export function Home3D({
   cartera,
   stats,
   points,
