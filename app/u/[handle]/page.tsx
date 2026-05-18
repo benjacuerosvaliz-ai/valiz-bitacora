@@ -226,6 +226,14 @@ export default async function PerfilPublicoPage({
     esElDueno,
   );
 
+  // Saldo de puntos del dueño (público — motiva a otros a ganarlos)
+  const { data: dueno } = await admin
+    .from("user_profiles")
+    .select("puntos_actuales")
+    .eq("id", profile.id)
+    .maybeSingle();
+  const puntosTotal = Number(dueno?.puntos_actuales ?? 0);
+
   const primerNombre = nombre.split(/\s+/)[0];
   const shareTitle = referidoCode
     ? `${nombre} te regala 5% off en Valiz`
@@ -257,9 +265,53 @@ export default async function PerfilPublicoPage({
       <header className="flex items-center justify-between border-b border-piedra px-6 py-4 sm:px-12 sm:py-5">
         <BrandMark variant="back" href="/bitacora" />
         <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-niebla">
-          Perfil
+          {esElDueno ? "Tu perfil" : "Perfil"}
         </p>
       </header>
+
+      {/* Barra del dueño (solo visible cuando el visitante es el dueño
+          logueado). Accesos rápidos a las acciones más comunes. */}
+      {esElDueno && (
+        <div className="border-b border-piedra bg-tinta/[0.025] px-5 py-2.5 sm:px-10">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2">
+            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+              Acciones rápidas
+            </p>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+              <Link
+                href="/yo/bitacora/nueva"
+                className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-tinta transition-colors hover:text-cuero"
+              >
+                + Bitácora
+              </Link>
+              <Link
+                href="/yo/agregar-pieza"
+                className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-tinta transition-colors hover:text-cuero"
+              >
+                + Pieza
+              </Link>
+              <Link
+                href="/yo/canje"
+                className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-tinta transition-colors hover:text-cuero"
+              >
+                Canjear puntos
+              </Link>
+              <Link
+                href="/yo/perfil"
+                className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-tinta transition-colors hover:text-cuero"
+              >
+                Editar perfil
+              </Link>
+              <Link
+                href="/yo"
+                className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-cuero transition-colors hover:text-tinta"
+              >
+                Dashboard completo →
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* HERO + STATS + EQUIPAJE — todo denso en 1 viewport ------------ */}
       <section className="border-b border-piedra px-5 py-6 sm:px-10 sm:py-8">
@@ -400,20 +452,28 @@ export default async function PerfilPublicoPage({
             />
           )}
 
-          {/* Fila 2: stats inline horizontales */}
-          {equipaje.length > 0 && (
-            <div className="mt-5 grid grid-cols-3 gap-2 border-t border-piedra pt-4 sm:gap-6">
-              <Stat label="Piezas" big={nf.format(equipaje.length)} />
-              <Stat
-                label="Horas en taller"
-                big={nf.format(Math.round(horasTotal))}
-              />
-              <Stat
-                label="Pies² rescatados"
-                big={nf.format(Math.round(piesTotal))}
-              />
-            </div>
-          )}
+          {/* Fila 2: stats inline horizontales (4 cols con puntos) */}
+          <div className="mt-5 grid grid-cols-2 gap-3 border-t border-piedra pt-4 sm:grid-cols-4 sm:gap-6">
+            {equipaje.length > 0 && (
+              <>
+                <Stat label="Piezas" big={nf.format(equipaje.length)} />
+                <Stat
+                  label="Horas en taller"
+                  big={nf.format(Math.round(horasTotal))}
+                />
+                <Stat
+                  label="Pies² rescatados"
+                  big={nf.format(Math.round(piesTotal))}
+                />
+              </>
+            )}
+            {/* Puntos Valiz — siempre visible (motiva ver que la gente
+                acumula plata). 1 pt = $1 CLP de descuento. */}
+            <Stat
+              label="Puntos · 1pt=$1 CLP"
+              big={nf.format(puntosTotal)}
+            />
+          </div>
 
         </div>
       </section>
