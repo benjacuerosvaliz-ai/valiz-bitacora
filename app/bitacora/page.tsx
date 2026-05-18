@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { BrandMark } from "@/components/brand-mark";
+import { slugify } from "@/lib/slugify";
 import { createStaticClient } from "@/lib/supabase/static";
 
+import { BitacoraFiltros } from "./bitacora-filtros";
 import { MapaColectivo, type Point } from "./mapa/mapa";
 
 export const metadata: Metadata = {
@@ -32,9 +34,17 @@ type ProductoRow = {
   sku: string;
   color_valiz: string | null;
   familia_id: string | null;
+  tallerista_id: string | null;
 };
 
-type FamiliaRow = { id: string; name: string; hours_per_unit: number | string | null };
+type FamiliaRow = {
+  id: string;
+  slug: string;
+  name: string;
+  hours_per_unit: number | string | null;
+};
+
+type TalleristaRow = { id: string; name: string };
 type ProfileRow = {
   id: string;
   display_name: string | null;
@@ -59,34 +69,93 @@ function authorLabel(p: ProfileRow | undefined): string {
   return p.display_name ?? p.handle ?? "Anónimo";
 }
 
-export default async function BitacoraColectivaPage() {
+type SearchParams = {
+  q?: string;
+  tallerista?: string;
+  familia?: string;
+};
+
+export default async function BitacoraColectivaPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const sp = await searchParams;
+  const q = (sp.q ?? "").trim();
+  const talleristaSlug = (sp.tallerista ?? "").trim();
+  const familiaSlug = (sp.familia ?? "").trim();
+
   const sb = createStaticClient();
 
-  const [bitsRes, prodsRes, famsRes, profsRes, prodsStatsRes] = await Promise.all([
-    sb
-      .from("bitacora_entries")
-      .select("id, user_id, sku, foto_url, lat, lng, lugar, texto, created_at")
-      .eq("invalidated", false)
-      .order("created_at", { ascending: false })
-      .limit(60),
-    sb.from("productos").select("sku, color_valiz, familia_id"),
-    sb.from("familias").select("id, name, hours_per_unit"),
-    sb.from("user_profiles_public").select("id, display_name, handle"),
-    sb
-      .from("productos")
-      .select("p2, sales_total, familia_id")
-      .eq("status", "active"),
-  ]);
+  // Datos base para filtros y mapeos (siempre se cargan)
+  const [prodsRes, famsRes, profsRes, prodsStatsRes, talleristasRes] =
+    await Promise.all([
+      sb
+        .from("productos")
+        .select("sku, color_valiz, familia_id, tallerista_id"),
+      sb.from("familias").select("id, slug, name, hours_per_unit"),
+      sb.from("user_profiles_public").select("id, display_name, handle"),
+      sb
+        .from("productos")
+        .select("p2, sales_total, familia_id")
+        .eq("status", "active"),
+      sb.from("talleristas").select("id, name").order("display_order"),
+    ]);
 
-  const bitacoras = (bitsRes.data ?? []) as BitacoraRow[];
   const productos = (prodsRes.data ?? []) as ProductoRow[];
   const familias = (famsRes.data ?? []) as FamiliaRow[];
   const profiles = (profsRes.data ?? []) as ProfileRow[];
   const productosStats = (prodsStatsRes.data ?? []) as ProductoStats[];
+  const talleristas = (talleristasRes.data ?? []) as TalleristaRow[];
 
   const productoBySku = new Map(productos.map((p) => [p.sku, p]));
   const familiaNameById = new Map(familias.map((f) => [f.id, f.name]));
+  const familiaIdBySlug = new Map(familias.map((f) => [f.slug, f.id]));
+  const talleristaIdBySlug = new Map(
+    talleristas.map((t) => [slugify(t.name), t.id]),
+  );
   const profileByUser = new Map(profiles.map((p) => [p.id, p]));
+
+  // Resolver SKUs filtrados según tallerista/familia ANTES de pedir
+  // bitácoras — así limitamos el query principal.
+  let skuFilter: string[] | null = null;
+  if (talleristaSlug || familiaSlug) {
+    const talleristaId = talleristaSlug
+      ? talleristaIdBySlug.get(talleristaSlug)
+      : null;
+    const familiaId = familiaSlug ? familiaIdBySlug.get(familiaSlug) : null;
+    skuFilter = productos
+      .filter((p) => {
+        if (talleristaId && p.tallerista_id !== talleristaId) return false;
+        if (familiaId && p.familia_id !== familiaId) return false;
+        return true;
+      })
+      .map((p) => p.sku);
+    // Si el filtro produce cero SKUs, el feed quedará vacío.
+  }
+
+  // Query principal de bitácoras con filtros aplicados
+  let bitsQuery = sb
+    .from("bitacora_entries")
+    .select("id, user_id, sku, foto_url, lat, lng, lugar, texto, created_at")
+    .eq("invalidated", false)
+    .order("created_at", { ascending: false })
+    .limit(120);
+
+  if (skuFilter !== null) {
+    bitsQuery =
+      skuFilter.length > 0
+        ? bitsQuery.in("sku", skuFilter)
+        : bitsQuery.eq("sku", "__no_match__"); // fuerza vacío
+  }
+  if (q) {
+    // Escapar % y _ que son wildcards en LIKE
+    const safe = q.replace(/[%_\\]/g, "\\$&");
+    bitsQuery = bitsQuery.or(`lugar.ilike.%${safe}%,texto.ilike.%${safe}%`);
+  }
+
+  const bitsRes = await bitsQuery;
+  const bitacoras = (bitsRes.data ?? []) as BitacoraRow[];
 
   // Stats del overlay del globo (mismo cálculo que /bitacora/mapa)
   const hoursByFamilia = new Map(
@@ -238,21 +307,41 @@ export default async function BitacoraColectivaPage() {
         )}
       </section>
 
+      {/* FILTROS ---------------------------------------------------------- */}
+      <BitacoraFiltros
+        talleristas={talleristas.map((t) => ({
+          value: slugify(t.name),
+          label: t.name,
+        }))}
+        familias={familias
+          .filter((f) => productos.some((p) => p.familia_id === f.id))
+          .map((f) => ({ value: f.slug, label: f.name }))
+          .sort((a, b) => a.label.localeCompare(b.label))}
+        qDefault={q}
+        talleristaDefault={talleristaSlug}
+        familiaDefault={familiaSlug}
+      />
+
       {/* FEED DE ENTRADAS ------------------------------------------------- */}
       <section id="feed" className="px-8 py-20 sm:px-16">
         <div className="mx-auto max-w-6xl">
           <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-            Últimas entradas
+            {q || talleristaSlug || familiaSlug
+              ? "Resultados"
+              : "Últimas entradas"}
           </p>
           <h2 className="mt-3 font-serif text-3xl leading-[1.1] tracking-[-0.015em] sm:text-4xl">
             {bitacoras.length === 0
-              ? "Todavía no hay entradas."
+              ? q || talleristaSlug || familiaSlug
+                ? "Sin entradas con esos filtros."
+                : "Todavía no hay entradas."
               : `${bitacoras.length} ${bitacoras.length === 1 ? "entrada" : "entradas"}.`}
           </h2>
           {bitacoras.length === 0 ? (
             <p className="mt-6 font-serif italic leading-relaxed text-niebla">
-              Si llevas una Valiz, sé la primera. Sube tu pieza con ubicación
-              y queda en el mapa.
+              {q || talleristaSlug || familiaSlug
+                ? "Prueba sacar algún filtro o buscar otro término."
+                : "Si llevas una Valiz, sé la primera. Sube tu pieza con ubicación y queda en el mapa."}
             </p>
           ) : (
             <ul className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
