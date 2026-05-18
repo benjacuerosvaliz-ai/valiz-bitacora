@@ -57,7 +57,7 @@ export function UserChipMenu({
   return (
     <div
       ref={menuRef}
-      className="fixed right-4 top-4 z-40 flex flex-row-reverse items-start gap-2 sm:right-6 sm:top-6"
+      className="relative flex flex-row-reverse items-start gap-2"
     >
       {/* Chip principal: clickable abre menú */}
       <div className="flex flex-col items-end gap-2">

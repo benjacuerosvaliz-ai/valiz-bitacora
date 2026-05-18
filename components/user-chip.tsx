@@ -4,6 +4,7 @@ import { isAdmin } from "@/lib/auth/admin-guard";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
+import { NotifBell, type NotifItem } from "./notif-bell";
 import { UserChipMenu } from "./user-chip-menu";
 
 /**
@@ -43,8 +44,8 @@ export async function UserChip() {
   // Si soy admin, contar pendientes para mostrar badge.
   let pendientes = 0;
   const esAdmin = isAdmin(user.email);
+  const admin = createAdminClient();
   if (esAdmin) {
-    const admin = createAdminClient();
     const { count } = await admin
       .from("compras_manuales")
       .select("id", { head: true, count: "exact" })
@@ -52,13 +53,63 @@ export async function UserChip() {
     pendientes = count ?? 0;
   }
 
+  // Notificaciones del user. Tolerar ausencia de tabla (migración aún
+  // no aplicada → arrays vacíos).
+  let notifsInitial: { items: NotifItem[]; unread: number } = {
+    items: [],
+    unread: 0,
+  };
+  try {
+    const [{ data: items }, { count: unreadCount }] = await Promise.all([
+      admin
+        .from("notificaciones")
+        .select("id, type, ref_id, ref_type, payload, read_at, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(30),
+      admin
+        .from("notificaciones")
+        .select("id", { head: true, count: "exact" })
+        .eq("user_id", user.id)
+        .is("read_at", null),
+    ]);
+    notifsInitial = {
+      items: (items ?? []) as NotifItem[],
+      unread: unreadCount ?? 0,
+    };
+  } catch {
+    // tabla no existe — bell muestra panel vacío sin badge
+  }
+
   return (
-    <UserChipMenu
-      nombre={nombre}
-      pts={pts}
-      pendientes={pendientes}
-      esAdmin={esAdmin}
-      handle={handle}
-    />
+    <div className="fixed right-4 top-4 z-40 flex items-start gap-2 sm:right-6 sm:top-6">
+      <NotifBell
+        initialUnread={notifsInitial.unread}
+        initialItems={notifsInitial.items}
+      />
+      <UserChipMenuPositioned
+        nombre={nombre}
+        pts={pts}
+        pendientes={pendientes}
+        esAdmin={esAdmin}
+        handle={handle}
+      />
+    </div>
   );
+}
+
+/**
+ * Wrapper para que el UserChipMenu se renderice en flujo normal dentro
+ * del wrapper fixed de arriba — antes el componente tenía su propio
+ * `fixed right-4 top-4`. Para evitar tocar todo el client, lo envuelvo
+ * y reuso.
+ */
+function UserChipMenuPositioned(props: {
+  nombre: string;
+  pts: number;
+  pendientes: number;
+  esAdmin: boolean;
+  handle: string | null;
+}) {
+  return <UserChipMenu {...props} />;
 }

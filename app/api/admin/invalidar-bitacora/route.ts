@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { isAdmin } from "@/lib/auth/admin-guard";
+import { notify } from "@/lib/notificaciones";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -58,6 +59,17 @@ export async function POST(request: NextRequest) {
       });
     }
   }
+
+  // Notificar al user
+  await notify({
+    userId: bit.user_id,
+    type: "bitacora_invalidada",
+    refId: id,
+    refType: "bitacora",
+    payload: {
+      motivo: "No cumplió los requisitos del catálogo",
+    },
+  });
 
   return NextResponse.json({ ok: true });
 }

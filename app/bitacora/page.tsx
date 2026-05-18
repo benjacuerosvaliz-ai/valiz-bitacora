@@ -177,6 +177,50 @@ export default async function BitacoraColectivaPage({
     getUserReactedSet(user?.id ?? null, bitIds),
   ]);
 
+  // "Lo más amado" — top 3 globales si hay actividad de reacciones.
+  // Solo lo mostramos cuando NO hay filtros activos (en filtro queremos
+  // ver los resultados puros) y cuando hay al menos 3 reacciones totales.
+  const sinFiltros = !q && !talleristaSlug && !familiaSlug;
+  let topAmados: BitacoraRow[] = [];
+  if (sinFiltros) {
+    try {
+      const { data: topCountsData } = await sb
+        .from("bitacora_reaccion_counts")
+        .select("bitacora_id, count")
+        .order("count", { ascending: false })
+        .limit(3);
+      const topCounts = (topCountsData ?? []) as {
+        bitacora_id: string;
+        count: number;
+      }[];
+      const totalReacciones = topCounts.reduce((s, r) => s + Number(r.count), 0);
+      if (topCounts.length > 0 && totalReacciones >= 3) {
+        const topIds = topCounts.map((r) => r.bitacora_id);
+        const { data: topBitsData } = await sb
+          .from("bitacora_entries")
+          .select(
+            "id, user_id, sku, foto_url, lat, lng, lugar, texto, created_at",
+          )
+          .in("id", topIds)
+          .eq("invalidated", false);
+        const topBitsRaw = (topBitsData ?? []) as BitacoraRow[];
+        // Preservar orden por count desc
+        const byId = new Map(topBitsRaw.map((b) => [b.id, b]));
+        topAmados = topCounts
+          .map((c) => byId.get(c.bitacora_id))
+          .filter((b): b is BitacoraRow => Boolean(b));
+        // Hidratar counts también
+        for (const r of topCounts) {
+          if (!countsMap.has(r.bitacora_id)) {
+            countsMap.set(r.bitacora_id, Number(r.count));
+          }
+        }
+      }
+    } catch {
+      // tabla de reacciones aún no existe — sin widget
+    }
+  }
+
   // Stats del overlay del globo (mismo cálculo que /bitacora/mapa)
   const hoursByFamilia = new Map(
     familias.map((f) => [f.id, Number(f.hours_per_unit ?? 0)]),
@@ -326,6 +370,66 @@ export default async function BitacoraColectivaPage({
           </div>
         )}
       </section>
+
+      {/* LO MÁS AMADO ----------------------------------------------------- */}
+      {topAmados.length > 0 && (
+        <section className="border-b border-piedra bg-tinta px-8 py-12 text-fondo sm:px-16 sm:py-16">
+          <div className="mx-auto max-w-6xl">
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+              Lo más amado
+            </p>
+            <h2 className="mt-3 font-serif text-2xl leading-tight tracking-[-0.015em] sm:text-3xl">
+              Las bitácoras con más ♥ de la comunidad.
+            </h2>
+            <ul className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-8">
+              {topAmados.map((b, i) => {
+                const p = b.sku ? productoBySku.get(b.sku) : null;
+                const fam = p?.familia_id
+                  ? familiaNameById.get(p.familia_id)
+                  : null;
+                const author = profileByUser.get(b.user_id);
+                const count = countsMap.get(b.id) ?? 0;
+                return (
+                  <li key={b.id} className="group">
+                    <Link
+                      href={`/bitacora/${b.id}`}
+                      className="block"
+                    >
+                      <div className="relative">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={b.foto_url}
+                          alt={fam ?? "Bitácora"}
+                          className="aspect-[4/3] w-full object-cover"
+                        />
+                        <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 bg-fondo px-2.5 py-1 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-tinta">
+                          {i + 1}º · ♥ {count}
+                        </span>
+                      </div>
+                      <div className="mt-3">
+                        {fam && (
+                          <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-cuero">
+                            {fam}
+                            {p?.color_valiz && ` · ${p.color_valiz}`}
+                          </p>
+                        )}
+                        <p className="mt-1 font-serif text-lg leading-tight text-fondo">
+                          {b.lugar ?? "Sin lugar"}
+                        </p>
+                        {author && (
+                          <p className="mt-1 font-sans text-[10px] uppercase tracking-[0.18em] text-fondo/60">
+                            {author.display_name ?? author.handle}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </section>
+      )}
 
       {/* FILTROS ---------------------------------------------------------- */}
       <BitacoraFiltros

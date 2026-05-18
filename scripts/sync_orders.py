@@ -269,6 +269,19 @@ def procesar_referidos(sb, orders_list: list[dict]):
                 "referencia_id": o["name"],
             }
         ).execute()
+        # Notificación in-app (tolerante si tabla aún no existe)
+        try:
+            sb.table("notificaciones").insert(
+                {
+                    "user_id": referidor_id,
+                    "type": "referido_pts",
+                    "ref_id": o["name"],
+                    "ref_type": "order",
+                    "payload": {"pts": pts},
+                }
+            ).execute()
+        except Exception:
+            pass  # tabla notificaciones aún no creada
         otorgados_total += 1
         pts_total += pts
         print(f"   ✓ {o['name']} → {pts:,} pts a referidor")

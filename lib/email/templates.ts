@@ -320,3 +320,125 @@ export function tplCompraValidada(args: {
     }),
   };
 }
+
+// ============================================================================
+// Digest semanal: resumen de lo nuevo en Valiz Bitácora
+// ============================================================================
+export function tplDigestSemanal(args: {
+  nombre: string | null;
+  bitacoras: {
+    id: string;
+    fotoUrl: string;
+    lugar: string | null;
+    texto: string | null;
+    familiaName: string | null;
+    colorValiz: string | null;
+    autorNombre: string;
+    reacciones: number;
+  }[];
+  ganadorConcurso?: {
+    titulo: string;
+    ganadorNombre: string;
+    concursoUrl: string;
+  } | null;
+  nuevasPiezasCount?: number;
+  yoUrl: string;
+  bitacoraUrl: string;
+}): { subject: string; html: string } {
+  const saludo = args.nombre
+    ? `Hola, ${args.nombre.split(/\s+/)[0]}.`
+    : "Hola.";
+
+  const tieneBits = args.bitacoras.length > 0;
+  const N = args.bitacoras.length;
+
+  // Lista visual de bitácoras destacadas
+  const bitacorasHtml = tieneBits
+    ? args.bitacoras
+        .map(
+          (b) => `
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px 0; border-top:1px solid ${PIEDRA};">
+          <tr>
+            <td style="padding:18px 0 0 0;">
+              <a href="${escape(args.bitacoraUrl)}/bitacora/${escape(b.id)}" style="text-decoration:none; color:${TINTA}; display:block;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td width="120" valign="top" style="padding:0 16px 0 0;">
+                      <img src="${escape(b.fotoUrl)}" alt="" width="104" height="104" style="display:block; width:104px; height:104px; object-fit:cover; border:1px solid ${PIEDRA};" />
+                    </td>
+                    <td valign="top">
+                      ${
+                        b.familiaName
+                          ? `<p style="margin:0 0 4px 0; font-size:10px; font-weight:600; letter-spacing:0.22em; text-transform:uppercase; color:${CUERO};">${escape(b.familiaName)}${b.colorValiz ? ` &middot; ${escape(b.colorValiz)}` : ""}</p>`
+                          : ""
+                      }
+                      <p style="margin:0 0 4px 0; font-family:${FONT_BODY}; font-size:18px; line-height:1.25; color:${TINTA};">${escape(b.lugar ?? "Sin lugar")}</p>
+                      ${
+                        b.texto
+                          ? `<p style="margin:0 0 6px 0; font-family:${FONT_BODY}; font-style:italic; font-size:14px; line-height:1.45; color:${NIEBLA};">${escape(b.texto.length > 100 ? b.texto.slice(0, 98) + "…" : b.texto)}</p>`
+                          : ""
+                      }
+                      <p style="margin:0; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:${NIEBLA};">${escape(b.autorNombre)}${b.reacciones > 0 ? ` &middot; ♥ ${b.reacciones}` : ""}</p>
+                    </td>
+                  </tr>
+                </table>
+              </a>
+            </td>
+          </tr>
+        </table>`,
+        )
+        .join("")
+    : "";
+
+  const ganadorHtml = args.ganadorConcurso
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 0 0; background:${TINTA}; padding:0;">
+        <tr>
+          <td style="padding:24px;">
+            <p style="margin:0 0 6px 0; font-size:10px; font-weight:600; letter-spacing:0.22em; text-transform:uppercase; color:${CUERO};">Concurso · Ganador</p>
+            <p style="margin:0 0 6px 0; font-family:${FONT_BODY}; font-size:22px; line-height:1.2; color:${FONDO};">${escape(args.ganadorConcurso.titulo)}</p>
+            <p style="margin:0; font-family:${FONT_BODY}; font-style:italic; font-size:16px; color:${FONDO};">${escape(args.ganadorConcurso.ganadorNombre)}</p>
+          </td>
+        </tr>
+      </table>`
+    : "";
+
+  const cifrasHtml =
+    args.nuevasPiezasCount && args.nuevasPiezasCount > 0
+      ? p(
+          `<strong>${nf.format(args.nuevasPiezasCount)}</strong> piezas nuevas viajando esta semana.`,
+        )
+      : "";
+
+  const body = [
+    p(`${escape(saludo)}`),
+    tieneBits
+      ? p(
+          N === 1
+            ? "Esto fue lo que pasó esta semana en Valiz:"
+            : `Lo más destacado de la última semana en Valiz — ${N === 5 ? "cinco" : N} bitácoras:`,
+        )
+      : p(
+          "Esta semana estuvo tranquila en bitácoras. Si llevas una Valiz, súbete al mapa.",
+        ),
+    cifrasHtml,
+    bitacorasHtml,
+    ganadorHtml,
+  ]
+    .filter(Boolean)
+    .join("");
+
+  return {
+    subject: tieneBits
+      ? `Esta semana en Valiz · ${N} bitácoras`
+      : `Esta semana en Valiz`,
+    html: shell({
+      preheader: tieneBits
+        ? `${N} bitácora${N === 1 ? "" : "s"} nueva${N === 1 ? "" : "s"} en el mapa Valiz`
+        : "Resumen semanal de Valiz Bitácora",
+      title: "Esta semana en Valiz.",
+      intro: "Lo que vimos en la bitácora colectiva.",
+      body,
+      cta: { label: "Ver bitácora completa", url: args.bitacoraUrl },
+    }),
+  };
+}

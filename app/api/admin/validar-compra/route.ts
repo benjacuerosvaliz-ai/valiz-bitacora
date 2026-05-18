@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { isAdmin } from "@/lib/auth/admin-guard";
 import { sendCompraValidada } from "@/lib/email/notify";
+import { notify } from "@/lib/notificaciones";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -75,6 +76,19 @@ export async function POST(request: NextRequest) {
       ptsOtorgados: awardPts,
     }).catch((e) => console.error("[send compra validada]", e));
   }
+
+  // Notificación in-app
+  await notify({
+    userId: compra.user_id,
+    type: "compra_validada",
+    refId: compra.id,
+    refType: "compra_manual",
+    payload: {
+      familia: famRow?.name ?? compra.familia_slug ?? "Pieza",
+      color: compra.color_valiz ?? null,
+      pts: awardPts,
+    },
+  });
 
   return NextResponse.json({ ok: true });
 }

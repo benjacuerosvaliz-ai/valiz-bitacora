@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { notifyOnce } from "@/lib/notificaciones";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -29,7 +30,7 @@ export async function POST(
   // Verificar que la bitácora existe y no está invalidada
   const { data: bit } = await admin
     .from("bitacora_entries")
-    .select("id, invalidated")
+    .select("id, invalidated, user_id, lugar")
     .eq("id", id)
     .maybeSingle();
   if (!bit || bit.invalidated) {
@@ -57,6 +58,19 @@ export async function POST(
       .from("bitacora_reacciones")
       .insert({ bitacora_id: id, user_id: user.id });
     reacted = true;
+
+    // Notificar al dueño (si no se reaccionó a sí mismo). notifyOnce
+    // evita duplicados si el mismo user reacciona, des-reacciona y
+    // re-reacciona en poco tiempo.
+    if (bit.user_id !== user.id) {
+      await notifyOnce({
+        userId: bit.user_id,
+        type: "bitacora_reaccion",
+        refId: id,
+        refType: "bitacora",
+        payload: { lugar: bit.lugar ?? null },
+      });
+    }
   }
 
   // Contar actuales

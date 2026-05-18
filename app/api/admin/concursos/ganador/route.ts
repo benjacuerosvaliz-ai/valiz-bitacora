@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { isAdmin } from "@/lib/auth/admin-guard";
+import { notify } from "@/lib/notificaciones";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -54,5 +55,23 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Notificar al ganador
+  const { data: concurso } = await admin
+    .from("concursos")
+    .select("titulo, slug")
+    .eq("id", concursoId)
+    .maybeSingle();
+  await notify({
+    userId: part.user_id,
+    type: "concurso_ganador",
+    refId: concursoId,
+    refType: "concurso",
+    payload: {
+      titulo: concurso?.titulo ?? "el concurso",
+      slug: concurso?.slug ?? null,
+    },
+  });
+
   return NextResponse.json({ ok: true });
 }
