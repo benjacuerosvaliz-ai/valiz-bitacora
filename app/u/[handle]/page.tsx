@@ -4,8 +4,10 @@ import { notFound } from "next/navigation";
 
 import { MapaColectivo } from "@/app/bitacora/mapa/mapa";
 import { BrandMark } from "@/components/brand-mark";
+import { ReferidoCodigo } from "@/components/referido-codigo";
 import { ShareButton } from "@/components/share-button";
 import { getPhotoBySku } from "@/lib/product-photos";
+import { getOrAssignReferidoCode } from "@/lib/referido";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createStaticClient } from "@/lib/supabase/static";
 
@@ -213,6 +215,25 @@ export default async function PerfilPublicoPage({
   const nombre = profile.display_name ?? profile.handle;
   const ubicacion = [profile.city, profile.country].filter(Boolean).join(", ");
 
+  // Código de referido del dueño del perfil. Si visita su propio
+  // perfil logueado y no tiene código, se le asigna uno automático del
+  // pool. Para visitantes anónimos, solo mostramos el código si ya
+  // estaba asignado (no consumimos pool por curiosos).
+  const { data: { user: currentUser } } = await sb.auth.getUser();
+  const esElDueno = currentUser?.id === profile.id;
+  const referidoCode = await getOrAssignReferidoCode(
+    profile.id,
+    esElDueno,
+  );
+
+  const primerNombre = nombre.split(/\s+/)[0];
+  const shareTitle = referidoCode
+    ? `${nombre} te regala 5% off en Valiz`
+    : `${nombre} · Valiz Bitácora`;
+  const shareText = referidoCode
+    ? `Usa el código ${referidoCode} en valiz.cl y obtenés 5% off en tu primera compra Valiz. Es de ${primerNombre} — pásate a ver su bitácora.`
+    : profile.bio ?? `Equipaje y bitácoras de ${nombre} en Valiz.`;
+
   // Puntos para el globo personal: solo SUS bitácoras con coords
   const points = bitacoras
     .filter((b) => b.lat !== null && b.lng !== null)
@@ -358,17 +379,26 @@ export default async function PerfilPublicoPage({
                   </a>
                 )}
                 <ShareButton
-                  title={`${nombre} · Valiz Bitácora`}
-                  text={
-                    profile.bio ??
-                    `Equipaje y bitácoras de ${nombre} en Valiz.`
-                  }
+                  title={shareTitle}
+                  text={shareText}
                   url={`/u/${profile.handle}`}
-                  label="Compartir"
+                  label={
+                    referidoCode ? "Regalar 5% off" : "Compartir"
+                  }
+                  highlight={!!referidoCode}
                 />
               </div>
             </div>
           </div>
+
+          {/* CTA público del código de referido (visible para todos) */}
+          {referidoCode && (
+            <ReferidoCodigo
+              code={referidoCode}
+              nombre={primerNombre}
+              showCopy
+            />
+          )}
 
           {/* Fila 2: stats inline horizontales */}
           {equipaje.length > 0 && (

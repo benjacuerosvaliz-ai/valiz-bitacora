@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 
 import { loadValizFonts } from "@/lib/og-fonts";
+import { getOrAssignReferidoCode } from "@/lib/referido";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createStaticClient } from "@/lib/supabase/static";
 
@@ -118,6 +119,11 @@ export default async function Image({
   }
   horasTotal = Math.round(horasTotal);
   piesTotal = Math.round(piesTotal);
+
+  // Código de referido del dueño (sin auto-asignar — solo si ya tiene)
+  const referidoCode = profile
+    ? await getOrAssignReferidoCode(profile.id, false)
+    : null;
 
   const nombre = profile?.display_name ?? profile?.handle ?? "Usuario";
   const inicial = nombre.trim().charAt(0).toUpperCase() || "V";
@@ -278,25 +284,81 @@ export default async function Image({
           <Stat label="Pies²" value={nf.format(piesTotal)} />
         </div>
 
-        {/* Footer URL */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 28,
-            left: 0,
-            right: 0,
-            display: "flex",
-            justifyContent: "center",
-            fontSize: 14,
-            letterSpacing: "0.32em",
-            textTransform: "uppercase",
-            color: COLORS.niebla,
-            fontFamily: "Manrope, sans-serif",
-            fontWeight: 600,
-          }}
-        >
-          bitacora.valiz.cl/u/{profile?.handle ?? handle}
-        </div>
+        {/* Footer: código de referido como CTA si lo tiene, sino URL */}
+        {referidoCode ? (
+          <div
+            style={{
+              position: "absolute",
+              bottom: 24,
+              left: 0,
+              right: 0,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: 16,
+            }}
+          >
+            <span
+              style={{
+                fontSize: 14,
+                letterSpacing: "0.32em",
+                textTransform: "uppercase",
+                color: COLORS.cuero,
+                fontFamily: "Manrope, sans-serif",
+                fontWeight: 600,
+                display: "flex",
+              }}
+            >
+              Te regalo 5% off ·
+            </span>
+            <span
+              style={{
+                fontSize: 22,
+                letterSpacing: "0.18em",
+                color: COLORS.fondo,
+                fontFamily: "Manrope, sans-serif",
+                fontWeight: 600,
+                background: COLORS.cuero,
+                padding: "8px 18px",
+                display: "flex",
+              }}
+            >
+              {referidoCode}
+            </span>
+            <span
+              style={{
+                fontSize: 14,
+                letterSpacing: "0.32em",
+                textTransform: "uppercase",
+                color: COLORS.niebla,
+                fontFamily: "Manrope, sans-serif",
+                fontWeight: 600,
+                display: "flex",
+              }}
+            >
+              · en valiz.cl
+            </span>
+          </div>
+        ) : (
+          <div
+            style={{
+              position: "absolute",
+              bottom: 28,
+              left: 0,
+              right: 0,
+              display: "flex",
+              justifyContent: "center",
+              fontSize: 14,
+              letterSpacing: "0.32em",
+              textTransform: "uppercase",
+              color: COLORS.niebla,
+              fontFamily: "Manrope, sans-serif",
+              fontWeight: 600,
+            }}
+          >
+            bitacora.valiz.cl/u/{profile?.handle ?? handle}
+          </div>
+        )}
       </div>
     ),
     { ...size, fonts },

@@ -3,7 +3,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { BrandMark } from "@/components/brand-mark";
+import { ReferidoCodigo } from "@/components/referido-codigo";
 import { getPhotoBySku } from "@/lib/product-photos";
+import { getOrAssignReferidoCode } from "@/lib/referido";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -216,6 +218,9 @@ export default async function YoPage() {
     (s, m) => s + (m.delta as number),
     0,
   );
+
+  // Código de referido (lazy-assign si no tiene)
+  const referidoCode = await getOrAssignReferidoCode(user.id, true);
 
   // Concurso vigente
   const nowIso = new Date().toISOString();
@@ -473,6 +478,25 @@ export default async function YoPage() {
               <span>→</span>
             </Link>
           </div>
+
+          {/* Bloque destacado: tu código de referido */}
+          {referidoCode && (
+            <div className="mt-3 border border-cuero/30 bg-cuero/[0.04] px-4 py-3 sm:px-5 sm:py-4">
+              <ReferidoCodigo
+                code={referidoCode}
+                nombre={
+                  (profile?.display_name ?? "Tu").split(/\s+/)[0]
+                }
+                showCopy
+              />
+              {ptsReferidos > 0 && (
+                <p className="mt-2 font-sans text-[10px] uppercase tracking-[0.22em] text-niebla">
+                  Ya ganaste {nf.format(ptsReferidos)} pts por
+                  referidos.
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Cards destacadas */}
           <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">

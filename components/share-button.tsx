@@ -21,6 +21,7 @@ export function ShareButton({
   className = "",
   label = "Compartir",
   variant = "default",
+  highlight = false,
 }: {
   /** Título sugerido (aparece en el sheet nativo) */
   title: string;
@@ -31,6 +32,8 @@ export function ShareButton({
   className?: string;
   label?: string;
   variant?: "default" | "icon";
+  /** Si true, usa el estilo cuero destacado (CTA principal). */
+  highlight?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -67,15 +70,19 @@ export function ShareButton({
 
   const isIcon = variant === "icon";
 
+  const baseClasses = isIcon
+    ? ""
+    : highlight
+      ? "bg-cuero px-5 py-2.5 text-[11px] text-fondo hover:bg-tinta"
+      : "border border-piedra px-4 py-2 text-[11px] text-tinta hover:border-cuero hover:text-cuero";
+
   return (
     <button
       type="button"
       onClick={share}
       disabled={busy}
       aria-label={label}
-      className={`group inline-flex items-center gap-2 font-sans font-semibold uppercase tracking-[0.18em] transition-colors disabled:opacity-60 ${
-        isIcon ? "" : "border border-piedra px-4 py-2 text-[11px] text-tinta hover:border-cuero hover:text-cuero"
-      } ${className}`}
+      className={`group inline-flex items-center gap-2 font-sans font-semibold uppercase tracking-[0.18em] transition-colors disabled:opacity-60 ${baseClasses} ${className}`}
     >
       {copied ? (
         <>
