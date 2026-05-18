@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 
+import { loadValizFonts } from "@/lib/og-fonts";
 import { createStaticClient } from "@/lib/supabase/static";
 
 export const runtime = "nodejs";
@@ -37,6 +38,8 @@ export default async function Image({
     .eq("invalidated", false)
     .maybeSingle();
 
+  const fonts = await loadValizFonts();
+
   if (!b) {
     return new ImageResponse(
       (
@@ -49,21 +52,21 @@ export default async function Image({
             justifyContent: "center",
             background: COLORS.fondo,
             color: COLORS.tinta,
-            fontSize: 48,
-            fontFamily: "serif",
+            fontSize: 56,
+            fontFamily: "Newsreader, serif",
           }}
         >
           Bitácora · Valiz
         </div>
       ),
-      { ...size },
+      { ...size, fonts },
     );
   }
 
   const [authorRes, prodRes] = await Promise.all([
     sb
       .from("user_profiles_public")
-      .select("display_name, handle")
+      .select("display_name, handle, avatar_url")
       .eq("id", b.user_id)
       .maybeSingle(),
     b.sku
@@ -75,7 +78,7 @@ export default async function Image({
       : Promise.resolve({ data: null }),
   ]);
   const author = authorRes.data as
-    | { display_name: string | null; handle: string | null }
+    | { display_name: string | null; handle: string | null; avatar_url: string | null }
     | null;
   const prod = prodRes.data as
     | {
@@ -91,8 +94,8 @@ export default async function Image({
 
   const authorLabel = author?.display_name ?? author?.handle ?? "Anónimo";
   const textoCorto = b.texto
-    ? b.texto.length > 180
-      ? b.texto.slice(0, 178) + "…"
+    ? b.texto.length > 160
+      ? b.texto.slice(0, 158) + "…"
       : b.texto
     : null;
 
@@ -105,63 +108,69 @@ export default async function Image({
           display: "flex",
           background: COLORS.fondo,
           color: COLORS.tinta,
-          fontFamily: "serif",
+          fontFamily: "Newsreader, serif",
         }}
       >
-        {/* Foto izquierda */}
+        {/* Foto bitácora (mitad izquierda) */}
         <div
           style={{
-            width: "50%",
+            width: 600,
             height: "100%",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             background: "#ece6dc",
+            position: "relative",
           }}
         >
           <img
             src={b.foto_url}
             alt=""
             width={600}
-            height={600}
-            style={{ objectFit: "cover", width: 600, height: 600 }}
+            height={630}
+            style={{
+              objectFit: "cover",
+              width: 600,
+              height: 630,
+            }}
           />
         </div>
 
-        {/* Texto derecha */}
+        {/* Panel derecho */}
         <div
           style={{
-            width: "50%",
-            height: "100%",
-            padding: "56px 64px",
+            flex: 1,
+            padding: "60px 60px 60px 56px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
           }}
         >
-          <div
-            style={{
-              fontSize: 18,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color: COLORS.niebla,
-              fontFamily: "sans-serif",
-              display: "flex",
-            }}
-          >
-            Valiz Bitácora · Bitácora
-          </div>
-
+          {/* Header marca + familia */}
           <div style={{ display: "flex", flexDirection: "column" }}>
+            <div
+              style={{
+                fontSize: 14,
+                letterSpacing: "0.32em",
+                textTransform: "uppercase",
+                color: COLORS.cuero,
+                fontFamily: "Manrope, sans-serif",
+                fontWeight: 600,
+                display: "flex",
+              }}
+            >
+              Valiz · Bitácora
+            </div>
             {familia && (
               <div
                 style={{
-                  fontSize: 20,
-                  letterSpacing: "0.22em",
+                  marginTop: 14,
+                  fontSize: 18,
+                  letterSpacing: "0.28em",
                   textTransform: "uppercase",
-                  color: COLORS.cuero,
-                  marginBottom: 18,
-                  fontFamily: "sans-serif",
+                  color: COLORS.niebla,
+                  fontFamily: "Manrope, sans-serif",
+                  fontWeight: 600,
                   display: "flex",
                 }}
               >
@@ -169,11 +178,16 @@ export default async function Image({
                 {prod?.color_valiz && ` · ${prod.color_valiz}`}
               </div>
             )}
+          </div>
+
+          {/* Lugar grande + texto */}
+          <div style={{ display: "flex", flexDirection: "column" }}>
             <div
               style={{
                 fontSize: 68,
-                lineHeight: 1.04,
+                lineHeight: 1.02,
                 letterSpacing: "-0.022em",
+                color: COLORS.tinta,
                 display: "flex",
               }}
             >
@@ -182,11 +196,13 @@ export default async function Image({
             {textoCorto && (
               <div
                 style={{
-                  marginTop: 24,
+                  marginTop: 22,
                   fontSize: 22,
                   fontStyle: "italic",
-                  lineHeight: 1.4,
-                  color: COLORS.niebla,
+                  fontFamily: "Newsreader, serif",
+                  lineHeight: 1.45,
+                  color: COLORS.tinta,
+                  maxWidth: 480,
                   display: "flex",
                 }}
               >
@@ -195,27 +211,83 @@ export default async function Image({
             )}
           </div>
 
+          {/* Footer: avatar + autor + fecha */}
           <div
             style={{
-              fontSize: 16,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color: COLORS.tinta,
-              borderTop: `1px solid ${COLORS.piedra}`,
-              paddingTop: 18,
-              fontFamily: "sans-serif",
               display: "flex",
-              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 14,
+              borderTop: `1px solid ${COLORS.piedra}`,
+              paddingTop: 22,
             }}
           >
-            <span>{authorLabel}</span>
-            <span style={{ color: COLORS.niebla }}>
-              {formatDate(b.created_at)}
-            </span>
+            {author?.avatar_url ? (
+              <img
+                src={author.avatar_url}
+                alt=""
+                width={44}
+                height={44}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: `1px solid ${COLORS.piedra}`,
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: "50%",
+                  background: COLORS.cuero,
+                  color: COLORS.fondo,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 22,
+                  fontFamily: "Newsreader, serif",
+                }}
+              >
+                {authorLabel.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 18,
+                  fontFamily: "Newsreader, serif",
+                  color: COLORS.tinta,
+                  display: "flex",
+                }}
+              >
+                {authorLabel}
+              </span>
+              <span
+                style={{
+                  fontSize: 13,
+                  letterSpacing: "0.22em",
+                  textTransform: "uppercase",
+                  color: COLORS.niebla,
+                  fontFamily: "Manrope, sans-serif",
+                  fontWeight: 600,
+                  marginTop: 2,
+                  display: "flex",
+                }}
+              >
+                {formatDate(b.created_at)}
+              </span>
+            </div>
           </div>
         </div>
       </div>
     ),
-    { ...size },
+    { ...size, fonts },
   );
 }

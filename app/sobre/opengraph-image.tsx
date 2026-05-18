@@ -1,5 +1,7 @@
 import { ImageResponse } from "next/og";
 
+import { loadValizFonts } from "@/lib/og-fonts";
+
 export const runtime = "nodejs";
 export const alt = "Sobre Valiz Bitácora";
 export const size = { width: 1200, height: 630 };
@@ -13,7 +15,8 @@ const COLORS = {
   piedra: "#d9d3c7",
 };
 
-export default function Image() {
+export default async function Image() {
+  const fonts = await loadValizFonts();
   return new ImageResponse(
     (
       <div
@@ -22,7 +25,7 @@ export default function Image() {
           height: "100%",
           background: COLORS.fondo,
           color: COLORS.tinta,
-          fontFamily: "serif",
+          fontFamily: "Newsreader, serif",
           padding: "72px 96px",
           display: "flex",
           flexDirection: "column",
@@ -35,7 +38,7 @@ export default function Image() {
             letterSpacing: "0.22em",
             textTransform: "uppercase",
             color: COLORS.niebla,
-            fontFamily: "sans-serif",
+            fontFamily: "Manrope, sans-serif", fontWeight: 600,
             display: "flex",
           }}
         >
@@ -76,7 +79,7 @@ export default function Image() {
             color: COLORS.tinta,
             borderTop: `1px solid ${COLORS.piedra}`,
             paddingTop: 18,
-            fontFamily: "sans-serif",
+            fontFamily: "Manrope, sans-serif", fontWeight: 600,
             display: "flex",
           }}
         >
@@ -84,6 +87,6 @@ export default function Image() {
         </div>
       </div>
     ),
-    { ...size },
+    { ...size, fonts },
   );
 }

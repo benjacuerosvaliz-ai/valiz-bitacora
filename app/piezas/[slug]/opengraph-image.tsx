@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
+import { loadValizFonts } from "@/lib/og-fonts";
 import { createStaticClient } from "@/lib/supabase/static";
 
 export const runtime = "nodejs";
@@ -82,6 +83,7 @@ export default async function Image({
   const colores = productos.length;
 
   const photo = await getFirstProductPhoto(slug);
+  const fonts = await loadValizFonts();
 
   return new ImageResponse(
     (
@@ -92,7 +94,7 @@ export default async function Image({
           display: "flex",
           background: COLORS.fondo,
           color: COLORS.tinta,
-          fontFamily: "serif",
+          fontFamily: "Newsreader, serif",
         }}
       >
         {/* Foto del producto (mitad izquierda) */}
@@ -134,7 +136,7 @@ export default async function Image({
               letterSpacing: "0.22em",
               textTransform: "uppercase",
               color: COLORS.niebla,
-              fontFamily: "sans-serif",
+              fontFamily: "Manrope, sans-serif", fontWeight: 600,
               display: "flex",
             }}
           >
@@ -189,7 +191,7 @@ export default async function Image({
               color: COLORS.tinta,
               borderTop: `1px solid ${COLORS.piedra}`,
               paddingTop: 18,
-              fontFamily: "sans-serif",
+              fontFamily: "Manrope, sans-serif", fontWeight: 600,
               display: "flex",
             }}
           >
@@ -198,6 +200,6 @@ export default async function Image({
         </div>
       </div>
     ),
-    { ...size },
+    { ...size, fonts },
   );
 }

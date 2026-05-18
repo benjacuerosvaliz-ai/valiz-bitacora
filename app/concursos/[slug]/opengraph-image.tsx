@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 
+import { loadValizFonts } from "@/lib/og-fonts";
 import { createStaticClient } from "@/lib/supabase/static";
 
 export const runtime = "nodejs";
@@ -47,6 +48,8 @@ export default async function Image({
     .eq("slug", slug)
     .maybeSingle();
 
+  const fonts = await loadValizFonts();
+
   if (!c) {
     return new ImageResponse(
       (
@@ -60,13 +63,13 @@ export default async function Image({
             background: COLORS.fondo,
             color: COLORS.tinta,
             fontSize: 48,
-            fontFamily: "serif",
+            fontFamily: "Newsreader, serif",
           }}
         >
           Concurso · Valiz
         </div>
       ),
-      { ...size },
+      { ...size, fonts },
     );
   }
 
@@ -113,7 +116,7 @@ export default async function Image({
           display: "flex",
           background: COLORS.fondo,
           color: COLORS.tinta,
-          fontFamily: "serif",
+          fontFamily: "Newsreader, serif",
         }}
       >
         {ganadorFoto && (
@@ -153,7 +156,7 @@ export default async function Image({
               letterSpacing: "0.22em",
               textTransform: "uppercase",
               color: COLORS.niebla,
-              fontFamily: "sans-serif",
+              fontFamily: "Manrope, sans-serif", fontWeight: 600,
               display: "flex",
             }}
           >
@@ -167,7 +170,7 @@ export default async function Image({
                 letterSpacing: "0.22em",
                 textTransform: "uppercase",
                 color: stColor,
-                fontFamily: "sans-serif",
+                fontFamily: "Manrope, sans-serif",
                 fontWeight: 600,
                 display: "flex",
               }}
@@ -220,7 +223,7 @@ export default async function Image({
               color: COLORS.tinta,
               borderTop: `1px solid ${COLORS.piedra}`,
               paddingTop: 18,
-              fontFamily: "sans-serif",
+              fontFamily: "Manrope, sans-serif", fontWeight: 600,
               display: "flex",
             }}
           >
@@ -229,6 +232,6 @@ export default async function Image({
         </div>
       </div>
     ),
-    { ...size },
+    { ...size, fonts },
   );
 }

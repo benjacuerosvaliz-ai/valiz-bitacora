@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 
+import { loadValizFonts } from "@/lib/og-fonts";
 import { slugify } from "@/lib/slugify";
 import { createStaticClient } from "@/lib/supabase/static";
 
@@ -37,6 +38,7 @@ export default async function Image({
     manos_count: number | null;
   }[];
   const t = list.find((x) => slugify(x.name) === slug);
+  const fonts = await loadValizFonts();
 
   if (!t) {
     return new ImageResponse(
@@ -50,14 +52,14 @@ export default async function Image({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontFamily: "serif",
+            fontFamily: "Newsreader, serif",
             fontSize: 48,
           }}
         >
           Tallerista · Valiz
         </div>
       ),
-      { ...size },
+      { ...size, fonts },
     );
   }
 
@@ -94,7 +96,7 @@ export default async function Image({
           height: "100%",
           background: COLORS.fondo,
           color: COLORS.tinta,
-          fontFamily: "serif",
+          fontFamily: "Newsreader, serif",
           padding: "64px 80px",
           display: "flex",
           flexDirection: "column",
@@ -107,7 +109,7 @@ export default async function Image({
             letterSpacing: "0.22em",
             textTransform: "uppercase",
             color: COLORS.niebla,
-            fontFamily: "sans-serif",
+            fontFamily: "Manrope, sans-serif", fontWeight: 600,
             display: "flex",
           }}
         >
@@ -147,7 +149,7 @@ export default async function Image({
                 alignItems: "center",
                 justifyContent: "center",
                 fontSize: 130,
-                fontFamily: "serif",
+                fontFamily: "Newsreader, serif",
               }}
             >
               {t.name.charAt(0)}
@@ -161,7 +163,7 @@ export default async function Image({
                   letterSpacing: "0.22em",
                   textTransform: "uppercase",
                   color: COLORS.cuero,
-                  fontFamily: "sans-serif",
+                  fontFamily: "Manrope, sans-serif",
                   fontWeight: 600,
                   display: "flex",
                 }}
@@ -185,7 +187,7 @@ export default async function Image({
                 marginTop: 14,
                 fontSize: 22,
                 color: COLORS.niebla,
-                fontFamily: "sans-serif",
+                fontFamily: "Manrope, sans-serif", fontWeight: 600,
                 letterSpacing: "0.18em",
                 textTransform: "uppercase",
                 display: "flex",
@@ -215,7 +217,7 @@ export default async function Image({
               letterSpacing: "0.22em",
               textTransform: "uppercase",
               color: COLORS.tinta,
-              fontFamily: "sans-serif",
+              fontFamily: "Manrope, sans-serif", fontWeight: 600,
               display: "flex",
             }}
           >
@@ -224,7 +226,7 @@ export default async function Image({
         </div>
       </div>
     ),
-    { ...size },
+    { ...size, fonts },
   );
 }
 
@@ -237,7 +239,7 @@ function Stat({ label, value }: { label: string; value: string }) {
           letterSpacing: "0.22em",
           textTransform: "uppercase",
           color: COLORS.niebla,
-          fontFamily: "sans-serif",
+          fontFamily: "Manrope, sans-serif", fontWeight: 600,
           display: "flex",
         }}
       >
