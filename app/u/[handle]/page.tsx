@@ -3,6 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { MapaColectivo } from "@/app/bitacora/mapa/mapa";
+import {
+  EquipajeGrid,
+  type EquipajePieza,
+} from "@/app/yo/equipaje-grid";
 import { BrandMark } from "@/components/brand-mark";
 import { ReferidoCodigo } from "@/components/referido-codigo";
 import { ShareButton } from "@/components/share-button";
@@ -234,6 +238,107 @@ export default async function PerfilPublicoPage({
     .maybeSingle();
   const puntosTotal = Number(dueno?.puntos_actuales ?? 0);
 
+  // Datos EXTRA solo si es el dueño viendo su propio perfil:
+  // compras manuales pendientes, equipaje detallado, concurso vigente.
+  type CompraManualRow = {
+    id: string;
+    sku: string | null;
+    familia_slug: string | null;
+    color_valiz: string | null;
+    lugar_compra: string | null;
+    fecha_compra: string | null;
+    foto_url: string | null;
+    verified: boolean;
+    created_at: string;
+  };
+  type ProductoEnriquecido = {
+    sku: string;
+    color_valiz: string | null;
+    p2: number | string | null;
+    familia_id: string | null;
+    precio: number | null;
+    shopify_handle: string | null;
+    tallerista_id: string | null;
+    cuero: { display_name: string } | { display_name: string }[] | null;
+  };
+  type TalleristaRow = { id: string; name: string };
+  type ConcursoVigente = {
+    slug: string;
+    titulo: string;
+    premio_descripcion: string | null;
+  };
+  let pendientes: CompraManualRow[] = [];
+  let equipajeDetalle: EquipajePieza[] = [];
+  let concursoVigente: ConcursoVigente | null = null;
+
+  if (esElDueno) {
+    const [pendRes, prodEnrRes, talleristasRes, concursoRes] =
+      await Promise.all([
+        admin
+          .from("compras_manuales")
+          .select(
+            "id, sku, familia_slug, color_valiz, lugar_compra, fecha_compra, foto_url, verified, created_at",
+          )
+          .eq("user_id", profile.id)
+          .eq("verified", false)
+          .order("created_at", { ascending: false }),
+        allSkus.length > 0
+          ? sb
+              .from("productos")
+              .select(
+                "sku, color_valiz, p2, familia_id, precio, shopify_handle, tallerista_id, cuero:cueros(display_name)",
+              )
+              .in("sku", allSkus)
+          : Promise.resolve({ data: [] }),
+        sb.from("talleristas").select("id, name"),
+        (async () => {
+          const nowIso = new Date().toISOString();
+          return await sb
+            .from("concursos")
+            .select("slug, titulo, premio_descripcion")
+            .lte("inicia_at", nowIso)
+            .gte("termina_at", nowIso)
+            .limit(1)
+            .maybeSingle();
+        })(),
+      ]);
+
+    pendientes = (pendRes.data ?? []) as CompraManualRow[];
+    concursoVigente = (concursoRes.data ?? null) as ConcursoVigente | null;
+
+    const prodEnrBySku = new Map(
+      ((prodEnrRes.data ?? []) as ProductoEnriquecido[]).map((p) => [p.sku, p]),
+    );
+    const talleristaById = new Map(
+      ((talleristasRes.data ?? []) as TalleristaRow[]).map((t) => [t.id, t]),
+    );
+
+    equipajeDetalle = equipaje.map((e) => {
+      const p = prodEnrBySku.get(e.sku);
+      const fam = p?.familia_id ? familiaById.get(p.familia_id) : null;
+      const tallerista = p?.tallerista_id
+        ? talleristaById.get(p.tallerista_id)
+        : null;
+      const cuero = Array.isArray(p?.cuero) ? p?.cuero[0] : p?.cuero;
+      return {
+        sku: e.sku,
+        source: e.source as "shopify" | "manual",
+        adquiridoAt: e.fecha,
+        fotoUrl: photoBySku.get(e.sku) ?? null,
+        fotoFallback: null,
+        familiaName: fam?.name ?? null,
+        familiaSlug: fam?.slug ?? null,
+        colorValiz: p?.color_valiz ?? null,
+        cueroName: cuero?.display_name ?? null,
+        precio: p?.precio ?? null,
+        pies2: p ? Number(p.p2 ?? 0) : null,
+        talleristaName: tallerista?.name ?? null,
+        horasPorUnidad: fam ? Number(fam.hours_per_unit ?? 0) : null,
+        shopifyHandle: p?.shopify_handle ?? null,
+      };
+    });
+  }
+
   const primerNombre = nombre.split(/\s+/)[0];
   const shareTitle = referidoCode
     ? `${nombre} te regala 15% off en Valiz`
@@ -303,10 +408,10 @@ export default async function PerfilPublicoPage({
                 Editar perfil
               </Link>
               <Link
-                href="/yo"
+                href="/yo/referir"
                 className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-cuero transition-colors hover:text-tinta"
               >
-                Dashboard completo →
+                Compartir mi link →
               </Link>
             </div>
           </div>
@@ -602,6 +707,102 @@ export default async function PerfilPublicoPage({
             </ul>
           </div>
         </section>
+      )}
+
+      {/* SECCIONES EXCLUSIVAS DEL DUEÑO -------------------------------- */}
+      {esElDueno && (
+        <>
+          {/* Concurso vigente como CTA */}
+          {concursoVigente && (
+            <section className="border-t border-piedra bg-cuero/5 px-5 py-6 sm:px-10 sm:py-8">
+              <div className="mx-auto flex max-w-5xl flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+                <div>
+                  <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+                    Concurso vigente · postula tu bitácora
+                  </p>
+                  <p className="mt-1 font-serif text-xl leading-tight">
+                    {concursoVigente.titulo}
+                  </p>
+                  {concursoVigente.premio_descripcion && (
+                    <p className="mt-1 font-serif text-sm italic text-niebla">
+                      Premio: {concursoVigente.premio_descripcion}
+                    </p>
+                  )}
+                </div>
+                <Link
+                  href={`/concursos/${concursoVigente.slug}`}
+                  className="border border-cuero bg-cuero px-5 py-3 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-fondo transition-colors hover:bg-tinta hover:border-tinta"
+                >
+                  Postular →
+                </Link>
+              </div>
+            </section>
+          )}
+
+          {/* Pendientes por validar */}
+          {pendientes.length > 0 && (
+            <section className="border-t border-piedra px-5 py-8 sm:px-10 sm:py-10">
+              <div className="mx-auto max-w-5xl">
+                <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+                  Por validar
+                </p>
+                <h2 className="mt-2 font-serif text-2xl leading-tight tracking-[-0.015em] sm:text-3xl">
+                  {pendientes.length === 1
+                    ? "Una pieza esperando aprobación."
+                    : `${pendientes.length} piezas esperando aprobación.`}
+                </h2>
+                <p className="mt-2 font-serif text-sm italic text-niebla">
+                  Las revisamos manualmente. Te avisamos por mail cuando
+                  estén listas.
+                </p>
+                <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {pendientes.slice(0, 8).map((p) => (
+                    <li
+                      key={p.id}
+                      className="border border-piedra bg-fondo overflow-hidden"
+                    >
+                      {p.foto_url && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={p.foto_url}
+                          alt={p.familia_slug ?? "Pendiente"}
+                          className="aspect-square w-full object-cover"
+                        />
+                      )}
+                      <div className="p-2">
+                        <p className="font-serif text-sm leading-tight">
+                          {p.familia_slug ?? "Pieza manual"}
+                        </p>
+                        {p.color_valiz && (
+                          <p className="mt-0.5 font-sans text-[9px] uppercase tracking-[0.18em] text-cuero">
+                            {p.color_valiz}
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          )}
+
+          {/* Equipaje detallado (cards grandes) */}
+          {equipajeDetalle.length > 0 && (
+            <section className="border-t border-piedra px-5 py-10 sm:px-10 sm:py-14">
+              <div className="mx-auto max-w-5xl">
+                <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+                  Tu equipaje en detalle
+                </p>
+                <h2 className="mt-2 font-serif text-2xl leading-tight tracking-[-0.015em] sm:text-3xl">
+                  Cada pieza, su historia.
+                </h2>
+                <div className="mt-6">
+                  <EquipajeGrid piezas={equipajeDetalle} />
+                </div>
+              </div>
+            </section>
+          )}
+        </>
       )}
     </main>
   );
