@@ -57,6 +57,7 @@ type ProfileRow = {
   id: string;
   display_name: string | null;
   handle: string | null;
+  avatar_url: string | null;
 };
 type ProductoStats = {
   p2: number | string | null;
@@ -102,7 +103,9 @@ export default async function BitacoraColectivaPage({
         .from("productos")
         .select("sku, color_valiz, familia_id, tallerista_id"),
       sb.from("familias").select("id, slug, name, hours_per_unit"),
-      sb.from("user_profiles_public").select("id, display_name, handle"),
+      sb
+        .from("user_profiles_public")
+        .select("id, display_name, handle, avatar_url"),
       sb
         .from("productos")
         .select("p2, sales_total, familia_id")
@@ -514,9 +517,13 @@ export default async function BitacoraColectivaPage({
                             {b.texto}
                           </p>
                         )}
-                        <p className="mt-4 font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
-                          {authorLabel(author)} · {formatDate(b.created_at)}
-                        </p>
+                        <div className="mt-4 flex items-center gap-2">
+                          <Avatar profile={author} />
+                          <p className="font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
+                            {authorLabel(author)} ·{" "}
+                            {formatDate(b.created_at)}
+                          </p>
+                        </div>
                       </div>
                     </Link>
                     <div className="flex items-center justify-between border-t border-piedra px-5 py-3">
@@ -545,6 +552,26 @@ export default async function BitacoraColectivaPage({
         </div>
       </section>
     </main>
+  );
+}
+
+function Avatar({ profile }: { profile: ProfileRow | undefined }) {
+  const name = profile?.display_name ?? profile?.handle ?? "V";
+  const inicial = name.trim().charAt(0).toUpperCase() || "V";
+  if (profile?.avatar_url) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={profile.avatar_url}
+        alt=""
+        className="h-6 w-6 shrink-0 rounded-full border border-piedra object-cover"
+      />
+    );
+  }
+  return (
+    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cuero font-serif text-[10px] text-fondo">
+      {inicial}
+    </span>
   );
 }
 

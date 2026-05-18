@@ -106,11 +106,11 @@ export function UserChipMenu({
                 </span>
               </p>
             </div>
-            <MenuItem href="/yo" onClick={() => setOpen(false)}>
-              Tu equipaje
+            <MenuItem href="/yo/referir" onClick={() => setOpen(false)} accent>
+              Recomendar Valiz
             </MenuItem>
-            <MenuItem href="/yo/perfil" onClick={() => setOpen(false)}>
-              Editar perfil
+            <MenuItem href="/yo" onClick={() => setOpen(false)}>
+              Tu perfil
             </MenuItem>
             {handle && (
               <MenuItem
@@ -121,22 +121,16 @@ export function UserChipMenu({
               </MenuItem>
             )}
             <MenuItem href="/bitacora" onClick={() => setOpen(false)}>
-              Valiz colectivo
-            </MenuItem>
-            <MenuItem href="/talleristas" onClick={() => setOpen(false)}>
-              Talleristas
+              Valiz en el mundo
             </MenuItem>
             <MenuItem href="/concursos" onClick={() => setOpen(false)}>
-              Concursos
-            </MenuItem>
-            <MenuItem href="/sobre" onClick={() => setOpen(false)}>
-              Sobre Valiz
+              Participar en concursos
             </MenuItem>
             <MenuItem href="/yo/canje" onClick={() => setOpen(false)}>
               Canjear puntos
             </MenuItem>
-            <MenuItem href="/yo/referir" onClick={() => setOpen(false)}>
-              Recomendar Valiz
+            <MenuItem href="/sobre" onClick={() => setOpen(false)}>
+              Sobre Valiz
             </MenuItem>
             {esAdmin && (
               <MenuItem href="/admin" onClick={() => setOpen(false)} accent>

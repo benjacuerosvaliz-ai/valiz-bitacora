@@ -21,6 +21,7 @@ type ProfilePublic = {
   bio: string | null;
   instagram_handle: string | null;
   tiktok_handle: string | null;
+  avatar_url: string | null;
 };
 
 type ProductoRow = {
@@ -218,93 +219,105 @@ export default async function PerfilPublicoPage({
         </p>
       </header>
 
-      {/* HERO PERSONA -------------------------------------------------- */}
-      <section className="border-b border-piedra px-8 py-16 sm:px-16 sm:py-24">
-        <div className="mx-auto max-w-4xl">
-          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-            @{profile.handle}
-          </p>
-          <h1 className="mt-3 font-serif text-5xl leading-[1.04] tracking-[-0.022em] sm:text-7xl">
-            {nombre}.
-          </h1>
-          {ubicacion && (
-            <p className="mt-4 font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
-              {ubicacion}
-            </p>
-          )}
-          {profile.bio && (
-            <p className="mt-8 max-w-2xl font-serif text-xl italic leading-relaxed text-niebla sm:text-2xl">
-              {profile.bio}
-            </p>
-          )}
-
-          {(profile.instagram_handle || profile.tiktok_handle) && (
-            <div className="mt-10 flex flex-wrap gap-3">
-              {profile.instagram_handle && (
-                <a
-                  href={`https://instagram.com/${profile.instagram_handle}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-white transition-opacity hover:opacity-85"
-                  style={{
-                    background:
-                      "linear-gradient(45deg, #FEDA75 0%, #FA7E1E 20%, #D62976 50%, #962FBF 75%, #4F5BD5 100%)",
-                  }}
-                >
-                  <svg
-                    className="h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.43.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.43.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.72 3.72 0 0 1-1.38-.9 3.72 3.72 0 0 1-.9-1.38c-.16-.43-.36-1.06-.41-2.23-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.43-.16 1.06-.36 2.23-.41 1.27-.06 1.65-.07 4.85-.07M12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63a5.92 5.92 0 0 0-2.13 1.39A5.92 5.92 0 0 0 .62 4.14c-.3.76-.5 1.64-.56 2.91C0 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.31.79.72 1.46 1.39 2.13a5.92 5.92 0 0 0 2.13 1.39c.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56a5.92 5.92 0 0 0 2.13-1.39 5.92 5.92 0 0 0 1.39-2.13c.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91a5.92 5.92 0 0 0-1.39-2.13A5.92 5.92 0 0 0 19.86.62c-.76-.3-1.64-.5-2.91-.56C15.67.01 15.26 0 12 0zm0 5.84a6.16 6.16 0 1 0 0 12.32 6.16 6.16 0 0 0 0-12.32zm0 10.16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.41-11.85a1.44 1.44 0 1 0 0 2.88 1.44 1.44 0 0 0 0-2.88z" />
-                  </svg>
-                  @{profile.instagram_handle}
-                </a>
-              )}
-              {profile.tiktok_handle && (
-                <a
-                  href={`https://tiktok.com/@${profile.tiktok_handle}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-black px-4 py-2 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-white transition-opacity hover:opacity-85"
-                >
-                  <svg
-                    className="h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.1z" />
-                  </svg>
-                  @{profile.tiktok_handle}
-                </a>
+      {/* HERO PERSONA — compacto: avatar + datos + stats + sociales --- */}
+      <section className="border-b border-piedra px-6 py-10 sm:px-12 sm:py-14 lg:py-16">
+        <div className="mx-auto max-w-5xl">
+          <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:gap-10">
+            {/* Avatar */}
+            <div className="shrink-0">
+              {profile.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={profile.avatar_url}
+                  alt={nombre}
+                  className="h-32 w-32 rounded-full border-2 border-piedra object-cover shadow-[0_10px_30px_rgba(26,26,26,0.08)] sm:h-40 sm:w-40 lg:h-44 lg:w-44"
+                />
+              ) : (
+                <div className="flex h-32 w-32 items-center justify-center rounded-full border-2 border-piedra bg-cuero font-serif text-5xl text-fondo shadow-[0_10px_30px_rgba(26,26,26,0.08)] sm:h-40 sm:w-40 sm:text-6xl lg:h-44 lg:w-44 lg:text-7xl">
+                  {nombre.trim().charAt(0).toUpperCase() || "V"}
+                </div>
               )}
             </div>
-          )}
 
-          <div className="mt-6">
-            <ShareButton
-              title={`${nombre} · Valiz Bitácora`}
-              text={profile.bio ?? `Equipaje y bitácoras de ${nombre} en Valiz.`}
-              url={`/u/${profile.handle}`}
-              label="Compartir perfil"
-            />
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+                @{profile.handle}
+                {ubicacion && (
+                  <span className="ml-3 text-niebla">· {ubicacion}</span>
+                )}
+              </p>
+              <h1 className="mt-2 font-serif text-4xl leading-[1.02] tracking-[-0.022em] sm:text-5xl lg:text-6xl">
+                {nombre}
+              </h1>
+              {profile.bio && (
+                <p className="mt-4 font-serif text-base italic leading-relaxed text-tinta/75 sm:text-lg">
+                  {profile.bio}
+                </p>
+              )}
+
+              {/* Sociales + Compartir inline */}
+              <div className="mt-5 flex flex-wrap items-center gap-2">
+                {profile.instagram_handle && (
+                  <a
+                    href={`https://instagram.com/${profile.instagram_handle}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Instagram @${profile.instagram_handle}`}
+                    title={`@${profile.instagram_handle}`}
+                    className="inline-flex h-9 w-9 items-center justify-center text-white transition-opacity hover:opacity-85"
+                    style={{
+                      background:
+                        "linear-gradient(45deg, #FEDA75 0%, #FA7E1E 20%, #D62976 50%, #962FBF 75%, #4F5BD5 100%)",
+                    }}
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.43.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.43.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.72 3.72 0 0 1-1.38-.9 3.72 3.72 0 0 1-.9-1.38c-.16-.43-.36-1.06-.41-2.23-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.43-.16 1.06-.36 2.23-.41 1.27-.06 1.65-.07 4.85-.07M12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63a5.92 5.92 0 0 0-2.13 1.39A5.92 5.92 0 0 0 .62 4.14c-.3.76-.5 1.64-.56 2.91C0 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.31.79.72 1.46 1.39 2.13a5.92 5.92 0 0 0 2.13 1.39c.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56a5.92 5.92 0 0 0 2.13-1.39 5.92 5.92 0 0 0 1.39-2.13c.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91a5.92 5.92 0 0 0-1.39-2.13A5.92 5.92 0 0 0 19.86.62c-.76-.3-1.64-.5-2.91-.56C15.67.01 15.26 0 12 0zm0 5.84a6.16 6.16 0 1 0 0 12.32 6.16 6.16 0 0 0 0-12.32zm0 10.16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.41-11.85a1.44 1.44 0 1 0 0 2.88 1.44 1.44 0 0 0 0-2.88z" />
+                    </svg>
+                  </a>
+                )}
+                {profile.tiktok_handle && (
+                  <a
+                    href={`https://tiktok.com/@${profile.tiktok_handle}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`TikTok @${profile.tiktok_handle}`}
+                    title={`@${profile.tiktok_handle}`}
+                    className="inline-flex h-9 w-9 items-center justify-center bg-black text-white transition-opacity hover:opacity-85"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.1z" />
+                    </svg>
+                  </a>
+                )}
+                <ShareButton
+                  title={`${nombre} · Valiz Bitácora`}
+                  text={
+                    profile.bio ?? `Equipaje y bitácoras de ${nombre} en Valiz.`
+                  }
+                  url={`/u/${profile.handle}`}
+                  label="Compartir"
+                />
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
 
-      {/* STATS DE IMPACTO --------------------------------------------- */}
-      {equipaje.length > 0 && (
-        <section className="border-b border-piedra px-8 py-12 sm:px-16 sm:py-16">
-          <div className="mx-auto max-w-4xl">
-            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-              Lo que ha movido
-            </p>
-            <div className="mt-6 grid grid-cols-3 gap-x-6 gap-y-4">
-              <Stat label="Piezas Valiz" big={nf.format(equipaje.length)} />
+          {/* Stats inline — mismo hero card, 3 cifras horizontales */}
+          {equipaje.length > 0 && (
+            <div className="mt-8 grid grid-cols-3 gap-3 border-t border-piedra pt-6 sm:mt-10 sm:gap-6 sm:pt-7">
+              <Stat label="Piezas" big={nf.format(equipaje.length)} />
               <Stat
-                label="Horas de taller"
+                label="Horas en taller"
                 big={nf.format(Math.round(horasTotal))}
               />
               <Stat
@@ -312,9 +325,9 @@ export default async function PerfilPublicoPage({
                 big={nf.format(Math.round(piesTotal))}
               />
             </div>
-          </div>
-        </section>
-      )}
+          )}
+        </div>
+      </section>
 
       {/* SU EQUIPAJE COMPLETO ----------------------------------------- */}
       {equipaje.length > 0 && (

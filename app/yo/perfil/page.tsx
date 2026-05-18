@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { AvatarUpload } from "@/components/avatar-upload";
 import { BrandMark } from "@/components/brand-mark";
 import { getPhotoBySku } from "@/lib/product-photos";
 import { createClient } from "@/lib/supabase/server";
@@ -32,7 +33,7 @@ export default async function PerfilPage() {
   const { data: profile } = await sb
     .from("user_profiles")
     .select(
-      "email, display_name, country, city, bio, instagram_handle, tiktok_handle",
+      "email, display_name, country, city, bio, instagram_handle, tiktok_handle, avatar_url",
     )
     .eq("id", user.id)
     .single();
@@ -84,6 +85,16 @@ export default async function PerfilPage() {
             cambiar acá). El nombre que pongas es lo que aparece en tus
             bitácoras públicas.
           </p>
+
+          {/* Avatar arriba del form (es lo primero que se ve) */}
+          <div className="mt-10 border-y border-piedra py-6">
+            <AvatarUpload
+              initialUrl={profile?.avatar_url ?? null}
+              initialName={
+                profile?.display_name ?? profile?.email?.split("@")[0] ?? "V"
+              }
+            />
+          </div>
 
           <div className="mt-10">
             <PerfilForm
