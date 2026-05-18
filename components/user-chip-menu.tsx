@@ -59,21 +59,31 @@ export function UserChipMenu({
       ref={menuRef}
       className="relative flex flex-row-reverse items-start gap-2"
     >
-      {/* Chip principal: clickable abre menú */}
+      {/* Chip principal: clickable abre menú.
+          Mobile = círculo compacto con inicial; desktop = pill con
+          nombre + pts. */}
       <div className="flex flex-col items-end gap-2">
         <button
           onClick={() => setOpen((o) => !o)}
-          className="inline-flex items-center gap-3 rounded-full border border-piedra bg-fondo/85 px-4 py-2 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-tinta backdrop-blur-sm transition-colors hover:border-cuero hover:text-cuero"
           aria-haspopup="menu"
           aria-expanded={open}
+          aria-label={`${nombre} · ${nf.format(pts)} puntos`}
+          className="group transition-colors"
         >
-          <span>{nombre}</span>
-          <span className="text-cuero">{nf.format(pts)} pts</span>
-          <span
-            className={`text-[8px] transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-            aria-hidden
-          >
-            ▼
+          {/* Mobile: círculo compacto (40px) con inicial */}
+          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-piedra bg-fondo/90 font-serif text-base text-tinta backdrop-blur-sm transition-colors group-hover:border-cuero group-hover:text-cuero sm:hidden">
+            {nombre.charAt(0).toUpperCase()}
+          </span>
+          {/* Desktop: pill con nombre + pts */}
+          <span className="hidden items-center gap-3 rounded-full border border-piedra bg-fondo/85 px-4 py-2 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-tinta backdrop-blur-sm transition-colors group-hover:border-cuero group-hover:text-cuero sm:inline-flex">
+            <span>{nombre}</span>
+            <span className="text-cuero">{nf.format(pts)} pts</span>
+            <span
+              className={`text-[8px] transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+              aria-hidden
+            >
+              ▼
+            </span>
           </span>
         </button>
 
@@ -81,8 +91,21 @@ export function UserChipMenu({
         {open && (
           <nav
             role="menu"
-            className="w-56 border border-piedra bg-fondo shadow-[0_8px_30px_rgba(26,26,26,0.08)]"
+            className="w-60 border border-piedra bg-fondo shadow-[0_8px_30px_rgba(26,26,26,0.08)]"
           >
+            {/* Header con nombre + pts (importante en mobile, donde el
+                chip ya no los muestra) */}
+            <div className="border-b border-piedra bg-tinta/[0.02] px-4 py-3">
+              <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-niebla">
+                {nombre}
+              </p>
+              <p className="mt-1 font-serif text-lg leading-none text-tinta">
+                {nf.format(pts)}{" "}
+                <span className="font-sans text-[10px] uppercase tracking-[0.22em] text-cuero">
+                  pts
+                </span>
+              </p>
+            </div>
             <MenuItem href="/yo" onClick={() => setOpen(false)}>
               Tu equipaje
             </MenuItem>

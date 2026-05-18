@@ -8,6 +8,7 @@ import {
   useTransform,
   type MotionValue,
 } from "motion/react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
 
@@ -20,18 +21,15 @@ const nf = new Intl.NumberFormat("es-CL");
 /**
  * Preview3D — narrativa Tres Vidas como landing scroll-driven.
  *
+ * Paleta Valiz cream/cuero/tinta (NO dark) — coherente con el resto
+ * de la app y permite que el globo Mapbox se funda con el fondo.
+ *
  * Estructura:
- *  HERO          → título "Cada Valiz tiene tres vidas"
+ *  HERO          → logos Valiz girando + título "Cada Valiz tiene tres vidas"
  *  VIDA I        → cuero (Mochila Alforja flotando + pies² rescatados)
  *  VIDA II       → horas en taller (Cartera Zarga + horas + talleres)
- *  VIDA III      → bitácora colectiva (globo Mapbox + invitación)
- *  OUTRO         → CTAs entrar / bitácora + sistema de puntos explicado
- *
- * Para los productos flotantes: scroll-driven rotateY/rotateX/scale +
- * cursor tilt sutil con spring.
- * Para el globo: solo entra con fade+scale; el propio Mapbox tiene su
- * auto-spin interno. CSS transforms 3D rompen el rendering WebGL del
- * mapa, por eso no se le aplican rotaciones.
+ *  VIDA III      → bitácora colectiva (globo Mapbox flotando)
+ *  OUTRO         → 1000 pts al crear cuenta + misiones, SOLO CTA crear
  */
 
 export function Preview3D({
@@ -47,7 +45,7 @@ export function Preview3D({
 }) {
   return (
     <main
-      className="bg-tinta text-fondo"
+      className="bg-fondo text-tinta"
       style={{ perspective: "1400px" } as React.CSSProperties}
     >
       <HeroSection />
@@ -97,7 +95,7 @@ export function Preview3D({
 }
 
 /* ------------------------------------------------------------------------ */
-/* HERO                                                                    */
+/* HERO con logos Valiz girando                                            */
 /* ------------------------------------------------------------------------ */
 function HeroSection() {
   const ref = useRef<HTMLDivElement>(null);
@@ -109,28 +107,89 @@ function HeroSection() {
   const y = useTransform(scrollYProgress, [0, 1], [0, -120]);
 
   return (
-    <section ref={ref} className="relative h-[110vh]">
+    <section ref={ref} className="relative h-[110vh] overflow-hidden">
+      {/* Logos Valiz girando como fondo */}
+      <div className="pointer-events-none absolute inset-0">
+        <SpinningLogo
+          size="40vw"
+          duration={60}
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.06]"
+        />
+        <SpinningLogo
+          size="18vw"
+          duration={45}
+          reverse
+          className="absolute left-[6%] top-[18%] opacity-30 sm:opacity-40"
+        />
+        <SpinningLogo
+          size="14vw"
+          duration={55}
+          className="absolute right-[8%] top-[24%] opacity-30 sm:opacity-40"
+        />
+        <SpinningLogo
+          size="10vw"
+          duration={40}
+          reverse
+          className="absolute right-[14%] bottom-[18%] opacity-30 sm:opacity-40"
+        />
+        <SpinningLogo
+          size="8vw"
+          duration={50}
+          className="absolute left-[12%] bottom-[22%] opacity-30 sm:opacity-40"
+        />
+      </div>
+
       <motion.div
         style={{ opacity, y }}
-        className="sticky top-0 flex h-screen flex-col items-center justify-center px-6 text-center sm:px-12"
+        className="relative sticky top-0 z-10 flex h-screen flex-col items-center justify-center px-6 text-center sm:px-12"
       >
         <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
           Valiz · Bitácora
         </p>
-        <h1 className="mt-8 font-serif text-[12vw] leading-[0.92] tracking-[-0.03em] text-fondo sm:text-[8vw] lg:text-[6.5vw]">
+        <h1 className="mt-8 font-serif text-[12vw] leading-[0.92] tracking-[-0.03em] text-tinta sm:text-[8vw] lg:text-[6.5vw]">
           Cada Valiz tiene
           <br />
           <span className="italic text-cuero">tres vidas.</span>
         </h1>
-        <p className="mt-10 max-w-md font-serif text-base italic leading-relaxed text-fondo/60 sm:text-lg">
+        <p className="mt-10 max-w-md font-serif text-base italic leading-relaxed text-niebla sm:text-lg">
           La que el cuero ya tuvo, la que pasa en taller, la que viene
           contigo.
         </p>
-        <p className="mt-16 font-sans text-[10px] uppercase tracking-[0.32em] text-fondo/40">
+        <p className="mt-16 font-sans text-[10px] uppercase tracking-[0.32em] text-niebla">
           Desliza ↓
         </p>
       </motion.div>
     </section>
+  );
+}
+
+function SpinningLogo({
+  size,
+  duration,
+  reverse = false,
+  className = "",
+}: {
+  size: string;
+  duration: number;
+  reverse?: boolean;
+  className?: string;
+}) {
+  return (
+    <motion.div
+      className={className}
+      style={{ width: size, height: size }}
+      animate={{ rotate: reverse ? -360 : 360 }}
+      transition={{ duration, ease: "linear", repeat: Infinity }}
+    >
+      <Image
+        src="/images/valiz-logo.png"
+        alt=""
+        width={1801}
+        height={1801}
+        className="h-full w-full object-contain"
+        priority
+      />
+    </motion.div>
   );
 }
 
@@ -229,11 +288,11 @@ function VidaSection({
               <img
                 src={producto.photo}
                 alt={`${producto.familiaName} ${producto.colorValiz ?? ""}`}
-                className="h-full w-full object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.5)]"
+                className="h-full w-full object-contain drop-shadow-[0_30px_60px_rgba(26,26,26,0.18)]"
                 draggable={false}
               />
               <div
-                className="absolute -bottom-6 left-1/2 h-6 w-3/4 -translate-x-1/2 rounded-[50%] bg-black/40 blur-2xl"
+                className="absolute -bottom-6 left-1/2 h-6 w-3/4 -translate-x-1/2 rounded-[50%] bg-tinta/15 blur-2xl"
                 aria-hidden
               />
             </motion.div>
@@ -247,23 +306,23 @@ function VidaSection({
             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
               {numero} · {tagline}
             </p>
-            <h2 className="font-serif text-5xl leading-[0.95] tracking-[-0.025em] sm:text-6xl lg:text-7xl">
+            <h2 className="font-serif text-5xl leading-[0.95] tracking-[-0.025em] text-tinta sm:text-6xl lg:text-7xl">
               {titulo}
             </h2>
-            <p className="max-w-xl font-serif text-lg leading-relaxed text-fondo/80 sm:text-xl">
+            <p className="max-w-xl font-serif text-lg leading-relaxed text-tinta/85 sm:text-xl">
               {parrafo}
             </p>
-            <div className="mt-4 flex flex-wrap gap-x-10 gap-y-6 border-l border-fondo/15 pl-5">
+            <div className="mt-4 flex flex-wrap gap-x-10 gap-y-6 border-l border-piedra pl-5">
               {stats.map((s) => (
                 <div key={s.label}>
-                  <p className="font-serif text-4xl leading-none tracking-[-0.015em] text-fondo sm:text-5xl">
+                  <p className="font-serif text-4xl leading-none tracking-[-0.015em] text-tinta sm:text-5xl">
                     {s.big}
                   </p>
                   <p className="mt-2 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
                     {s.label}
                   </p>
                   {s.hint && (
-                    <p className="mt-1 font-sans text-[10px] uppercase tracking-[0.18em] text-fondo/50">
+                    <p className="mt-1 font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
                       {s.hint}
                     </p>
                   )}
@@ -278,7 +337,7 @@ function VidaSection({
 }
 
 /* ------------------------------------------------------------------------ */
-/* VIDA III — bitácora colectiva (globo Mapbox)                            */
+/* VIDA III — bitácora colectiva (globo Mapbox flotando)                   */
 /* ------------------------------------------------------------------------ */
 function VidaIIIBitacora({
   stats,
@@ -293,12 +352,10 @@ function VidaIIIBitacora({
     offset: ["start end", "end start"],
   });
 
-  // El globo NO rota con CSS transforms — eso rompe el rendering WebGL.
-  // Solo fade + scale leve.
   const globeOpacity = useTransform(
     scrollYProgress,
     [0, 0.2, 0.8, 1],
-    [0, 1, 1, 0.4],
+    [0, 1, 1, 0.5],
   );
   const globeScale = useTransform(
     scrollYProgress,
@@ -317,7 +374,8 @@ function VidaIIIBitacora({
     <section ref={ref} className="relative h-[220vh]">
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
         <div className="grid w-full grid-cols-1 items-center gap-10 px-6 sm:px-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:px-20">
-          {/* Globo */}
+          {/* Globo (sobre bg-fondo, el space-color del fog del mapa
+              ya es cream → se funde, no se ve cuadrado) */}
           <motion.div
             style={{ opacity: globeOpacity, scale: globeScale }}
             className="relative h-[55vh] w-full sm:h-[70vh]"
@@ -333,15 +391,15 @@ function VidaIIIBitacora({
             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
               III · Vida futura
             </p>
-            <h2 className="font-serif text-5xl leading-[0.95] tracking-[-0.025em] sm:text-6xl lg:text-7xl">
+            <h2 className="font-serif text-5xl leading-[0.95] tracking-[-0.025em] text-tinta sm:text-6xl lg:text-7xl">
               Tu bitácora.
             </h2>
-            <p className="max-w-xl font-serif text-lg leading-relaxed text-fondo/80 sm:text-xl">
+            <p className="max-w-xl font-serif text-lg leading-relaxed text-tinta/85 sm:text-xl">
               Cuando una Valiz sale del taller, empieza su vida más larga.
               Cada lugar que visita, cada foto que le sacas — queda en el
               mapa, para siempre.
             </p>
-            <div className="mt-4 grid grid-cols-3 gap-x-8 gap-y-4 border-l border-fondo/15 pl-5">
+            <div className="mt-4 grid grid-cols-3 gap-x-8 gap-y-4 border-l border-piedra pl-5">
               <MiniStat big={nf.format(stats.bitacorasTotal)} label="Bitácoras" />
               <MiniStat
                 big={nf.format(stats.personasUnicas)}
@@ -352,8 +410,8 @@ function VidaIIIBitacora({
                 label={stats.lugaresUnicos === 1 ? "Lugar" : "Lugares"}
               />
             </div>
-            <p className="mt-6 max-w-xl font-serif text-base italic text-fondo/60 sm:text-lg">
-              Y cada bitácora que sube te devuelve algo.
+            <p className="mt-6 max-w-xl font-serif text-base italic text-niebla sm:text-lg">
+              Y cada paso que sumas te devuelve algo.
             </p>
           </motion.div>
         </div>
@@ -365,7 +423,7 @@ function VidaIIIBitacora({
 function MiniStat({ big, label }: { big: string; label: string }) {
   return (
     <div>
-      <p className="font-serif text-3xl leading-none tracking-[-0.015em] text-fondo sm:text-4xl">
+      <p className="font-serif text-3xl leading-none tracking-[-0.015em] text-tinta sm:text-4xl">
         {big}
       </p>
       <p className="mt-2 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
@@ -376,7 +434,7 @@ function MiniStat({ big, label }: { big: string; label: string }) {
 }
 
 /* ------------------------------------------------------------------------ */
-/* OUTRO — sistema de puntos + CTAs                                        */
+/* OUTRO — 1000 pts al crear cuenta + misiones                             */
 /* ------------------------------------------------------------------------ */
 function OutroSection() {
   const ref = useRef<HTMLDivElement>(null);
@@ -384,59 +442,73 @@ function OutroSection() {
     target: ref,
     offset: ["start end", "end end"],
   });
-  const y = useTransform(scrollYProgress, [0, 1], [80, 0]);
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [0, 1]);
+
+  // Importante: SE ILUMINA al fondo del scroll. La opacity y el lift
+  // suben de 0 a 1 conforme bajas, NO se hacen fade-out al final.
+  const opacity = useTransform(scrollYProgress, [0, 0.4, 1], [0, 1, 1]);
+  const y = useTransform(scrollYProgress, [0, 1], [60, 0]);
 
   return (
-    <section ref={ref} className="relative min-h-screen">
+    <section ref={ref} className="relative min-h-[130vh] overflow-hidden">
+      {/* Logo Valiz girando sutil de fondo */}
+      <div className="pointer-events-none absolute inset-0">
+        <SpinningLogo
+          size="55vw"
+          duration={90}
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.05]"
+        />
+      </div>
+
       <motion.div
         style={{ y, opacity }}
-        className="flex min-h-screen flex-col items-center justify-center gap-12 px-6 py-32 text-center sm:px-12"
+        className="relative flex min-h-[130vh] flex-col items-center justify-center gap-10 px-6 py-32 text-center sm:px-12"
       >
         <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
           Sé parte de la bitácora
         </p>
-        <h2 className="max-w-4xl font-serif text-[9vw] leading-[0.95] tracking-[-0.03em] sm:text-[5.5vw] lg:text-[4.5vw]">
-          Tu Valiz también
+        <h2 className="max-w-4xl font-serif text-[10vw] leading-[0.95] tracking-[-0.03em] text-tinta sm:text-[6vw] lg:text-[5vw]">
+          1.000 puntos
           <br />
-          <span className="italic text-cuero">tiene historia.</span>
+          <span className="italic text-cuero">por crear tu cuenta.</span>
         </h2>
+        <p className="max-w-2xl font-serif text-xl italic leading-relaxed text-niebla sm:text-2xl">
+          Y cada misión que completas — subir tu primera pieza, publicar
+          tu primera bitácora, recomendar Valiz — suma más puntos.
+        </p>
 
-        {/* Sistema de puntos explicado */}
-        <div className="mt-4 grid w-full max-w-3xl grid-cols-1 gap-6 border-y border-fondo/15 py-10 text-left sm:grid-cols-3 sm:gap-10">
-          <PuntoStep
-            n="1"
-            titulo="Sube una bitácora"
-            cuerpo="Foto, lugar y un texto contando dónde fuiste con tu Valiz."
+        {/* Misiones rápidas */}
+        <div className="mt-6 grid w-full max-w-3xl grid-cols-1 gap-5 border-y border-piedra py-10 text-left sm:grid-cols-3 sm:gap-10">
+          <Mision
+            premio="+1.000"
+            titulo="Crear cuenta"
+            cuerpo="Te damos la bienvenida con mil puntos en tu equipaje digital."
           />
-          <PuntoStep
-            n="2"
-            titulo="Gana 200 puntos"
-            cuerpo="Por cada bitácora con ubicación y texto. 1 pt = $1 CLP de descuento."
+          <Mision
+            premio="+200"
+            titulo="Cada bitácora"
+            cuerpo="Sube foto con ubicación y un texto contando dónde fuiste con tu Valiz."
           />
-          <PuntoStep
-            n="3"
-            titulo="Canjea en valiz.cl"
-            cuerpo="Tus puntos se convierten en código de descuento para tu próxima pieza."
+          <Mision
+            premio="+5% pts"
+            titulo="Recomienda"
+            cuerpo="Cuando alguien compra con tu código, te llevas el 5% del subtotal en puntos."
           />
         </div>
 
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+        <p className="font-serif text-base italic text-niebla">
+          1 punto = $1 CLP de descuento en valiz.cl
+        </p>
+
+        <div className="mt-4">
           <Link
             href="/login"
-            className="border border-fondo bg-fondo px-8 py-4 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-cuero hover:border-cuero"
+            className="inline-flex items-center gap-3 bg-tinta px-10 py-5 font-sans text-xs font-semibold uppercase tracking-[0.28em] text-fondo transition-colors hover:bg-cuero"
           >
             Crear cuenta →
           </Link>
-          <Link
-            href="/bitacora"
-            className="border border-fondo/30 px-8 py-4 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-fondo transition-colors hover:border-cuero hover:text-cuero"
-          >
-            Ver bitácora colectiva
-          </Link>
         </div>
 
-        <p className="mt-12 font-sans text-[10px] uppercase tracking-[0.32em] text-fondo/40">
+        <p className="mt-8 font-sans text-[10px] uppercase tracking-[0.32em] text-niebla">
           Valiz · Since 2018
         </p>
       </motion.div>
@@ -444,24 +516,24 @@ function OutroSection() {
   );
 }
 
-function PuntoStep({
-  n,
+function Mision({
+  premio,
   titulo,
   cuerpo,
 }: {
-  n: string;
+  premio: string;
   titulo: string;
   cuerpo: string;
 }) {
   return (
     <div>
-      <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
-        Paso {n}
+      <p className="font-mono text-2xl font-semibold tracking-[-0.01em] text-cuero">
+        {premio}
       </p>
-      <p className="mt-3 font-serif text-2xl leading-tight tracking-[-0.01em] text-fondo">
+      <p className="mt-2 font-serif text-xl leading-tight tracking-[-0.01em] text-tinta">
         {titulo}
       </p>
-      <p className="mt-3 font-serif text-base leading-relaxed text-fondo/60">
+      <p className="mt-2 font-serif text-sm leading-relaxed text-niebla">
         {cuerpo}
       </p>
     </div>

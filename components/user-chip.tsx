@@ -21,7 +21,7 @@ export async function UserChip() {
     return (
       <Link
         href="/login"
-        className="fixed right-4 top-4 z-40 inline-flex items-center gap-2 rounded-full border border-piedra bg-fondo/85 px-4 py-2 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-tinta backdrop-blur-sm transition-colors hover:border-cuero hover:text-cuero sm:right-6 sm:top-6"
+        className="fixed right-4 top-4 z-30 inline-flex items-center gap-2 rounded-full border border-piedra bg-fondo/85 px-4 py-2 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-tinta backdrop-blur-sm transition-colors hover:border-cuero hover:text-cuero sm:right-6 sm:top-6"
       >
         Entrar
       </Link>
@@ -82,7 +82,7 @@ export async function UserChip() {
   }
 
   return (
-    <div className="fixed right-4 top-4 z-40 flex items-start gap-2 sm:right-6 sm:top-6">
+    <div className="fixed right-4 top-4 z-30 flex items-start gap-2 sm:right-6 sm:top-6">
       <NotifBell
         initialUnread={notifsInitial.unread}
         initialItems={notifsInitial.items}
