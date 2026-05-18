@@ -326,7 +326,7 @@ export default async function Image({
                 display: "flex",
               }}
             >
-              Te regalo 5% off ·
+              Te regalo 15% off ·
             </span>
             <span
               style={{

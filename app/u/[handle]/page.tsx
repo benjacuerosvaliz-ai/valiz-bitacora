@@ -236,10 +236,10 @@ export default async function PerfilPublicoPage({
 
   const primerNombre = nombre.split(/\s+/)[0];
   const shareTitle = referidoCode
-    ? `${nombre} te regala 5% off en Valiz`
+    ? `${nombre} te regala 15% off en Valiz`
     : `${nombre} · Valiz Bitácora`;
   const shareText = referidoCode
-    ? `Usa el código ${referidoCode} en valiz.cl y obtenés 5% off en tu primera compra Valiz. Es de ${primerNombre} — pásate a ver su bitácora.`
+    ? `Usa el código ${referidoCode} en valiz.cl y obtenés 15% off en tu primera compra Valiz. Es de ${primerNombre} — pásate a ver su bitácora.`
     : profile.bio ?? `Equipaje y bitácoras de ${nombre} en Valiz.`;
 
   // Puntos para el globo personal: solo SUS bitácoras con coords
@@ -435,7 +435,7 @@ export default async function PerfilPublicoPage({
                   text={shareText}
                   url={`/u/${profile.handle}`}
                   label={
-                    referidoCode ? "Regalar 5% off" : "Compartir"
+                    referidoCode ? "Regalar 15% off" : "Compartir"
                   }
                   highlight={!!referidoCode}
                 />

@@ -93,7 +93,7 @@ export default async function ReferirPage() {
           <p className="mt-6 max-w-xl font-serif italic leading-relaxed text-niebla">
             Comparte tu link. Quien compre con él se lleva{" "}
             <span className="not-italic font-semibold text-cuero">
-              5% de descuento
+              15% de descuento
             </span>{" "}
             en valiz.cl, y tú recibes{" "}
             <span className="not-italic font-semibold text-cuero">

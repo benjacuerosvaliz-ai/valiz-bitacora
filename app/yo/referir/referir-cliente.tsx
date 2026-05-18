@@ -44,7 +44,7 @@ export function ReferirCliente({
 
   function shareWhatsApp() {
     if (!link) return;
-    const text = `Encontré algo en Valiz que te puede gustar. Si entras con mi link tienes 5% de descuento: ${link}`;
+    const text = `Encontré algo en Valiz que te puede gustar. Si entras con mi link tienes 15% de descuento en tu primera compra: ${link}`;
     window.open(
       `https://wa.me/?text=${encodeURIComponent(text)}`,
       "_blank",
@@ -56,7 +56,7 @@ export function ReferirCliente({
     if (!link || typeof navigator.share !== "function") return;
     navigator
       .share({
-        title: "Valiz · 5% de descuento",
+        title: "Valiz · 15% de descuento",
         text: "Encontré algo en Valiz que te puede gustar.",
         url: link,
       })

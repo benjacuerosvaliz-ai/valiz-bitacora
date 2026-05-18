@@ -6,7 +6,7 @@ import { useState } from "react";
  * Bloque CTA para mostrar el código de referido de una persona, con
  * botón "Copiar". Vive en el perfil público y en /yo.
  *
- * Mensaje principal: "{Nombre} te regala 5% off en valiz.cl".
+ * Mensaje principal: "{Nombre} te regala 15% off en valiz.cl".
  * Click copia el código al portapapeles y muestra confirmación 2s.
  */
 export function ReferidoCodigo({
@@ -34,7 +34,7 @@ export function ReferidoCodigo({
     <div className="mt-5 flex flex-col items-start gap-3 border-t border-piedra pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
       <div className="flex flex-col gap-0.5">
         <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
-          {nombre} te regala 5% off
+          {nombre} te regala 15% off
         </p>
         <p className="font-serif text-sm italic leading-snug text-niebla">
           Usá este código en valiz.cl para tu primera compra Valiz.

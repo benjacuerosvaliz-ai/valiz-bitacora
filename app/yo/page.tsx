@@ -506,7 +506,7 @@ export default async function YoPage() {
               descripcion={
                 ptsReferidos > 0
                   ? `Has ganado ${nf.format(ptsReferidos)} pts por ventas referidas.`
-                  : "Quien compre con tu link tiene 5% off. Tú recibes 5% en pts."
+                  : "Quien compre con tu link tiene 15% off. Tú recibes 5% en pts."
               }
               href="/yo/referir"
               ctaLabel="Ver mi link →"

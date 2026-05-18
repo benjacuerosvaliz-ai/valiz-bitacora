@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * asigna (lazy). Si el pool está vacío o falla, devuelve null.
  *
  * Diseñado para uso server-side desde páginas que quieren mostrar
- * "compartí este código para 5% off". El pool se sigue manejando con
+ * "compartí este código para 15% off". El pool se sigue manejando con
  * el script cargar_codigos_referido.py.
  */
 export async function getOrAssignReferidoCode(

@@ -627,7 +627,7 @@ function OutroSection() {
           <Mision
             premio="+5% pts"
             titulo="Recomienda"
-            cuerpo="Si alguien compra con tu código, llevas 5% en puntos."
+            cuerpo="Tu código da 15% off al que compra. Tú llevas 5% del subtotal en pts."
           />
           <Mision
             premio="Valiz"
