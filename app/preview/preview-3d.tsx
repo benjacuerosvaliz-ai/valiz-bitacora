@@ -33,12 +33,10 @@ const nf = new Intl.NumberFormat("es-CL");
  */
 
 export function Preview3D({
-  mochila,
   cartera,
   stats,
   points,
 }: {
-  mochila: Producto3D | null;
   cartera: Producto3D | null;
   stats: StatsGlobales;
   points: Point[];
@@ -49,23 +47,22 @@ export function Preview3D({
       style={{ perspective: "1400px" } as React.CSSProperties}
     >
       <HeroSection />
-      {mochila && (
-        <VidaSection
-          numero="I"
-          producto={mochila}
-          tagline="Vida pasada"
-          titulo="El cuero antes de ser tuyo."
-          parrafo="Subproducto de la industria ganadera chilena. Curtido localmente, con procesos cuidadosos. Sin nosotros, descarte. Con nosotros, objeto que vivirá décadas."
-          stats={[
-            {
-              big: nf.format(stats.piesTotal),
-              label: "pies² rescatados",
-              hint: "en los últimos 12 meses",
-            },
-          ]}
-          textOnRight={true}
-        />
-      )}
+      <VidaCueroSection
+        numero="I"
+        tagline="Vida pasada"
+        titulo="El cuero antes de ser tuyo."
+        parrafo="Subproducto de la industria ganadera chilena. Curtido localmente, con procesos cuidadosos. Sin nosotros, descarte. Con nosotros, objeto que vivirá décadas."
+        imagen="/images/vida-pasada.jpg"
+        alt="Pila de cueros enrollados en distintos colores"
+        stats={[
+          {
+            big: nf.format(stats.piesTotal),
+            label: "pies² rescatados",
+            hint: "en los últimos 12 meses",
+          },
+        ]}
+        textOnRight={true}
+      />
       {cartera && (
         <VidaSection
           numero="II"
@@ -295,6 +292,144 @@ function VidaSection({
               <div
                 className="absolute -bottom-6 left-1/2 h-6 w-3/4 -translate-x-1/2 rounded-[50%] bg-tinta/15 blur-2xl"
                 aria-hidden
+              />
+            </motion.div>
+          </motion.div>
+
+          {/* Texto */}
+          <motion.div
+            style={{ x: textX, opacity: textOpacity }}
+            className="relative flex flex-col gap-6"
+          >
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
+              {numero} · {tagline}
+            </p>
+            <h2 className="font-serif text-5xl leading-[0.95] tracking-[-0.025em] text-tinta sm:text-6xl lg:text-7xl">
+              {titulo}
+            </h2>
+            <p className="max-w-xl font-serif text-lg leading-relaxed text-tinta/85 sm:text-xl">
+              {parrafo}
+            </p>
+            <div className="mt-4 flex flex-wrap gap-x-10 gap-y-6 border-l border-piedra pl-5">
+              {stats.map((s) => (
+                <div key={s.label}>
+                  <p className="font-serif text-4xl leading-none tracking-[-0.015em] text-tinta sm:text-5xl">
+                    {s.big}
+                  </p>
+                  <p className="mt-2 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+                    {s.label}
+                  </p>
+                  {s.hint && (
+                    <p className="mt-1 font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
+                      {s.hint}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------------ */
+/* VIDA I CUERO — imagen libre (no producto) con scroll-driven motion      */
+/* ------------------------------------------------------------------------ */
+function VidaCueroSection({
+  numero,
+  tagline,
+  titulo,
+  parrafo,
+  imagen,
+  alt,
+  stats,
+  textOnRight,
+}: {
+  numero: string;
+  tagline: string;
+  titulo: string;
+  parrafo: string;
+  imagen: string;
+  alt: string;
+  stats: StatBlock[];
+  textOnRight: boolean;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"],
+  });
+
+  // La foto de cueros no necesita rotar tan fuerte (no es un objeto 3D
+  // como una mochila) — usamos zoom + leve pan + tilt cursor para
+  // "respirarla". Sensación de cuero vivo.
+  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [1.05, 1.18, 1.05]);
+  const x = useTransform(scrollYProgress, [0, 0.5, 1], [-30, 0, 30]);
+  const y = useTransform(scrollYProgress, [0, 0.5, 1], [40, 0, -40]);
+  const opacity = useTransform(
+    scrollYProgress,
+    [0, 0.18, 0.82, 1],
+    [0, 1, 1, 0.4],
+  );
+
+  const textX = useTransform(scrollYProgress, [0, 0.5, 1], [80, 0, -80]);
+  const textOpacity = useTransform(
+    scrollYProgress,
+    [0, 0.3, 0.7, 1],
+    [0, 1, 1, 0],
+  );
+
+  // Cursor parallax sutil
+  const tiltY = useMotionValue(0);
+  const tiltX = useMotionValue(0);
+  const tiltYSpring = useSpring(tiltY, { stiffness: 140, damping: 18 });
+  const tiltXSpring = useSpring(tiltX, { stiffness: 140, damping: 18 });
+
+  function onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dx = (e.clientX - cx) / rect.width;
+    const dy = (e.clientY - cy) / rect.height;
+    tiltY.set(dx * 6);
+    tiltX.set(-dy * 4);
+  }
+  function onMouseLeave() {
+    tiltY.set(0);
+    tiltX.set(0);
+  }
+
+  return (
+    <section ref={ref} className="relative h-[150vh]">
+      <div className="sticky top-0 flex h-screen items-center overflow-hidden">
+        <div
+          onMouseMove={onMouseMove}
+          onMouseLeave={onMouseLeave}
+          className={`relative grid w-full grid-cols-1 items-center gap-8 px-6 sm:px-12 lg:grid-cols-2 lg:gap-14 lg:px-20 ${
+            textOnRight ? "" : "lg:[direction:rtl] lg:[&>*]:[direction:ltr]"
+          }`}
+        >
+          {/* Foto de cueros con frame minimal y movimiento */}
+          <motion.div
+            style={{ opacity, x, y }}
+            className="relative flex items-center justify-center"
+          >
+            <motion.div
+              style={{
+                rotateY: tiltYSpring,
+                rotateX: tiltXSpring,
+                transformStyle: "preserve-3d" as const,
+              }}
+              className="relative aspect-[3/4] w-[78vw] max-w-[480px] overflow-hidden border border-piedra shadow-[0_30px_60px_rgba(26,26,26,0.18)] sm:w-[50vw]"
+            >
+              <motion.img
+                src={imagen}
+                alt={alt}
+                style={{ scale }}
+                className="h-full w-full object-cover"
+                draggable={false}
               />
             </motion.div>
           </motion.div>

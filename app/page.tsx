@@ -170,10 +170,10 @@ export default async function Home() {
                 Desliza ↓
               </p>
               <Link
-                href="/tienda"
+                href="/bitacora"
                 className="group inline-flex items-center gap-3 border border-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-all duration-500 hover:bg-tinta hover:text-fondo"
               >
-                Entrar a la tienda
+                Ver bitácora colectiva
                 <span className="transition-transform duration-500 group-hover:translate-x-1">
                   ↗
                 </span>
@@ -545,12 +545,14 @@ export default async function Home() {
             >
               Concursos
             </Link>
-            <Link
-              href="/tienda"
+            <a
+              href="https://www.valiz.cl"
+              target="_blank"
+              rel="noopener noreferrer"
               className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla transition-colors hover:text-cuero"
             >
-              Tienda
-            </Link>
+              valiz.cl ↗
+            </a>
           </div>
           <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
             Valiz · Since 2018

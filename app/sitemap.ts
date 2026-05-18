@@ -21,7 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/bitacora/mapa`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
     { url: `${SITE_URL}/colecciones`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
     { url: `${SITE_URL}/concursos`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
-    { url: `${SITE_URL}/tienda`, lastModified: now, changeFrequency: "weekly", priority: 0.6 },
+    // /tienda escondida hasta etapa 2 — no se indexa
   ];
 
   // Talleristas individuales

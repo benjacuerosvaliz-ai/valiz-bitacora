@@ -121,10 +121,13 @@ export default async function PreviewPage() {
   const sb = createStaticClient();
   const photoBySku = getPhotoBySku();
 
-  const [mochila, cartera] = await Promise.all([
-    resolveProducto(sb, "mochila-alforja", photoBySku),
-    resolveProducto(sb, "cartera-zarga-grande", photoBySku),
-  ]);
+  // Vida I usa la foto de cueros enrollados (no producto). Vida II
+  // muestra la Cartera Zarga Grande flotando como pieza terminada.
+  const cartera = await resolveProducto(
+    sb,
+    "cartera-zarga-grande",
+    photoBySku,
+  );
 
   // Stats globales
   const [prodsStatsRes, famsRes, bitsRes, talleristasRes] = await Promise.all([
@@ -230,12 +233,5 @@ export default async function PreviewPage() {
       };
     });
 
-  return (
-    <Preview3D
-      mochila={mochila}
-      cartera={cartera}
-      stats={stats}
-      points={points}
-    />
-  );
+  return <Preview3D cartera={cartera} stats={stats} points={points} />;
 }

@@ -12,6 +12,8 @@ import { createStaticClient } from "@/lib/supabase/static";
 export const metadata: Metadata = {
   title: "Tienda · Valiz Bitácora",
   description: "Entra al espacio Valiz — los objetos en sus muebles.",
+  // Escondida hasta etapa 2: no indexar, no listar links públicos
+  robots: { index: false, follow: false },
 };
 
 export const revalidate = 300;

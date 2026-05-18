@@ -119,9 +119,10 @@ export default function SobrePage() {
               hint="Las familias, los colores, los talleres — todo en un scroll."
             />
             <CtaLink
-              href="/tienda"
-              label="Tienda valiz.cl"
-              hint="Comprar una pieza. Empezar su tercera vida."
+              href="https://www.valiz.cl"
+              external
+              label="Comprar en valiz.cl"
+              hint="La tienda oficial — empezar la tercera vida de tu pieza."
             />
           </ul>
         </div>
@@ -174,27 +175,44 @@ function CtaLink({
   href,
   label,
   hint,
+  external,
 }: {
   href: string;
   label: string;
   hint: string;
+  external?: boolean;
 }) {
+  const className =
+    "group flex items-baseline justify-between gap-6 py-6 transition-colors hover:bg-tinta/[0.02]";
+  const inner = (
+    <>
+      <div>
+        <p className="font-serif text-2xl leading-tight tracking-[-0.01em] sm:text-3xl">
+          {label}
+        </p>
+        <p className="mt-2 font-sans text-sm text-niebla">{hint}</p>
+      </div>
+      <span className="font-sans text-[11px] uppercase tracking-[0.22em] text-cuero transition-transform group-hover:translate-x-1">
+        {external ? "↗" : "Ir →"}
+      </span>
+    </>
+  );
   return (
     <li>
-      <Link
-        href={href}
-        className="group flex items-baseline justify-between gap-6 py-6 transition-colors hover:bg-tinta/[0.02]"
-      >
-        <div>
-          <p className="font-serif text-2xl leading-tight tracking-[-0.01em] sm:text-3xl">
-            {label}
-          </p>
-          <p className="mt-2 font-sans text-sm text-niebla">{hint}</p>
-        </div>
-        <span className="font-sans text-[11px] uppercase tracking-[0.22em] text-cuero transition-transform group-hover:translate-x-1">
-          Ir →
-        </span>
-      </Link>
+      {external ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={className}
+        >
+          {inner}
+        </a>
+      ) : (
+        <Link href={href} className={className}>
+          {inner}
+        </Link>
+      )}
     </li>
   );
 }
