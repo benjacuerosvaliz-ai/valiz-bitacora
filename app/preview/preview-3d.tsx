@@ -473,26 +473,31 @@ function OutroSection() {
           <span className="italic text-cuero">por crear tu cuenta.</span>
         </h2>
         <p className="max-w-2xl font-serif text-xl italic leading-relaxed text-niebla sm:text-2xl">
-          Y cada misión que completas — subir tu primera pieza, publicar
-          tu primera bitácora, recomendar Valiz — suma más puntos.
+          Y cada misión que completas suma más. Concursos cada mes con
+          piezas Valiz de regalo para los mejores viajes.
         </p>
 
-        {/* Misiones rápidas */}
-        <div className="mt-6 grid w-full max-w-3xl grid-cols-1 gap-5 border-y border-piedra py-10 text-left sm:grid-cols-3 sm:gap-10">
+        {/* Misiones rápidas — 2x2 en mobile, 4 cols en desktop */}
+        <div className="mt-6 grid w-full max-w-5xl grid-cols-2 gap-6 border-y border-piedra py-10 text-left sm:gap-8 lg:grid-cols-4 lg:gap-10">
           <Mision
             premio="+1.000"
             titulo="Crear cuenta"
-            cuerpo="Te damos la bienvenida con mil puntos en tu equipaje digital."
+            cuerpo="Te damos la bienvenida con mil puntos en tu equipaje."
           />
           <Mision
             premio="+200"
             titulo="Cada bitácora"
-            cuerpo="Sube foto con ubicación y un texto contando dónde fuiste con tu Valiz."
+            cuerpo="Foto, ubicación y un texto contando dónde fuiste."
           />
           <Mision
             premio="+5% pts"
             titulo="Recomienda"
-            cuerpo="Cuando alguien compra con tu código, te llevas el 5% del subtotal en puntos."
+            cuerpo="Si alguien compra con tu código, llevas 5% en puntos."
+          />
+          <Mision
+            premio="Valiz"
+            titulo="Concursos"
+            cuerpo="Cada mes premiamos las mejores bitácoras con piezas nuevas."
           />
         </div>
 
@@ -500,12 +505,19 @@ function OutroSection() {
           1 punto = $1 CLP de descuento en valiz.cl
         </p>
 
-        <div className="mt-4">
+        {/* CTAs duales: crear cuenta (primario) + iniciar sesión */}
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
           <Link
             href="/login"
             className="inline-flex items-center gap-3 bg-tinta px-10 py-5 font-sans text-xs font-semibold uppercase tracking-[0.28em] text-fondo transition-colors hover:bg-cuero"
           >
             Crear cuenta →
+          </Link>
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-3 border border-piedra bg-fondo px-8 py-5 font-sans text-xs font-semibold uppercase tracking-[0.28em] text-tinta transition-colors hover:border-cuero hover:text-cuero"
+          >
+            Ya tengo cuenta
           </Link>
         </div>
 

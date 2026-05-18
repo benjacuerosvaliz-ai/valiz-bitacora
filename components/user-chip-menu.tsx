@@ -71,11 +71,11 @@ export function UserChipMenu({
           className="group transition-colors"
         >
           {/* Mobile: círculo compacto (40px) con inicial */}
-          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-piedra bg-fondo/90 font-serif text-base text-tinta backdrop-blur-sm transition-colors group-hover:border-cuero group-hover:text-cuero sm:hidden">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-piedra bg-fondo font-serif text-base text-tinta transition-colors group-hover:border-cuero group-hover:text-cuero sm:hidden">
             {nombre.charAt(0).toUpperCase()}
           </span>
           {/* Desktop: pill con nombre + pts */}
-          <span className="hidden items-center gap-3 rounded-full border border-piedra bg-fondo/85 px-4 py-2 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-tinta backdrop-blur-sm transition-colors group-hover:border-cuero group-hover:text-cuero sm:inline-flex">
+          <span className="hidden items-center gap-3 rounded-full border border-piedra bg-fondo px-4 py-2 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors group-hover:border-cuero group-hover:text-cuero sm:inline-flex">
             <span>{nombre}</span>
             <span className="text-cuero">{nf.format(pts)} pts</span>
             <span

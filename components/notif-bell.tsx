@@ -132,7 +132,7 @@ export function NotifBell({
             ? `${unread} notificación${unread === 1 ? "" : "es"} sin leer`
             : "Notificaciones"
         }
-        className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-piedra bg-fondo/85 text-tinta backdrop-blur-sm transition-colors hover:border-cuero hover:text-cuero"
+        className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-piedra bg-fondo text-tinta transition-colors hover:border-cuero hover:text-cuero"
       >
         <BellIcon />
         {unread > 0 && (
