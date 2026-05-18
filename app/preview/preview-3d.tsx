@@ -104,38 +104,33 @@ function HeroSection() {
     offset: ["start start", "end start"],
   });
   const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
-  const y = useTransform(scrollYProgress, [0, 1], [0, -120]);
+  const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
 
   return (
-    <section ref={ref} className="relative h-[110vh] overflow-hidden">
-      {/* Logos Valiz girando como fondo */}
+    <section ref={ref} className="relative h-screen overflow-hidden">
+      {/* Logos Valiz girando como fondo (sutiles, decorativos) */}
       <div className="pointer-events-none absolute inset-0">
-        <SpinningLogo
-          size="40vw"
-          duration={60}
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.06]"
-        />
         <SpinningLogo
           size="18vw"
           duration={45}
           reverse
-          className="absolute left-[6%] top-[18%] opacity-30 sm:opacity-40"
+          className="absolute left-[6%] top-[16%] opacity-25 sm:opacity-35"
         />
         <SpinningLogo
           size="14vw"
           duration={55}
-          className="absolute right-[8%] top-[24%] opacity-30 sm:opacity-40"
+          className="absolute right-[8%] top-[22%] opacity-25 sm:opacity-35"
         />
         <SpinningLogo
           size="10vw"
           duration={40}
           reverse
-          className="absolute right-[14%] bottom-[18%] opacity-30 sm:opacity-40"
+          className="absolute right-[14%] bottom-[16%] opacity-25 sm:opacity-35"
         />
         <SpinningLogo
           size="8vw"
           duration={50}
-          className="absolute left-[12%] bottom-[22%] opacity-30 sm:opacity-40"
+          className="absolute left-[12%] bottom-[20%] opacity-25 sm:opacity-35"
         />
       </div>
 
@@ -143,19 +138,25 @@ function HeroSection() {
         style={{ opacity, y }}
         className="relative sticky top-0 z-10 flex h-screen flex-col items-center justify-center px-6 text-center sm:px-12"
       >
-        <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
+        {/* Logo Valiz principal — sello central, prominente, girando */}
+        <SpinningLogo
+          size="clamp(80px, 11vw, 140px)"
+          duration={40}
+          className="opacity-95"
+        />
+        <p className="mt-5 font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
           Valiz · Bitácora
         </p>
-        <h1 className="mt-8 font-serif text-[12vw] leading-[0.92] tracking-[-0.03em] text-tinta sm:text-[8vw] lg:text-[6.5vw]">
+        <h1 className="mt-5 font-serif text-[12vw] leading-[0.92] tracking-[-0.03em] text-tinta sm:text-[8vw] lg:text-[6.5vw]">
           Cada Valiz tiene
           <br />
           <span className="italic text-cuero">tres vidas.</span>
         </h1>
-        <p className="mt-10 max-w-md font-serif text-base italic leading-relaxed text-niebla sm:text-lg">
+        <p className="mt-6 max-w-md font-serif text-base italic leading-relaxed text-niebla sm:text-lg">
           La que el cuero ya tuvo, la que pasa en taller, la que viene
           contigo.
         </p>
-        <p className="mt-16 font-sans text-[10px] uppercase tracking-[0.32em] text-niebla">
+        <p className="mt-10 font-sans text-[10px] uppercase tracking-[0.32em] text-niebla">
           Desliza ↓
         </p>
       </motion.div>
@@ -261,12 +262,12 @@ function VidaSection({
   const totalRotX = useCombined(rotateX, tiltXSpring);
 
   return (
-    <section ref={ref} className="relative h-[200vh]">
+    <section ref={ref} className="relative h-[150vh]">
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
         <div
           onMouseMove={onMouseMove}
           onMouseLeave={onMouseLeave}
-          className={`relative grid w-full grid-cols-1 items-center gap-10 px-6 sm:px-12 lg:grid-cols-2 lg:gap-16 lg:px-20 ${
+          className={`relative grid w-full grid-cols-1 items-center gap-8 px-6 sm:px-12 lg:grid-cols-2 lg:gap-14 lg:px-20 ${
             textOnRight ? "" : "lg:[direction:rtl] lg:[&>*]:[direction:ltr]"
           }`}
         >
@@ -371,9 +372,9 @@ function VidaIIIBitacora({
   );
 
   return (
-    <section ref={ref} className="relative h-[220vh]">
+    <section ref={ref} className="relative h-[170vh]">
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
-        <div className="grid w-full grid-cols-1 items-center gap-10 px-6 sm:px-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:px-20">
+        <div className="grid w-full grid-cols-1 items-center gap-8 px-6 sm:px-12 lg:grid-cols-[1.1fr_1fr] lg:gap-14 lg:px-20">
           {/* Globo (sobre bg-fondo, el space-color del fog del mapa
               ya es cream → se funde, no se ve cuadrado) */}
           <motion.div
@@ -449,7 +450,7 @@ function OutroSection() {
   const y = useTransform(scrollYProgress, [0, 1], [60, 0]);
 
   return (
-    <section ref={ref} className="relative min-h-[130vh] overflow-hidden">
+    <section ref={ref} className="relative min-h-screen overflow-hidden">
       {/* Logo Valiz girando sutil de fondo */}
       <div className="pointer-events-none absolute inset-0">
         <SpinningLogo
@@ -461,7 +462,7 @@ function OutroSection() {
 
       <motion.div
         style={{ y, opacity }}
-        className="relative flex min-h-[130vh] flex-col items-center justify-center gap-10 px-6 py-32 text-center sm:px-12"
+        className="relative flex min-h-screen flex-col items-center justify-center gap-8 px-6 py-20 text-center sm:gap-10 sm:px-12 sm:py-24"
       >
         <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
           Sé parte de la bitácora
