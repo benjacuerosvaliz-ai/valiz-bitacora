@@ -62,12 +62,31 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const sb = createStaticClient();
   const { data } = await sb
     .from("concursos")
-    .select("titulo, descripcion")
+    .select("titulo, descripcion, premio_descripcion")
     .eq("slug", slug)
     .maybeSingle();
+  if (!data) return { title: "Concurso" };
+  const description =
+    data.descripcion?.slice(0, 200) ??
+    (data.premio_descripcion
+      ? `Concurso Valiz · Premio: ${data.premio_descripcion}`
+      : "Concurso Valiz Bitácora.");
+  const url = `/concursos/${slug}`;
   return {
-    title: data ? `${data.titulo} · Concurso Valiz` : "Concurso · Valiz",
-    description: data?.descripcion ?? undefined,
+    title: data.titulo,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      title: data.titulo,
+      description,
+      url,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: data.titulo,
+      description,
+    },
   };
 }
 

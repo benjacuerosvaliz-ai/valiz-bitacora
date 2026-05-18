@@ -4,6 +4,7 @@ import { Newsreader, Manrope } from "next/font/google";
 import { CustomCursor } from "@/components/custom-cursor";
 import { LenisProvider } from "@/components/lenis-provider";
 import { UserChip } from "@/components/user-chip";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 import "./globals.css";
 
@@ -21,9 +22,31 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Valiz Bitácora",
-  description:
-    "La bitácora viva de Valiz — objetos de cuero artesanal chileno hechos para envejecer bien.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: SITE_NAME,
+    template: `%s · ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  authors: [{ name: "Valiz", url: "https://www.valiz.cl" }],
+  creator: "Valiz",
+  publisher: "Valiz",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    locale: "es_CL",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+  },
+  icons: { icon: "/icon.png" },
 };
 
 export default function RootLayout({

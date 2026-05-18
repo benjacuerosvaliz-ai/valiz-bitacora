@@ -60,13 +60,31 @@ export async function generateMetadata({
   const sb = createStaticClient();
   const { data } = await sb
     .from("user_profiles_public")
-    .select("display_name, handle")
+    .select("display_name, handle, bio, city, country")
     .eq("handle", handle)
     .maybeSingle();
-  const nombre = data?.display_name ?? data?.handle ?? "Usuario";
+  if (!data) return { title: "Perfil" };
+  const nombre = data.display_name ?? data.handle ?? "Usuario";
+  const ubicacion = [data.city, data.country].filter(Boolean).join(", ");
+  const description =
+    data.bio?.slice(0, 200) ??
+    `Equipaje, viajes y bitácoras de ${nombre}${ubicacion ? ` en ${ubicacion}` : ""} — Valiz.`;
+  const url = `/u/${handle}`;
   return {
-    title: `${nombre} · Valiz Bitácora`,
-    description: `Equipaje y bitácoras de ${nombre} en Valiz.`,
+    title: nombre,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "profile",
+      title: nombre,
+      description,
+      url,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: nombre,
+      description,
+    },
   };
 }
 

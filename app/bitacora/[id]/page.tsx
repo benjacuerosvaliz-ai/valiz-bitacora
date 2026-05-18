@@ -26,13 +26,31 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const sb = createStaticClient();
   const { data } = await sb
     .from("bitacora_entries")
-    .select("lugar, texto")
+    .select("lugar, texto, user_id")
     .eq("id", id)
     .eq("invalidated", false)
     .maybeSingle();
+  if (!data) return { title: "Bitácora" };
+  const title = data.lugar ?? "Bitácora";
+  const description =
+    data.texto?.slice(0, 200) ??
+    `Bitácora desde ${data.lugar ?? "algún lugar"} en Valiz.`;
+  const url = `/bitacora/${id}`;
   return {
-    title: `${data?.lugar ?? "Bitácora"} · Valiz`,
-    description: data?.texto?.slice(0, 160) ?? undefined,
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      title,
+      description,
+      url,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
   };
 }
 

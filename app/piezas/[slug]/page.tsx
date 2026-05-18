@@ -25,11 +25,29 @@ export async function generateMetadata({
   const sb = createStaticClient();
   const { data } = await sb
     .from("familias")
-    .select("name")
+    .select("name, description")
     .eq("slug", slug)
-    .single();
+    .maybeSingle();
+  if (!data) return { title: "Pieza" };
+  const description =
+    data.description?.slice(0, 200) ??
+    `${data.name} de Valiz — cuero artesanal chileno hecho para envejecer bien.`;
+  const url = `/piezas/${slug}`;
   return {
-    title: data ? `${data.name} · Valiz Bitácora` : "Pieza · Valiz Bitácora",
+    title: data.name,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      title: data.name,
+      description,
+      url,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: data.name,
+      description,
+    },
   };
 }
 
