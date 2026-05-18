@@ -20,14 +20,20 @@ const COLORS = {
 const nf = new Intl.NumberFormat("es-CL");
 
 /**
- * OG image cinemático para perfil público.
+ * OG image centrado vertical — aguanta crops de WhatsApp y se ve
+ * balanceado en cualquier red social.
  *
- * Layout: avatar gigante a la izquierda (440x440) tipo álbum +
- * panel derecho con nombre, handle, ubicación, bio y stats grandes.
- * Pequeño tag "VALIZ BITÁCORA" arriba como marca.
+ * Composición:
+ *  - Top tag VALIZ · BITÁCORA en cuero
+ *  - Avatar circular grande centrado (260px)
+ *  - Nombre serif gigante centrado
+ *  - @handle · ubicación
+ *  - Bio italic
+ *  - 3 stats grandes inline horizontal centradas
+ *  - Footer URL
  *
- * Fonts Newsreader (serif) + Manrope (sans) cargadas desde Google Fonts
- * con UA-trick para obtener TTF (next/og no soporta WOFF2).
+ * Todo se queda en el centro del 1200x630 — si WhatsApp recorta a
+ * cuadrado, sigue viendo lo esencial (avatar + nombre + stats).
  */
 export default async function Image({
   params,
@@ -42,7 +48,6 @@ export default async function Image({
     .eq("handle", handle)
     .maybeSingle();
 
-  // Stats abreviadas (mismo cálculo que la página)
   let piezasCount = 0;
   let horasTotal = 0;
   let piesTotal = 0;
@@ -111,6 +116,8 @@ export default async function Image({
       }
     }
   }
+  horasTotal = Math.round(horasTotal);
+  piesTotal = Math.round(piesTotal);
 
   const nombre = profile?.display_name ?? profile?.handle ?? "Usuario";
   const inicial = nombre.trim().charAt(0).toUpperCase() || "V";
@@ -119,8 +126,8 @@ export default async function Image({
       ? [profile.city, profile.country].filter(Boolean).join(", ")
       : null;
   const bio =
-    profile?.bio && profile.bio.length > 130
-      ? profile.bio.slice(0, 128) + "…"
+    profile?.bio && profile.bio.length > 110
+      ? profile.bio.slice(0, 108) + "…"
       : profile?.bio;
 
   const fonts = await loadValizFonts();
@@ -132,166 +139,160 @@ export default async function Image({
           width: "100%",
           height: "100%",
           display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
           background: COLORS.fondo,
           color: COLORS.tinta,
           fontFamily: "Newsreader, serif",
+          padding: "40px 60px",
           position: "relative",
         }}
       >
-        {/* Tag superior izquierda como marca */}
+        {/* Tag superior centrado */}
         <div
           style={{
             position: "absolute",
             top: 36,
-            left: 48,
+            left: 0,
+            right: 0,
+            display: "flex",
+            justifyContent: "center",
             fontSize: 16,
-            letterSpacing: "0.32em",
+            letterSpacing: "0.4em",
             textTransform: "uppercase",
             color: COLORS.cuero,
             fontFamily: "Manrope, sans-serif",
             fontWeight: 600,
-            display: "flex",
           }}
         >
           Valiz · Bitácora
         </div>
 
-        {/* Avatar — protagonista, ~440px */}
+        {/* Avatar centro */}
+        {profile?.avatar_url ? (
+          <img
+            src={profile.avatar_url}
+            alt=""
+            width={220}
+            height={220}
+            style={{
+              width: 220,
+              height: 220,
+              borderRadius: "50%",
+              objectFit: "cover",
+              border: `3px solid ${COLORS.piedra}`,
+              boxShadow: "0 16px 50px rgba(26,26,26,0.15)",
+              marginBottom: 22,
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              width: 220,
+              height: 220,
+              borderRadius: "50%",
+              background: COLORS.cuero,
+              color: COLORS.fondo,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 130,
+              fontFamily: "Newsreader, serif",
+              boxShadow: "0 16px 50px rgba(26,26,26,0.15)",
+              marginBottom: 22,
+            }}
+          >
+            {inicial}
+          </div>
+        )}
+
+        {/* Nombre */}
         <div
           style={{
-            width: 520,
-            height: "100%",
+            fontSize: nombre.length > 18 ? 60 : 76,
+            lineHeight: 1.02,
+            letterSpacing: "-0.022em",
+            color: COLORS.tinta,
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            paddingLeft: 60,
+            textAlign: "center",
+            margin: 0,
           }}
         >
-          {profile?.avatar_url ? (
-            <img
-              src={profile.avatar_url}
-              alt=""
-              width={440}
-              height={440}
-              style={{
-                width: 440,
-                height: 440,
-                borderRadius: "50%",
-                objectFit: "cover",
-                border: `3px solid ${COLORS.piedra}`,
-                boxShadow: "0 20px 60px rgba(26,26,26,0.18)",
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                width: 440,
-                height: 440,
-                borderRadius: "50%",
-                background: COLORS.cuero,
-                color: COLORS.fondo,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 240,
-                fontFamily: "Newsreader, serif",
-                boxShadow: "0 20px 60px rgba(26,26,26,0.18)",
-              }}
-            >
-              {inicial}
-            </div>
+          {nombre}
+        </div>
+
+        {/* @handle · ubicación */}
+        <div
+          style={{
+            marginTop: 8,
+            fontSize: 18,
+            letterSpacing: "0.28em",
+            textTransform: "uppercase",
+            color: COLORS.niebla,
+            fontFamily: "Manrope, sans-serif",
+            fontWeight: 600,
+            display: "flex",
+          }}
+        >
+          @{profile?.handle ?? handle}
+          {ubicacion && (
+            <span style={{ color: COLORS.cuero, marginLeft: 14 }}>
+              · {ubicacion}
+            </span>
           )}
         </div>
 
-        {/* Panel derecho: nombre, info, stats */}
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            padding: "60px 60px 60px 20px",
-            gap: 0,
-          }}
-        >
-          <div
-            style={{
-              fontSize: 17,
-              letterSpacing: "0.28em",
-              textTransform: "uppercase",
-              color: COLORS.niebla,
-              fontFamily: "Manrope, sans-serif",
-              fontWeight: 600,
-              display: "flex",
-            }}
-          >
-            @{profile?.handle ?? handle}
-            {ubicacion && (
-              <span style={{ color: COLORS.cuero, marginLeft: 14 }}>
-                · {ubicacion}
-              </span>
-            )}
-          </div>
-
+        {/* Bio */}
+        {bio && (
           <div
             style={{
               marginTop: 18,
-              fontSize: nombre.length > 18 ? 64 : 80,
-              lineHeight: 1.0,
-              letterSpacing: "-0.022em",
+              fontSize: 22,
+              fontStyle: "italic",
+              fontFamily: "Newsreader, serif",
+              lineHeight: 1.4,
               color: COLORS.tinta,
+              maxWidth: 800,
+              textAlign: "center",
               display: "flex",
             }}
           >
-            {nombre}
+            {bio}
           </div>
+        )}
 
-          {bio && (
-            <div
-              style={{
-                marginTop: 22,
-                fontSize: 22,
-                fontStyle: "italic",
-                fontFamily: "Newsreader, serif",
-                lineHeight: 1.4,
-                color: COLORS.tinta,
-                maxWidth: 580,
-                display: "flex",
-              }}
-            >
-              {bio}
-            </div>
-          )}
-
-          {/* Stats grid grande */}
-          <div
-            style={{
-              marginTop: 36,
-              display: "flex",
-              gap: 48,
-              borderTop: `1px solid ${COLORS.piedra}`,
-              paddingTop: 26,
-            }}
-          >
-            <Stat label="Piezas" value={nf.format(piezasCount)} />
-            <Stat label="Horas" value={nf.format(horasTotal)} />
-            <Stat label="Pies²" value={nf.format(piesTotal)} />
-          </div>
+        {/* Stats inline grandes */}
+        <div
+          style={{
+            marginTop: 32,
+            display: "flex",
+            gap: 60,
+            borderTop: `1px solid ${COLORS.piedra}`,
+            borderBottom: `1px solid ${COLORS.piedra}`,
+            padding: "20px 60px",
+          }}
+        >
+          <Stat label="Piezas" value={nf.format(piezasCount)} />
+          <Stat label="Horas" value={nf.format(horasTotal)} />
+          <Stat label="Pies²" value={nf.format(piesTotal)} />
         </div>
 
         {/* Footer URL */}
         <div
           style={{
             position: "absolute",
-            bottom: 32,
-            left: 60,
-            fontSize: 15,
+            bottom: 28,
+            left: 0,
+            right: 0,
+            display: "flex",
+            justifyContent: "center",
+            fontSize: 14,
             letterSpacing: "0.32em",
             textTransform: "uppercase",
             color: COLORS.niebla,
             fontFamily: "Manrope, sans-serif",
             fontWeight: 600,
-            display: "flex",
           }}
         >
           bitacora.valiz.cl/u/{profile?.handle ?? handle}
@@ -304,10 +305,29 @@ export default async function Image({
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
       <div
         style={{
-          fontSize: 13,
+          fontSize: 46,
+          lineHeight: 1,
+          letterSpacing: "-0.01em",
+          color: COLORS.tinta,
+          fontFamily: "Newsreader, serif",
+          display: "flex",
+        }}
+      >
+        {value}
+      </div>
+      <div
+        style={{
+          marginTop: 6,
+          fontSize: 12,
           letterSpacing: "0.32em",
           textTransform: "uppercase",
           color: COLORS.cuero,
@@ -317,19 +337,6 @@ function Stat({ label, value }: { label: string; value: string }) {
         }}
       >
         {label}
-      </div>
-      <div
-        style={{
-          marginTop: 8,
-          fontSize: 54,
-          lineHeight: 1,
-          letterSpacing: "-0.01em",
-          color: COLORS.tinta,
-          fontFamily: "Newsreader, serif",
-          display: "flex",
-        }}
-      >
-        {value}
       </div>
     </div>
   );

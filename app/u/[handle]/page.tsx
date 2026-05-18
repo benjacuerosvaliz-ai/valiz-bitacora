@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { MapaColectivo } from "@/app/bitacora/mapa/mapa";
 import { BrandMark } from "@/components/brand-mark";
 import { ShareButton } from "@/components/share-button";
 import { getPhotoBySku } from "@/lib/product-photos";
@@ -44,6 +45,8 @@ type BitacoraRow = {
   foto_url: string;
   lugar: string | null;
   texto: string | null;
+  lat: number | string | null;
+  lng: number | string | null;
   created_at: string;
 };
 
@@ -144,7 +147,7 @@ export default async function PerfilPublicoPage({
       .eq("verified", true),
     sb
       .from("bitacora_entries")
-      .select("id, sku, foto_url, lugar, texto, created_at")
+      .select("id, sku, foto_url, lugar, texto, lat, lng, created_at")
       .eq("user_id", profile.id)
       .eq("invalidated", false)
       .order("created_at", { ascending: false })
@@ -210,54 +213,86 @@ export default async function PerfilPublicoPage({
   const nombre = profile.display_name ?? profile.handle;
   const ubicacion = [profile.city, profile.country].filter(Boolean).join(", ");
 
+  // Puntos para el globo personal: solo SUS bitácoras con coords
+  const points = bitacoras
+    .filter((b) => b.lat !== null && b.lng !== null)
+    .map((b) => {
+      const p = b.sku ? productoBySku.get(b.sku) : null;
+      const fam = p?.familia_id ? familiaById.get(p.familia_id) : null;
+      return {
+        id: b.id,
+        lat: Number(b.lat),
+        lng: Number(b.lng),
+        foto: b.foto_url,
+        lugar: b.lugar,
+        texto: b.texto,
+        familia: fam?.name ?? null,
+        colorValiz: p?.color_valiz ?? null,
+      };
+    });
+
   return (
     <main className="flex min-h-screen flex-col bg-fondo">
-      <header className="flex items-center justify-between border-b border-piedra px-8 py-5 sm:px-16 sm:py-6">
+      <header className="flex items-center justify-between border-b border-piedra px-6 py-4 sm:px-12 sm:py-5">
         <BrandMark variant="back" href="/bitacora" />
-        <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
-          Perfil público
+        <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-niebla">
+          Perfil
         </p>
       </header>
 
-      {/* HERO PERSONA — compacto: avatar + datos + stats + sociales --- */}
-      <section className="border-b border-piedra px-6 py-10 sm:px-12 sm:py-14 lg:py-16">
+      {/* HERO + STATS + EQUIPAJE — todo denso en 1 viewport ------------ */}
+      <section className="border-b border-piedra px-5 py-6 sm:px-10 sm:py-8">
         <div className="mx-auto max-w-5xl">
-          <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:gap-10">
-            {/* Avatar */}
-            <div className="shrink-0">
+          {/* Fila 1: avatar + nombre/handle/bio + sociales */}
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-7">
+            <div className="flex items-center gap-4 sm:block">
               {profile.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={profile.avatar_url}
                   alt={nombre}
-                  className="h-32 w-32 rounded-full border-2 border-piedra object-cover shadow-[0_10px_30px_rgba(26,26,26,0.08)] sm:h-40 sm:w-40 lg:h-44 lg:w-44"
+                  className="h-20 w-20 shrink-0 rounded-full border-2 border-piedra object-cover sm:h-28 sm:w-28 lg:h-32 lg:w-32"
                 />
               ) : (
-                <div className="flex h-32 w-32 items-center justify-center rounded-full border-2 border-piedra bg-cuero font-serif text-5xl text-fondo shadow-[0_10px_30px_rgba(26,26,26,0.08)] sm:h-40 sm:w-40 sm:text-6xl lg:h-44 lg:w-44 lg:text-7xl">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-2 border-piedra bg-cuero font-serif text-3xl text-fondo sm:h-28 sm:w-28 sm:text-5xl lg:h-32 lg:w-32 lg:text-6xl">
                   {nombre.trim().charAt(0).toUpperCase() || "V"}
                 </div>
               )}
+              {/* Mobile: nombre al lado del avatar */}
+              <div className="min-w-0 flex-1 sm:hidden">
+                <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+                  @{profile.handle}
+                </p>
+                <h1 className="mt-1 font-serif text-2xl leading-[1.02] tracking-[-0.02em]">
+                  {nombre}
+                </h1>
+                {ubicacion && (
+                  <p className="mt-1 font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
+                    {ubicacion}
+                  </p>
+                )}
+              </div>
             </div>
 
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-              <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-                @{profile.handle}
-                {ubicacion && (
-                  <span className="ml-3 text-niebla">· {ubicacion}</span>
-                )}
-              </p>
-              <h1 className="mt-2 font-serif text-4xl leading-[1.02] tracking-[-0.022em] sm:text-5xl lg:text-6xl">
-                {nombre}
-              </h1>
+            <div className="min-w-0 flex-1">
+              {/* Desktop: nombre/handle aparte */}
+              <div className="hidden sm:block">
+                <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+                  @{profile.handle}
+                  {ubicacion && (
+                    <span className="ml-2 text-niebla">· {ubicacion}</span>
+                  )}
+                </p>
+                <h1 className="mt-2 font-serif text-4xl leading-[1.02] tracking-[-0.02em] lg:text-5xl">
+                  {nombre}
+                </h1>
+              </div>
               {profile.bio && (
-                <p className="mt-4 font-serif text-base italic leading-relaxed text-tinta/75 sm:text-lg">
+                <p className="mt-3 font-serif text-sm italic leading-relaxed text-tinta/75 sm:mt-3 sm:text-base">
                   {profile.bio}
                 </p>
               )}
-
-              {/* Sociales + Compartir inline */}
-              <div className="mt-5 flex flex-wrap items-center gap-2">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
                 {profile.instagram_handle && (
                   <a
                     href={`https://instagram.com/${profile.instagram_handle}`}
@@ -265,14 +300,14 @@ export default async function PerfilPublicoPage({
                     rel="noopener noreferrer"
                     aria-label={`Instagram @${profile.instagram_handle}`}
                     title={`@${profile.instagram_handle}`}
-                    className="inline-flex h-9 w-9 items-center justify-center text-white transition-opacity hover:opacity-85"
+                    className="inline-flex h-8 w-8 items-center justify-center text-white transition-opacity hover:opacity-85"
                     style={{
                       background:
                         "linear-gradient(45deg, #FEDA75 0%, #FA7E1E 20%, #D62976 50%, #962FBF 75%, #4F5BD5 100%)",
                     }}
                   >
                     <svg
-                      className="h-4 w-4"
+                      className="h-3.5 w-3.5"
                       viewBox="0 0 24 24"
                       fill="currentColor"
                       aria-hidden="true"
@@ -288,10 +323,10 @@ export default async function PerfilPublicoPage({
                     rel="noopener noreferrer"
                     aria-label={`TikTok @${profile.tiktok_handle}`}
                     title={`@${profile.tiktok_handle}`}
-                    className="inline-flex h-9 w-9 items-center justify-center bg-black text-white transition-opacity hover:opacity-85"
+                    className="inline-flex h-8 w-8 items-center justify-center bg-black text-white transition-opacity hover:opacity-85"
                   >
                     <svg
-                      className="h-4 w-4"
+                      className="h-3.5 w-3.5"
                       viewBox="0 0 24 24"
                       fill="currentColor"
                       aria-hidden="true"
@@ -303,7 +338,8 @@ export default async function PerfilPublicoPage({
                 <ShareButton
                   title={`${nombre} · Valiz Bitácora`}
                   text={
-                    profile.bio ?? `Equipaje y bitácoras de ${nombre} en Valiz.`
+                    profile.bio ??
+                    `Equipaje y bitácoras de ${nombre} en Valiz.`
                   }
                   url={`/u/${profile.handle}`}
                   label="Compartir"
@@ -312,9 +348,9 @@ export default async function PerfilPublicoPage({
             </div>
           </div>
 
-          {/* Stats inline — mismo hero card, 3 cifras horizontales */}
+          {/* Fila 2: stats inline horizontales */}
           {equipaje.length > 0 && (
-            <div className="mt-8 grid grid-cols-3 gap-3 border-t border-piedra pt-6 sm:mt-10 sm:gap-6 sm:pt-7">
+            <div className="mt-5 grid grid-cols-3 gap-2 border-t border-piedra pt-4 sm:gap-6">
               <Stat label="Piezas" big={nf.format(equipaje.length)} />
               <Stat
                 label="Horas en taller"
@@ -326,54 +362,169 @@ export default async function PerfilPublicoPage({
               />
             </div>
           )}
+
+          {/* Fila 3: equipaje como medallas inline (chips redondos) */}
+          {equipaje.length > 0 && (
+            <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-piedra pt-4">
+              <p className="mr-1 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+                Su equipaje:
+              </p>
+              {equipaje.slice(0, 14).map((e, i) => {
+                const p = productoBySku.get(e.sku);
+                const fam = p?.familia_id
+                  ? familiaById.get(p.familia_id)
+                  : null;
+                const foto = photoBySku.get(e.sku);
+                return (
+                  <Link
+                    key={`${e.sku}-${i}`}
+                    href={fam ? `/piezas/${fam.slug}` : "#"}
+                    title={`${fam?.name ?? e.sku}${p?.color_valiz ? " · " + p.color_valiz : ""}`}
+                    className="group flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-piedra bg-fondo transition-all hover:border-cuero hover:-translate-y-0.5"
+                  >
+                    {foto ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={foto}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="font-serif text-[8px] italic text-niebla">
+                        {e.sku}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+              {equipaje.length > 14 && (
+                <span className="font-sans text-[10px] uppercase tracking-[0.22em] text-niebla">
+                  +{equipaje.length - 14}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* SU EQUIPAJE COMPLETO ----------------------------------------- */}
-      {equipaje.length > 0 && (
-        <section className="border-b border-piedra px-8 py-16 sm:px-16">
-          <div className="mx-auto max-w-4xl">
-            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-              Su equipaje
+      {/* MUNDO PERSONAL — globo con SUS bitácoras + feed lado a lado --- */}
+      <section className="border-b border-piedra px-5 py-8 sm:px-10 sm:py-10">
+        <div className="mx-auto max-w-6xl">
+          <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[1.2fr_1fr] lg:gap-10">
+            {/* Globo personal */}
+            <div className="order-1">
+              <p className="mb-3 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+                {nombre.split(/\s+/)[0]} en el mundo
+              </p>
+              {points.length > 0 ? (
+                <div className="aspect-square w-full overflow-hidden sm:aspect-[4/3] lg:aspect-square">
+                  <MapaColectivo points={points} />
+                </div>
+              ) : (
+                <div className="flex aspect-square w-full flex-col items-center justify-center bg-tinta/[0.02] p-8 text-center sm:aspect-[4/3] lg:aspect-square">
+                  <p className="font-serif text-lg italic leading-relaxed text-niebla">
+                    {nombre.split(/\s+/)[0]} todavía no ha marcado
+                    bitácoras en el mapa.
+                  </p>
+                </div>
+              )}
+              {points.length > 0 && (
+                <p className="mt-2 font-sans text-[10px] uppercase tracking-[0.22em] text-niebla">
+                  {points.length}{" "}
+                  {points.length === 1
+                    ? "lugar marcado"
+                    : "lugares marcados"}
+                </p>
+              )}
+            </div>
+
+            {/* Bitácoras compactas al lado */}
+            <div className="order-2">
+              <p className="mb-3 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+                Sus bitácoras
+              </p>
+              {bitacoras.length === 0 ? (
+                <p className="font-serif text-base italic leading-relaxed text-niebla">
+                  {nombre} todavía no ha subido bitácoras.
+                </p>
+              ) : (
+                <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-2">
+                  {bitacoras.slice(0, 6).map((b) => {
+                    const p = b.sku ? productoBySku.get(b.sku) : null;
+                    const fam = p?.familia_id
+                      ? familiaById.get(p.familia_id)?.name
+                      : null;
+                    return (
+                      <li key={b.id}>
+                        <Link
+                          href={`/bitacora/${b.id}`}
+                          className="group block overflow-hidden border border-piedra transition-colors hover:border-cuero"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={b.foto_url}
+                            alt={fam ?? "Bitácora"}
+                            className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          {b.lugar && (
+                            <p className="bg-fondo px-2 py-1.5 font-sans text-[9px] uppercase tracking-[0.18em] text-niebla">
+                              {b.lugar}
+                            </p>
+                          )}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {bitacoras.length > 6 && (
+                <p className="mt-3 font-sans text-[10px] uppercase tracking-[0.22em] text-niebla">
+                  +{bitacoras.length - 6} más
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FEED COMPLETO — solo si tiene más de 6 */}
+      {bitacoras.length > 6 && (
+        <section className="px-5 py-10 sm:px-10 sm:py-14">
+          <div className="mx-auto max-w-5xl">
+            <p className="mb-4 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+              Todas sus bitácoras
             </p>
-            <h2 className="mt-3 font-serif text-3xl leading-tight tracking-[-0.015em] sm:text-4xl">
-              {equipaje.length === 1
-                ? "Una pieza Valiz."
-                : `${nf.format(equipaje.length)} piezas Valiz.`}
-            </h2>
-            <ul className="mt-10 grid grid-cols-3 gap-x-3 gap-y-6 sm:grid-cols-4 lg:grid-cols-6">
-              {equipaje.map((e, i) => {
-                const p = productoBySku.get(e.sku);
-                const fam = p?.familia_id ? familiaById.get(p.familia_id) : null;
-                const foto = photoBySku.get(e.sku);
+            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {bitacoras.map((b) => {
+                const p = b.sku ? productoBySku.get(b.sku) : null;
+                const fam = p?.familia_id
+                  ? familiaById.get(p.familia_id)?.name
+                  : null;
                 return (
-                  <li
-                    key={`${e.sku}-${i}`}
-                    className="flex flex-col items-center"
-                  >
+                  <li key={b.id}>
                     <Link
-                      href={fam ? `/piezas/${fam.slug}` : "#"}
-                      className="group flex h-16 w-16 items-center justify-center rounded-full border border-piedra bg-fondo transition-colors hover:border-cuero sm:h-20 sm:w-20"
-                      title={`${fam?.name ?? e.sku}${
-                        p?.color_valiz ? " · " + p.color_valiz : ""
-                      }`}
+                      href={`/bitacora/${b.id}`}
+                      className="group block overflow-hidden border border-piedra transition-colors hover:border-cuero"
                     >
-                      {foto ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={foto}
-                          alt={fam?.name ?? e.sku}
-                          className="h-[78%] w-[78%] rounded-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      ) : (
-                        <span className="font-serif text-[10px] italic text-niebla">
-                          {e.sku}
-                        </span>
-                      )}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={b.foto_url}
+                        alt={fam ?? "Bitácora"}
+                        className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="bg-fondo px-2 py-2">
+                        {fam && (
+                          <p className="font-serif text-xs text-tinta">
+                            {fam}
+                          </p>
+                        )}
+                        {b.lugar && (
+                          <p className="mt-0.5 font-sans text-[9px] uppercase tracking-[0.18em] text-niebla">
+                            {b.lugar}
+                          </p>
+                        )}
+                      </div>
                     </Link>
-                    <p className="mt-2 text-center font-sans text-[9px] uppercase tracking-[0.15em] text-niebla leading-tight">
-                      {fam?.name ?? e.sku}
-                    </p>
                   </li>
                 );
               })}
@@ -381,75 +532,6 @@ export default async function PerfilPublicoPage({
           </div>
         </section>
       )}
-
-      {/* FEED DE BITÁCORAS ------------------------------------------- */}
-      <section className="px-8 py-16 sm:px-16 sm:py-24">
-        <div className="mx-auto max-w-5xl">
-          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-            Sus bitácoras
-          </p>
-          {bitacoras.length === 0 ? (
-            <p className="mt-6 font-serif italic text-niebla">
-              {nombre} todavía no ha subido bitácoras.
-            </p>
-          ) : (
-            <>
-              <h2 className="mt-3 font-serif text-3xl leading-tight tracking-[-0.015em] sm:text-4xl">
-                {bitacoras.length}{" "}
-                {bitacoras.length === 1 ? "entrada" : "entradas"}.
-              </h2>
-              <ul className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                {bitacoras.map((b) => {
-                  const p = b.sku ? productoBySku.get(b.sku) : null;
-                  const fam = p?.familia_id
-                    ? familiaById.get(p.familia_id)?.name
-                    : null;
-                  return (
-                    <li
-                      key={b.id}
-                      className="border border-piedra bg-fondo transition-colors hover:border-cuero"
-                    >
-                      <Link href={`/bitacora/${b.id}`} className="block">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={b.foto_url}
-                          alt={fam ?? "Bitácora Valiz"}
-                          className="aspect-[4/5] w-full object-cover"
-                        />
-                        <div className="px-5 py-5">
-                          {fam && (
-                            <p className="font-serif text-lg text-tinta">
-                              {fam}
-                              {p?.color_valiz && (
-                                <span className="ml-2 italic text-cuero">
-                                  · {p.color_valiz}
-                                </span>
-                              )}
-                            </p>
-                          )}
-                          {b.lugar && (
-                            <p className="mt-1 font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
-                              {b.lugar}
-                            </p>
-                          )}
-                          {b.texto && (
-                            <p className="mt-3 line-clamp-3 font-serif text-base italic leading-relaxed text-niebla">
-                              {b.texto}
-                            </p>
-                          )}
-                          <p className="mt-4 font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
-                            {formatDate(b.created_at)}
-                          </p>
-                        </div>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </>
-          )}
-        </div>
-      </section>
     </main>
   );
 }
