@@ -3,6 +3,11 @@ import Link from "next/link";
 
 import { HeartButton } from "@/components/bitacora/heart-button";
 import { BrandMark } from "@/components/brand-mark";
+import {
+  FamilyHoverImageProvider,
+  FamilyHoverTrigger,
+} from "@/components/family-hover-image";
+import { getPhotoBySku } from "@/lib/product-photos";
 import { getReactionCounts, getUserReactedSet } from "@/lib/reacciones";
 import { createClient } from "@/lib/supabase/server";
 import { slugify } from "@/lib/slugify";
@@ -113,6 +118,7 @@ export default async function BitacoraColectivaPage({
 
   const productoBySku = new Map(productos.map((p) => [p.sku, p]));
   const familiaNameById = new Map(familias.map((f) => [f.id, f.name]));
+  const photoBySku = getPhotoBySku();
   const familiaIdBySlug = new Map(familias.map((f) => [f.slug, f.id]));
   const talleristaIdBySlug = new Map(
     talleristas.map((t) => [slugify(t.name), t.id]),
@@ -358,6 +364,7 @@ export default async function BitacoraColectivaPage({
                 : "Si llevas una Valiz, sé la primera. Sube tu pieza con ubicación y queda en el mapa."}
             </p>
           ) : (
+            <FamilyHoverImageProvider>
             <ul className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {bitacoras.map((b) => {
                 const p = b.sku ? productoBySku.get(b.sku) : null;
@@ -365,6 +372,7 @@ export default async function BitacoraColectivaPage({
                   ? familiaNameById.get(p.familia_id)
                   : null;
                 const author = profileByUser.get(b.user_id);
+                const skuPhoto = b.sku ? (photoBySku.get(b.sku) ?? null) : null;
                 return (
                   <li
                     key={b.id}
@@ -380,12 +388,16 @@ export default async function BitacoraColectivaPage({
                       <div className="px-5 py-5">
                         {fam && (
                           <p className="font-serif text-lg text-tinta">
-                            {fam}
-                            {p?.color_valiz && (
-                              <span className="ml-2 italic text-cuero">
-                                · {p.color_valiz}
+                            <FamilyHoverTrigger imageSrc={skuPhoto}>
+                              <span className="cursor-help">
+                                {fam}
+                                {p?.color_valiz && (
+                                  <span className="ml-2 italic text-cuero">
+                                    · {p.color_valiz}
+                                  </span>
+                                )}
                               </span>
-                            )}
+                            </FamilyHoverTrigger>
                           </p>
                         )}
                         {b.lugar && (
@@ -424,6 +436,7 @@ export default async function BitacoraColectivaPage({
                 );
               })}
             </ul>
+            </FamilyHoverImageProvider>
           )}
         </div>
       </section>

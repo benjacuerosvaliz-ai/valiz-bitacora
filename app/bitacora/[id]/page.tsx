@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { HeartButton } from "@/components/bitacora/heart-button";
 import { BrandMark } from "@/components/brand-mark";
+import { ShareButton } from "@/components/share-button";
 import { getReactionCounts, getUserReactedSet } from "@/lib/reacciones";
 import { createClient } from "@/lib/supabase/server";
 import { createStaticClient } from "@/lib/supabase/static";
@@ -187,6 +188,11 @@ export default async function BitacoraDetailPage({ params }: Props) {
                 initialReacted={isReacted}
                 loggedIn={!!user}
                 variant="large"
+              />
+              <ShareButton
+                title={`${b.lugar ?? "Bitácora"} · Valiz`}
+                text={b.texto ?? undefined}
+                url={`/bitacora/${b.id}`}
               />
               {prod?.shopify_handle && (
                 <a

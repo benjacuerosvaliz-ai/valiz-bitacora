@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { BrandMark } from "@/components/brand-mark";
+import { ShareButton } from "@/components/share-button";
 import { getPhotoBySku } from "@/lib/product-photos";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createStaticClient } from "@/lib/supabase/static";
@@ -281,6 +282,15 @@ export default async function PerfilPublicoPage({
               )}
             </div>
           )}
+
+          <div className="mt-6">
+            <ShareButton
+              title={`${nombre} · Valiz Bitácora`}
+              text={profile.bio ?? `Equipaje y bitácoras de ${nombre} en Valiz.`}
+              url={`/u/${profile.handle}`}
+              label="Compartir perfil"
+            />
+          </div>
         </div>
       </section>
 
