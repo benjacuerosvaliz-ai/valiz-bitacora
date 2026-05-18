@@ -10,6 +10,7 @@ import {
 import { BrandMark } from "@/components/brand-mark";
 import { ReferidoCodigo } from "@/components/referido-codigo";
 import { ShareButton } from "@/components/share-button";
+import { WelcomeTour } from "@/components/welcome-tour";
 import { getPhotoBySku } from "@/lib/product-photos";
 import { getOrAssignReferidoCode } from "@/lib/referido";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -231,12 +232,35 @@ export default async function PerfilPublicoPage({
   );
 
   // Saldo de puntos del dueño (público — motiva a otros a ganarlos)
+  // También welcomed_at para saber si es primer login (mostrar tour).
   const { data: dueno } = await admin
     .from("user_profiles")
-    .select("puntos_actuales")
+    .select("puntos_actuales, welcomed_at")
     .eq("id", profile.id)
     .maybeSingle();
   const puntosTotal = Number(dueno?.puntos_actuales ?? 0);
+  const isFirstLogin = esElDueno && !dueno?.welcomed_at;
+
+  // Si es primer login, otorgar 1000 pts de bienvenida (idempotente
+  // via referencia_id único). Esto pasa una sola vez por user.
+  const PUNTOS_BIENVENIDA = 1000;
+  if (isFirstLogin) {
+    const refId = `bienvenida:${profile.id}`;
+    const { count: yaTiene } = await admin
+      .from("puntos_movimientos")
+      .select("id", { head: true, count: "exact" })
+      .eq("user_id", profile.id)
+      .eq("motivo", "ajuste_admin")
+      .eq("referencia_id", refId);
+    if ((yaTiene ?? 0) === 0) {
+      await admin.from("puntos_movimientos").insert({
+        user_id: profile.id,
+        delta: PUNTOS_BIENVENIDA,
+        motivo: "ajuste_admin",
+        referencia_id: refId,
+      });
+    }
+  }
 
   // Datos EXTRA solo si es el dueño viendo su propio perfil:
   // compras manuales pendientes, equipaje detallado, concurso vigente.
@@ -367,6 +391,20 @@ export default async function PerfilPublicoPage({
 
   return (
     <main className="flex min-h-screen flex-col bg-fondo">
+      {/* Tour de bienvenida — solo primer login del dueño */}
+      {isFirstLogin && (
+        <WelcomeTour
+          nombre={nombre}
+          piezas={equipaje.length}
+          horas={Math.round(horasTotal)}
+          pies={Math.round(piesTotal)}
+          puntosBienvenida={PUNTOS_BIENVENIDA}
+          referidoCode={referidoCode}
+          handle={profile.handle}
+          tieneAvatar={!!profile.avatar_url}
+        />
+      )}
+
       <header className="flex items-center justify-between border-b border-piedra px-6 py-4 sm:px-12 sm:py-5">
         <BrandMark variant="back" href="/bitacora" />
         <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-niebla">
