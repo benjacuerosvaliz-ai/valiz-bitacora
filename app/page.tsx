@@ -9,6 +9,7 @@ import {
   FamilyHoverImageProvider,
   FamilyHoverTrigger,
 } from "@/components/family-hover-image";
+import { slugify } from "@/lib/slugify";
 import { createStaticClient } from "@/lib/supabase/static";
 
 const nf = new Intl.NumberFormat("es-CL");
@@ -518,10 +519,39 @@ export default async function Home() {
       </section>
 
       <footer className="px-8 py-10 sm:px-16">
-        <div className="flex flex-col items-baseline justify-between gap-3 sm:flex-row">
-          <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
-            Cuero artesano · Manos chilenas
-          </p>
+        <div className="flex flex-col items-baseline justify-between gap-6 sm:flex-row">
+          <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
+            <Link
+              href="/sobre"
+              className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla transition-colors hover:text-cuero"
+            >
+              Sobre Valiz
+            </Link>
+            <Link
+              href="/talleristas"
+              className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla transition-colors hover:text-cuero"
+            >
+              Talleristas
+            </Link>
+            <Link
+              href="/bitacora"
+              className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla transition-colors hover:text-cuero"
+            >
+              Bitácora
+            </Link>
+            <Link
+              href="/concursos"
+              className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla transition-colors hover:text-cuero"
+            >
+              Concursos
+            </Link>
+            <Link
+              href="/tienda"
+              className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla transition-colors hover:text-cuero"
+            >
+              Tienda
+            </Link>
+          </div>
           <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
             Valiz · Since 2018
           </p>
@@ -533,8 +563,12 @@ export default async function Home() {
 
 function TalleristaCard({ t }: { t: Tallerista }) {
   const manos = t.manos_count ?? 1;
+  const slug = slugify(t.name);
   return (
-    <article className="border-t border-piedra pt-6">
+    <Link
+      href={`/talleristas/${slug}`}
+      className="group block border-t border-piedra pt-6 transition-colors hover:text-cuero"
+    >
       <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-niebla">
         Taller de {t.name}
       </p>
@@ -550,6 +584,9 @@ function TalleristaCard({ t }: { t: Tallerista }) {
           {t.specialties.length > 3 && " ·  …"}
         </p>
       )}
-    </article>
+      <p className="mt-6 font-sans text-[10px] uppercase tracking-[0.22em] text-cuero opacity-0 transition-opacity group-hover:opacity-100">
+        Ver perfil →
+      </p>
+    </Link>
   );
 }

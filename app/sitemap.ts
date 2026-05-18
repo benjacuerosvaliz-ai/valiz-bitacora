@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { SITE_URL } from "@/lib/site";
+import { slugify } from "@/lib/slugify";
 import { createStaticClient } from "@/lib/supabase/static";
 
 // Re-genera cada 1h. Suficiente: nuevas bitácoras/perfiles/concursos
@@ -14,12 +15,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Rutas estáticas
   const staticUrls: MetadataRoute.Sitemap = [
     { url: `${SITE_URL}/`, lastModified: now, changeFrequency: "weekly", priority: 1.0 },
+    { url: `${SITE_URL}/sobre`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${SITE_URL}/talleristas`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE_URL}/bitacora`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
     { url: `${SITE_URL}/bitacora/mapa`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
     { url: `${SITE_URL}/colecciones`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
     { url: `${SITE_URL}/concursos`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE_URL}/tienda`, lastModified: now, changeFrequency: "weekly", priority: 0.6 },
   ];
+
+  // Talleristas individuales
+  const { data: talleristas } = await sb.from("talleristas").select("name, created_at");
+  const talleristaUrls: MetadataRoute.Sitemap = ((talleristas ?? []) as {
+    name: string;
+    created_at: string;
+  }[]).map((t) => ({
+    url: `${SITE_URL}/talleristas/${slugify(t.name)}`,
+    lastModified: new Date(t.created_at),
+    changeFrequency: "monthly",
+    priority: 0.6,
+  }));
 
   // Piezas (familias)
   const { data: familias } = await sb.from("familias").select("slug, updated_at, created_at");
@@ -82,5 +97,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticUrls, ...familiaUrls, ...bitUrls, ...profileUrls, ...concursoUrls];
+  return [
+    ...staticUrls,
+    ...talleristaUrls,
+    ...familiaUrls,
+    ...bitUrls,
+    ...profileUrls,
+    ...concursoUrls,
+  ];
 }
