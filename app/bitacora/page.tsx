@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { HeartButton } from "@/components/bitacora/heart-button";
 import { BrandMark } from "@/components/brand-mark";
+import { getReactionCounts, getUserReactedSet } from "@/lib/reacciones";
+import { createClient } from "@/lib/supabase/server";
 import { slugify } from "@/lib/slugify";
 import { createStaticClient } from "@/lib/supabase/static";
 
@@ -156,6 +159,17 @@ export default async function BitacoraColectivaPage({
 
   const bitsRes = await bitsQuery;
   const bitacoras = (bitsRes.data ?? []) as BitacoraRow[];
+
+  // Reacciones: counts públicos + estado del user actual
+  const userSb = await createClient();
+  const {
+    data: { user },
+  } = await userSb.auth.getUser();
+  const bitIds = bitacoras.map((b) => b.id);
+  const [countsMap, reactedSet] = await Promise.all([
+    getReactionCounts(bitIds),
+    getUserReactedSet(user?.id ?? null, bitIds),
+  ]);
 
   // Stats del overlay del globo (mismo cálculo que /bitacora/mapa)
   const hoursByFamilia = new Map(
@@ -389,14 +403,23 @@ export default async function BitacoraColectivaPage({
                         </p>
                       </div>
                     </Link>
-                    {author?.handle && (
-                      <Link
-                        href={`/u/${author.handle}`}
-                        className="block border-t border-piedra px-5 py-3 font-sans text-[10px] uppercase tracking-[0.18em] text-cuero transition-colors hover:bg-tinta hover:text-fondo"
-                      >
-                        Ver perfil de {authorLabel(author)} →
-                      </Link>
-                    )}
+                    <div className="flex items-center justify-between border-t border-piedra px-5 py-3">
+                      <HeartButton
+                        bitacoraId={b.id}
+                        initialCount={countsMap.get(b.id) ?? 0}
+                        initialReacted={reactedSet.has(b.id)}
+                        loggedIn={!!user}
+                        variant="compact"
+                      />
+                      {author?.handle && (
+                        <Link
+                          href={`/u/${author.handle}`}
+                          className="font-sans text-[10px] uppercase tracking-[0.18em] text-cuero transition-colors hover:text-tinta"
+                        >
+                          @{author.handle} →
+                        </Link>
+                      )}
+                    </div>
                   </li>
                 );
               })}

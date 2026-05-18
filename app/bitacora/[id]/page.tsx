@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { HeartButton } from "@/components/bitacora/heart-button";
 import { BrandMark } from "@/components/brand-mark";
+import { getReactionCounts, getUserReactedSet } from "@/lib/reacciones";
+import { createClient } from "@/lib/supabase/server";
 import { createStaticClient } from "@/lib/supabase/static";
 
 export const revalidate = 60;
@@ -101,6 +104,18 @@ export default async function BitacoraDetailPage({ params }: Props) {
   const authorLabel =
     author?.display_name ?? author?.handle ?? "Anónimo";
 
+  // Reacciones: conteo público + estado del user actual si está logueado
+  const userSb = await createClient();
+  const {
+    data: { user },
+  } = await userSb.auth.getUser();
+  const [countsMap, reactedSet] = await Promise.all([
+    getReactionCounts([b.id]),
+    getUserReactedSet(user?.id ?? null, [b.id]),
+  ]);
+  const reactionCount = countsMap.get(b.id) ?? 0;
+  const isReacted = reactedSet.has(b.id);
+
   return (
     <main className="flex min-h-screen flex-col bg-fondo">
       <header className="flex items-center justify-between border-b border-piedra px-8 py-5 sm:px-16 sm:py-6">
@@ -165,16 +180,25 @@ export default async function BitacoraDetailPage({ params }: Props) {
               )}
             </div>
 
-            {prod?.shopify_handle && (
-              <a
-                href={`https://www.valiz.cl/products/${prod.shopify_handle}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-8 inline-flex items-center gap-3 border border-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
-              >
-                Ver pieza en valiz.cl →
-              </a>
-            )}
+            <div className="mt-8 flex flex-wrap items-center gap-6">
+              <HeartButton
+                bitacoraId={b.id}
+                initialCount={reactionCount}
+                initialReacted={isReacted}
+                loggedIn={!!user}
+                variant="large"
+              />
+              {prod?.shopify_handle && (
+                <a
+                  href={`https://www.valiz.cl/products/${prod.shopify_handle}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-3 border border-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
+                >
+                  Ver pieza en valiz.cl →
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </article>
