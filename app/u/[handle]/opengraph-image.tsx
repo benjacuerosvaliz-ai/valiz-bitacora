@@ -125,6 +125,18 @@ export default async function Image({
     ? await getOrAssignReferidoCode(profile.id, false)
     : null;
 
+  // Saldo de puntos del dueño (público — motiva)
+  let puntosTotal = 0;
+  if (profile) {
+    const admin = createAdminClient();
+    const { data: dueno } = await admin
+      .from("user_profiles")
+      .select("puntos_actuales")
+      .eq("id", profile.id)
+      .maybeSingle();
+    puntosTotal = Number(dueno?.puntos_actuales ?? 0);
+  }
+
   const nombre = profile?.display_name ?? profile?.handle ?? "Usuario";
   const inicial = nombre.trim().charAt(0).toUpperCase() || "V";
   const ubicacion =
@@ -268,20 +280,25 @@ export default async function Image({
           </div>
         )}
 
-        {/* Stats inline grandes */}
+        {/* Stats inline grandes — 4 cifras incluyendo Puntos */}
         <div
           style={{
-            marginTop: 32,
+            marginTop: 28,
             display: "flex",
-            gap: 60,
+            gap: 44,
             borderTop: `1px solid ${COLORS.piedra}`,
             borderBottom: `1px solid ${COLORS.piedra}`,
-            padding: "20px 60px",
+            padding: "18px 50px",
           }}
         >
           <Stat label="Piezas" value={nf.format(piezasCount)} />
           <Stat label="Horas" value={nf.format(horasTotal)} />
           <Stat label="Pies²" value={nf.format(piesTotal)} />
+          <Stat
+            label="Pts · 1pt=$1"
+            value={nf.format(puntosTotal)}
+            accent
+          />
         </div>
 
         {/* Footer: código de referido como CTA si lo tiene, sino URL */}
@@ -365,7 +382,15 @@ export default async function Image({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
   return (
     <div
       style={{
@@ -376,10 +401,10 @@ function Stat({ label, value }: { label: string; value: string }) {
     >
       <div
         style={{
-          fontSize: 46,
+          fontSize: 42,
           lineHeight: 1,
           letterSpacing: "-0.01em",
-          color: COLORS.tinta,
+          color: accent ? COLORS.cuero : COLORS.tinta,
           fontFamily: "Newsreader, serif",
           display: "flex",
         }}
@@ -389,8 +414,8 @@ function Stat({ label, value }: { label: string; value: string }) {
       <div
         style={{
           marginTop: 6,
-          fontSize: 12,
-          letterSpacing: "0.32em",
+          fontSize: 11,
+          letterSpacing: "0.28em",
           textTransform: "uppercase",
           color: COLORS.cuero,
           fontFamily: "Manrope, sans-serif",
