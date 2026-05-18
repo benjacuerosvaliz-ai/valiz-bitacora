@@ -271,6 +271,17 @@ export default async function PerfilPublicoPage({
                     {ubicacion}
                   </p>
                 )}
+                {/* Medallas del equipaje al lado de la identidad */}
+                {equipaje.length > 0 && (
+                  <EquipajeMedallas
+                    equipaje={equipaje}
+                    productoBySku={productoBySku}
+                    familiaById={familiaById}
+                    photoBySku={photoBySku}
+                    size="sm"
+                    max={6}
+                  />
+                )}
               </div>
             </div>
 
@@ -286,6 +297,17 @@ export default async function PerfilPublicoPage({
                 <h1 className="mt-2 font-serif text-4xl leading-[1.02] tracking-[-0.02em] lg:text-5xl">
                   {nombre}
                 </h1>
+                {/* Medallas del equipaje al lado de la identidad */}
+                {equipaje.length > 0 && (
+                  <EquipajeMedallas
+                    equipaje={equipaje}
+                    productoBySku={productoBySku}
+                    familiaById={familiaById}
+                    photoBySku={photoBySku}
+                    size="md"
+                    max={12}
+                  />
+                )}
               </div>
               {profile.bio && (
                 <p className="mt-3 font-serif text-sm italic leading-relaxed text-tinta/75 sm:mt-3 sm:text-base">
@@ -363,47 +385,6 @@ export default async function PerfilPublicoPage({
             </div>
           )}
 
-          {/* Fila 3: equipaje como medallas inline (chips redondos) */}
-          {equipaje.length > 0 && (
-            <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-piedra pt-4">
-              <p className="mr-1 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
-                Su equipaje:
-              </p>
-              {equipaje.slice(0, 14).map((e, i) => {
-                const p = productoBySku.get(e.sku);
-                const fam = p?.familia_id
-                  ? familiaById.get(p.familia_id)
-                  : null;
-                const foto = photoBySku.get(e.sku);
-                return (
-                  <Link
-                    key={`${e.sku}-${i}`}
-                    href={fam ? `/piezas/${fam.slug}` : "#"}
-                    title={`${fam?.name ?? e.sku}${p?.color_valiz ? " · " + p.color_valiz : ""}`}
-                    className="group flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-piedra bg-fondo transition-all hover:border-cuero hover:-translate-y-0.5"
-                  >
-                    {foto ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={foto}
-                        alt=""
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="font-serif text-[8px] italic text-niebla">
-                        {e.sku}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-              {equipaje.length > 14 && (
-                <span className="font-sans text-[10px] uppercase tracking-[0.22em] text-niebla">
-                  +{equipaje.length - 14}
-                </span>
-              )}
-            </div>
-          )}
         </div>
       </section>
 
@@ -545,6 +526,65 @@ function Stat({ label, big }: { label: string; big: string }) {
       <p className="mt-2 font-serif text-3xl leading-none tracking-[-0.02em] text-tinta sm:text-4xl">
         {big}
       </p>
+    </div>
+  );
+}
+
+/**
+ * Medallas circulares con foto del producto, en fila. Va dentro del
+ * bloque de identidad (debajo de la ubicación) para que el equipaje se
+ * lea como parte de quién es la persona, no como sección aparte.
+ */
+function EquipajeMedallas({
+  equipaje,
+  productoBySku,
+  familiaById,
+  photoBySku,
+  size,
+  max,
+}: {
+  equipaje: EquipajeItem[];
+  productoBySku: Map<string, ProductoRow>;
+  familiaById: Map<string, FamiliaRow>;
+  photoBySku: Map<string, string>;
+  size: "sm" | "md";
+  max: number;
+}) {
+  const dim = size === "sm" ? "h-7 w-7" : "h-9 w-9";
+  const overflow = equipaje.length - max;
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+      {equipaje.slice(0, max).map((e, i) => {
+        const p = productoBySku.get(e.sku);
+        const fam = p?.familia_id ? familiaById.get(p.familia_id) : null;
+        const foto = photoBySku.get(e.sku);
+        return (
+          <Link
+            key={`${e.sku}-${i}`}
+            href={fam ? `/piezas/${fam.slug}` : "#"}
+            title={`${fam?.name ?? e.sku}${p?.color_valiz ? " · " + p.color_valiz : ""}`}
+            className={`group flex ${dim} items-center justify-center overflow-hidden rounded-full border border-piedra bg-fondo transition-all hover:border-cuero hover:-translate-y-0.5`}
+          >
+            {foto ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={foto}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span className="font-serif text-[7px] italic text-niebla">
+                {e.sku.slice(0, 3)}
+              </span>
+            )}
+          </Link>
+        );
+      })}
+      {overflow > 0 && (
+        <span className="ml-1 font-sans text-[9px] uppercase tracking-[0.18em] text-niebla">
+          +{overflow}
+        </span>
+      )}
     </div>
   );
 }
