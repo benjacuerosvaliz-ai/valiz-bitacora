@@ -101,89 +101,149 @@ function HeroSection() {
         style={{ opacity, y }}
         className="relative sticky top-0 flex h-screen items-center"
       >
-        <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-8 px-6 sm:px-12 lg:grid-cols-[1.1fr_1fr] lg:gap-14 lg:px-16">
-          {/* Texto */}
-          <div className="flex flex-col gap-5">
-            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
-              Propuesta comercial · Mayo 2026
-            </p>
-            <h1 className="font-serif text-[14vw] leading-[0.92] tracking-[-0.03em] sm:text-[8vw] lg:text-[6vw]">
-              Para{" "}
-              <span className="italic text-cuero">Mamás Mateas.</span>
-            </h1>
-            <p className="font-serif text-xl italic leading-relaxed text-niebla sm:text-2xl">
-              Mochila Alforja Mamá — la pieza más esperada del catálogo
-              Valiz.
-            </p>
+        <div className="mx-auto w-full max-w-6xl px-5 sm:px-12 lg:px-16">
+          {/* Tag + H1 (siempre arriba) */}
+          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.32em] text-cuero sm:text-[11px]">
+            Propuesta comercial · Mayo 2026
+          </p>
+          <h1 className="mt-3 font-serif text-[13vw] leading-[0.92] tracking-[-0.03em] sm:text-[8vw] lg:text-[6vw]">
+            Para{" "}
+            <span className="italic text-cuero">Mamás Mateas.</span>
+          </h1>
 
-            {/* Collab: Valiz × Mamás Mateas */}
-            <div className="mt-6 flex items-center gap-5 border-l-2 border-cuero pl-5">
-              <div className="flex items-center gap-3">
-                <Image
-                  src="/images/valiz-logo.png"
-                  alt="Valiz"
-                  width={40}
-                  height={40}
-                  className="h-10 w-10 object-contain"
-                />
-                <span className="font-sans text-sm font-semibold uppercase tracking-[0.22em] text-tinta">
-                  Valiz
+          {/* MOBILE: video vertical IZQ + descripción/collab DER en row */}
+          <div className="mt-6 grid grid-cols-[auto_1fr] items-start gap-4 lg:hidden">
+            {/* Video vertical chico al lado del texto */}
+            <div className="relative aspect-[9/16] w-[36vw] max-w-[170px] overflow-hidden shadow-[0_20px_40px_rgba(26,26,26,0.18)]">
+              <video
+                ref={videoRef}
+                src={VIDEO_HERO}
+                autoPlay
+                loop
+                muted={muted}
+                playsInline
+                poster="/images/productos/mochila-alforja-mama/MAM-G-CAM/01-front.webp"
+                className="h-full w-full object-cover"
+              />
+              <button
+                type="button"
+                onClick={toggleMute}
+                aria-label={muted ? "Activar sonido" : "Silenciar"}
+                className="absolute bottom-2 right-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-fondo/85 text-tinta backdrop-blur-sm transition-colors hover:bg-cuero hover:text-fondo"
+              >
+                {muted ? <SoundOffIcon /> : <SoundOnIcon />}
+              </button>
+            </div>
+
+            {/* Texto + collab apilados, al lado del video */}
+            <div className="flex flex-col gap-3">
+              <p className="font-serif text-sm italic leading-snug text-niebla">
+                Mochila Alforja Mamá — la pieza más esperada del catálogo
+                Valiz.
+              </p>
+              <div className="flex flex-col gap-2 border-l-2 border-cuero pl-3">
+                <div className="flex items-center gap-2">
+                  <Image
+                    src="/images/valiz-logo.png"
+                    alt="Valiz"
+                    width={28}
+                    height={28}
+                    className="h-7 w-7 object-contain"
+                  />
+                  <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-tinta">
+                    Valiz
+                  </span>
+                </div>
+                <span className="font-serif text-base italic text-cuero leading-none">
+                  ×
                 </span>
-              </div>
-              <span className="font-serif text-2xl italic text-cuero">
-                ×
-              </span>
-              <div className="flex items-center gap-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={MATEAS_LOGO}
-                  alt="Mamás Mateas"
-                  className="h-10 w-10 rounded-full object-contain"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = "none";
-                  }}
-                />
-                <span className="font-sans text-sm font-semibold uppercase tracking-[0.22em] text-tinta">
-                  Mamás Mateas
-                </span>
+                <div className="flex items-center gap-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={MATEAS_LOGO}
+                    alt="Mamás Mateas"
+                    className="h-7 w-7 rounded-full object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                  <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-tinta">
+                    Mamás Mateas
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Video Alforja Mama — letterbox premium: video real
-              centrado sin crop + el mismo video blureado de fondo
-              ocupando todo el container (estilo cinemax). */}
-          <div className="relative mx-auto aspect-[4/3] w-full max-w-[560px] overflow-hidden bg-tinta shadow-[0_30px_60px_rgba(26,26,26,0.22)] sm:aspect-[5/4]">
-            {/* Background blureado para llenar las bandas laterales */}
-            <video
-              src={VIDEO_HERO}
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl"
-              aria-hidden
-            />
-            {/* Video real centrado, completo, sin crop */}
-            <video
-              ref={videoRef}
-              src={VIDEO_HERO}
-              autoPlay
-              loop
-              muted={muted}
-              playsInline
-              poster="/images/productos/mochila-alforja-mama/MAM-G-CAM/01-front.webp"
-              className="relative h-full w-full object-contain"
-            />
-            {/* Toggle audio */}
-            <button
-              type="button"
-              onClick={toggleMute}
-              aria-label={muted ? "Activar sonido" : "Silenciar"}
-              className="absolute bottom-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-fondo/85 text-tinta backdrop-blur-sm transition-colors hover:bg-cuero hover:text-fondo"
-            >
-              {muted ? <SoundOffIcon /> : <SoundOnIcon />}
-            </button>
+          {/* DESKTOP: layout original (texto izq grande + video letterbox der) */}
+          <div className="mt-10 hidden grid-cols-[1.1fr_1fr] items-center gap-14 lg:grid">
+            <div className="flex flex-col gap-5">
+              <p className="font-serif text-xl italic leading-relaxed text-niebla sm:text-2xl">
+                Mochila Alforja Mamá — la pieza más esperada del catálogo
+                Valiz.
+              </p>
+              <div className="mt-2 flex items-center gap-5 border-l-2 border-cuero pl-5">
+                <div className="flex items-center gap-3">
+                  <Image
+                    src="/images/valiz-logo.png"
+                    alt="Valiz"
+                    width={40}
+                    height={40}
+                    className="h-10 w-10 object-contain"
+                  />
+                  <span className="font-sans text-sm font-semibold uppercase tracking-[0.22em] text-tinta">
+                    Valiz
+                  </span>
+                </div>
+                <span className="font-serif text-2xl italic text-cuero">
+                  ×
+                </span>
+                <div className="flex items-center gap-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={MATEAS_LOGO}
+                    alt="Mamás Mateas"
+                    className="h-10 w-10 rounded-full object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                  <span className="font-sans text-sm font-semibold uppercase tracking-[0.22em] text-tinta">
+                    Mamás Mateas
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Video letterbox horizontal (desktop only) */}
+            <div className="relative aspect-[5/4] w-full max-w-[560px] overflow-hidden bg-tinta shadow-[0_30px_60px_rgba(26,26,26,0.22)]">
+              <video
+                src={VIDEO_HERO}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl"
+                aria-hidden
+              />
+              <video
+                src={VIDEO_HERO}
+                autoPlay
+                loop
+                muted={muted}
+                playsInline
+                poster="/images/productos/mochila-alforja-mama/MAM-G-CAM/01-front.webp"
+                className="relative h-full w-full object-contain"
+              />
+              <button
+                type="button"
+                onClick={toggleMute}
+                aria-label={muted ? "Activar sonido" : "Silenciar"}
+                className="absolute bottom-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-fondo/85 text-tinta backdrop-blur-sm transition-colors hover:bg-cuero hover:text-fondo"
+              >
+                {muted ? <SoundOffIcon /> : <SoundOnIcon />}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -362,16 +422,16 @@ function PorQueSection() {
         <h2 className="mt-4 max-w-3xl font-serif text-4xl leading-[1.02] tracking-[-0.02em] sm:text-5xl">
           Dos marcas con la misma filosofía.
         </h2>
-        <div className="mt-14 grid grid-cols-1 gap-10 sm:grid-cols-2 sm:gap-x-14 sm:gap-y-12">
+        <div className="mt-12 grid grid-cols-2 gap-x-5 gap-y-8 sm:gap-x-14 sm:gap-y-12">
           {razones.map((r, i) => (
             <div key={r.titulo}>
-              <p className="font-mono text-2xl font-semibold tracking-tight text-cuero">
+              <p className="font-mono text-xl font-semibold tracking-tight text-cuero sm:text-2xl">
                 {String(i + 1).padStart(2, "0")}
               </p>
-              <h3 className="mt-3 font-serif text-2xl leading-tight tracking-[-0.015em] sm:text-3xl">
+              <h3 className="mt-2 font-serif text-lg leading-tight tracking-[-0.015em] sm:mt-3 sm:text-2xl lg:text-3xl">
                 {r.titulo}
               </h3>
-              <p className="mt-3 font-serif text-base leading-relaxed text-niebla sm:text-lg">
+              <p className="mt-2 font-serif text-sm leading-relaxed text-niebla sm:mt-3 sm:text-base lg:text-lg">
                 {r.cuerpo}
               </p>
             </div>
@@ -505,7 +565,7 @@ function CumplimientoSection() {
     },
     {
       req: "Etiqueta con código de barras",
-      val: "Cada SKU lleva EAN-13 + etiqueta colgante con descripción",
+      val: "Cada SKU lleva código de barras universal propio + etiqueta colgante con descripción",
     },
   ];
 
@@ -518,20 +578,20 @@ function CumplimientoSection() {
         <h2 className="mt-4 max-w-3xl font-serif text-4xl leading-[1.02] tracking-[-0.02em] sm:text-5xl">
           Revisamos su checklist. Valiz cumple los siete puntos.
         </h2>
-        <ul className="mt-14 divide-y divide-piedra border-y border-piedra">
+        <ul className="mt-14 grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2 sm:gap-x-10 sm:gap-y-8">
           {items.map((it) => (
             <li
               key={it.req}
-              className="flex items-start gap-5 py-6"
+              className="flex items-start gap-3 border-t border-piedra pt-5 sm:gap-4"
             >
-              <span className="mt-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-cuero font-sans text-[12px] font-semibold text-fondo">
+              <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cuero font-sans text-[11px] font-semibold text-fondo sm:h-7 sm:w-7 sm:text-[12px]">
                 ✓
               </span>
               <div>
-                <p className="font-serif text-lg leading-tight tracking-[-0.01em] text-tinta sm:text-xl">
+                <p className="font-serif text-base leading-tight tracking-[-0.01em] text-tinta sm:text-lg">
                   {it.req}
                 </p>
-                <p className="mt-1.5 font-serif text-base leading-relaxed text-niebla">
+                <p className="mt-1.5 font-serif text-sm leading-relaxed text-niebla sm:text-base">
                   {it.val}
                 </p>
               </div>
