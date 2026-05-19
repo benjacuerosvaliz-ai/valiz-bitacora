@@ -136,8 +136,8 @@ function HeroSection() {
             </div>
           </div>
 
-          {/* Video de la Alforja Mama (con fallback a poster si no carga) */}
-          <div className="relative mx-auto aspect-square w-[78vw] max-w-[520px] overflow-hidden sm:w-[55vw] lg:w-[40vw]">
+          {/* Video de la Alforja Mama — vertical 9:16 (formato reel) */}
+          <div className="relative mx-auto aspect-[9/16] w-[60vw] max-w-[320px] overflow-hidden sm:w-[40vw] lg:w-[28vw]">
             <video
               src={VIDEO_HERO}
               autoPlay
@@ -145,7 +145,7 @@ function HeroSection() {
               muted
               playsInline
               poster="/images/productos/mochila-alforja-mama/MAM-G-CAM/01-front.webp"
-              className="h-full w-full object-cover drop-shadow-[0_30px_60px_rgba(26,26,26,0.18)]"
+              className="h-full w-full object-cover drop-shadow-[0_30px_60px_rgba(26,26,26,0.22)]"
             />
             <div
               className="absolute -bottom-6 left-1/2 h-6 w-3/4 -translate-x-1/2 rounded-[50%] bg-tinta/20 blur-2xl"
