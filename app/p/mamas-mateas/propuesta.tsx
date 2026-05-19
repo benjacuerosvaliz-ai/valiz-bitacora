@@ -2,59 +2,58 @@
 
 import {
   motion,
-  useMotionValue,
   useScroll,
-  useSpring,
   useTransform,
 } from "motion/react";
 import Image from "next/image";
 import { useRef } from "react";
 
 const nf = new Intl.NumberFormat("es-CL");
+const WHATSAPP_NUMERO = "56966466977"; // +56 9 6646 6977
+const WHATSAPP_TEXT =
+  "Hola Benja, vimos la propuesta Valiz × Mamás Mateas y queremos avanzar.";
+const WHATSAPP_HREF = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(WHATSAPP_TEXT)}`;
+
+const MATEAS_LOGO = "/images/mamas-mateas-logo.png";
+const VIDEO_HERO = "/videos/mamas-alforja.mp4";
 
 export type ColorVariant = {
   name: string;
   hint: string;
   foto: string;
+  href: string | null;
 };
 
 /**
- * Propuesta comercial Valiz × Mamás Mateas — landing premium
- * scroll-driven, branded, hecha a medida para conquistar al cliente.
+ * Propuesta Valiz × Mamás Mateas — landing scroll-driven privada.
  *
- * Estructura:
- *  HERO — título + Mochila Alforja Mamá flotando con tilt
- *  CARTA — apertura cálida, voz Valiz
- *  EL PRODUCTO — specs en grid + foto sticky
- *  POR QUÉ ENCAJAMOS — 4 razones
- *  PALETA — los 10 colores como cards con foto + hint
- *  PROPUESTA COMERCIAL — tabla elegante con totales destacados
- *  CUMPLIMIENTO — 7 ✓ del checklist Mateas
- *  PRÓXIMOS PASOS + CONTACTO — CTAs grandes
+ * Flujo nuevo:
+ *  HERO          — video Alforja Mama + título + Valiz × Mamás Mateas
+ *  CARTA         — apertura breve (3 líneas)
+ *  EL PRODUCTO   — specs + paleta (10 colores con CTA a valiz.cl) juntos
+ *  POR QUÉ       — 4 razones de match
+ *  COMERCIAL     — tabla + total destacado
+ *  CUMPLIMIENTO  — 7 ✓ del checklist Mateas
+ *  CIERRE        — "Esto puede ser un hitazo" + único CTA WhatsApp
  */
-
 export function Propuesta({ colores }: { colores: ColorVariant[] }) {
-  // Color principal del hero — Camel (top seller)
-  const heroFoto = colores.find((c) => c.name === "Camel")?.foto ?? colores[0].foto;
-
   return (
     <main className="bg-fondo text-tinta">
-      <HeroSection foto={heroFoto} />
+      <HeroSection />
       <CartaSection />
-      <ProductoSection foto={heroFoto} />
+      <ProductoYPaletaSection colores={colores} />
       <PorQueSection />
-      <PaletaSection colores={colores} />
       <PropuestaComercialSection />
       <CumplimientoSection />
-      <ProximosPasosSection />
+      <CierreSection />
     </main>
   );
 }
 
 /* ------------------------------------------------------------------------ */
-/* HERO                                                                    */
+/* HERO con video                                                          */
 /* ------------------------------------------------------------------------ */
-function HeroSection({ foto }: { foto: string }) {
+function HeroSection() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -63,28 +62,12 @@ function HeroSection({ foto }: { foto: string }) {
   const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
   const y = useTransform(scrollYProgress, [0, 1], [0, -80]);
 
-  // Cursor tilt
-  const tiltY = useMotionValue(0);
-  const tiltX = useMotionValue(0);
-  const tY = useSpring(tiltY, { stiffness: 140, damping: 18 });
-  const tX = useSpring(tiltX, { stiffness: 140, damping: 18 });
-  function onMove(e: React.MouseEvent<HTMLDivElement>) {
-    const r = e.currentTarget.getBoundingClientRect();
-    tiltY.set(((e.clientX - r.left - r.width / 2) / r.width) * 14);
-    tiltX.set(((e.clientY - r.top - r.height / 2) / r.height) * -10);
-  }
-  function onLeave() {
-    tiltY.set(0);
-    tiltX.set(0);
-  }
-
   return (
     <section
       ref={ref}
       className="relative min-h-screen overflow-hidden"
-      style={{ perspective: "1400px" } as React.CSSProperties}
     >
-      {/* Logo Valiz girando de fondo */}
+      {/* Logo Valiz girando sutil de fondo */}
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ duration: 80, ease: "linear", repeat: Infinity }}
@@ -103,8 +86,6 @@ function HeroSection({ foto }: { foto: string }) {
       <motion.div
         style={{ opacity, y }}
         className="relative sticky top-0 flex h-screen items-center"
-        onMouseMove={onMove}
-        onMouseLeave={onLeave}
       >
         <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-8 px-6 sm:px-12 lg:grid-cols-[1.1fr_1fr] lg:gap-14 lg:px-16">
           {/* Texto */}
@@ -120,46 +101,59 @@ function HeroSection({ foto }: { foto: string }) {
               Mochila Alforja Mamá — la pieza más esperada del catálogo
               Valiz.
             </p>
-            <div className="mt-6 flex items-baseline gap-6 border-l-2 border-cuero pl-5">
-              <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-cuero">
-                  De
-                </p>
-                <p className="font-serif text-xl text-tinta">Valiz SpA</p>
+
+            {/* Collab: Valiz × Mamás Mateas */}
+            <div className="mt-6 flex items-center gap-5 border-l-2 border-cuero pl-5">
+              <div className="flex items-center gap-3">
+                <Image
+                  src="/images/valiz-logo.png"
+                  alt="Valiz"
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 object-contain"
+                />
+                <span className="font-sans text-sm font-semibold uppercase tracking-[0.22em] text-tinta">
+                  Valiz
+                </span>
               </div>
-              <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-cuero">
-                  Para
-                </p>
-                <p className="font-serif text-xl text-tinta">Mamás Mateas</p>
+              <span className="font-serif text-2xl italic text-cuero">
+                ×
+              </span>
+              <div className="flex items-center gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={MATEAS_LOGO}
+                  alt="Mamás Mateas"
+                  className="h-10 w-10 rounded-full object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
+                />
+                <span className="font-sans text-sm font-semibold uppercase tracking-[0.22em] text-tinta">
+                  Mamás Mateas
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Foto Mochila Camel con tilt */}
-          <motion.div
-            style={{
-              rotateY: tY,
-              rotateX: tX,
-              transformStyle: "preserve-3d" as const,
-            }}
-            className="relative mx-auto aspect-square w-[78vw] max-w-[520px] sm:w-[55vw] lg:w-[40vw]"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={foto}
-              alt="Mochila Alforja Mamá Camel"
-              className="h-full w-full object-contain drop-shadow-[0_30px_60px_rgba(26,26,26,0.18)]"
-              draggable={false}
+          {/* Video de la Alforja Mama (con fallback a poster si no carga) */}
+          <div className="relative mx-auto aspect-square w-[78vw] max-w-[520px] overflow-hidden sm:w-[55vw] lg:w-[40vw]">
+            <video
+              src={VIDEO_HERO}
+              autoPlay
+              loop
+              muted
+              playsInline
+              poster="/images/productos/mochila-alforja-mama/MAM-G-CAM/01-front.webp"
+              className="h-full w-full object-cover drop-shadow-[0_30px_60px_rgba(26,26,26,0.18)]"
             />
             <div
               className="absolute -bottom-6 left-1/2 h-6 w-3/4 -translate-x-1/2 rounded-[50%] bg-tinta/20 blur-2xl"
               aria-hidden
             />
-          </motion.div>
+          </div>
         </div>
 
-        {/* Scroll hint */}
         <p className="absolute bottom-8 left-1/2 -translate-x-1/2 font-sans text-[10px] uppercase tracking-[0.32em] text-niebla">
           Continuar ↓
         </p>
@@ -169,46 +163,34 @@ function HeroSection({ foto }: { foto: string }) {
 }
 
 /* ------------------------------------------------------------------------ */
-/* CARTA                                                                   */
+/* CARTA — versión corta                                                   */
 /* ------------------------------------------------------------------------ */
 function CartaSection() {
   return (
-    <section className="border-t border-piedra px-6 py-24 sm:px-12 sm:py-32">
+    <section className="border-t border-piedra px-6 py-20 sm:px-12 sm:py-28">
       <div className="mx-auto max-w-3xl">
         <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
           Hola, equipo Mamás Mateas
         </p>
-        <div className="mt-8 space-y-6 font-serif text-xl leading-relaxed text-tinta sm:text-2xl">
-          <p>
-            Somos <strong className="italic text-cuero">Valiz</strong>, una
-            marca chilena de marroquinería artesanal con seis años de
-            trayectoria. Diseñamos y producimos piezas de cuero genuino
-            hechas a mano en talleres locales, con identidad de autor y
-            durabilidad de años.
-          </p>
-          <p>
-            Conocemos el trabajo de Mamás Mateas y nos parece que hay un{" "}
-            <strong className="italic text-cuero">cruce natural</strong>{" "}
-            entre las dos marcas: ustedes curan con cuidado los productos
-            que recomiendan a la comunidad de mamás chilenas, y nosotros
-            ponemos el mismo cuidado en cada pieza que sale del taller.
-          </p>
-          <p>
-            Por eso queremos ofrecerles formalmente nuestra{" "}
-            <strong className="italic text-cuero">Mochila Alforja Mamá</strong>{" "}
-            — la pieza más esperada del catálogo Valiz y la que mejor encaja
-            con su comunidad.
-          </p>
-        </div>
+        <p className="mt-7 font-serif text-2xl leading-relaxed text-tinta sm:text-3xl">
+          Somos{" "}
+          <strong className="italic text-cuero">Valiz</strong>: marca
+          chilena de marroquinería artesanal, seis años haciendo cuero
+          genuino a mano en talleres locales. Queremos ofrecerles
+          formalmente nuestra{" "}
+          <strong className="italic text-cuero">Mochila Alforja Mamá</strong>
+          {" "}— la pieza más pedida de nuestro catálogo y la que mejor
+          encaja con su comunidad.
+        </p>
       </div>
     </section>
   );
 }
 
 /* ------------------------------------------------------------------------ */
-/* PRODUCTO + SPECS                                                        */
+/* PRODUCTO + PALETA juntos                                                */
 /* ------------------------------------------------------------------------ */
-function ProductoSection({ foto }: { foto: string }) {
+function ProductoYPaletaSection({ colores }: { colores: ColorVariant[] }) {
   return (
     <section className="border-t border-piedra bg-tinta/[0.02] px-6 py-24 sm:px-12 sm:py-32">
       <div className="mx-auto max-w-6xl">
@@ -219,45 +201,68 @@ function ProductoSection({ foto }: { foto: string }) {
           Mochila Alforja Mamá.
         </h2>
         <p className="mt-6 max-w-2xl font-serif text-lg italic leading-relaxed text-niebla sm:text-xl">
-          Diseñada específicamente para acompañar a las mamás en cada
-          salida con su guagua, sin tener que renunciar al estilo. Lo que
-          las mamás piden por DM y compran apenas tienen su segundo hijo.
+          Diseñada para acompañar a las mamás en cada salida con su
+          guagua, sin renunciar al estilo.
         </p>
 
-        <div className="mt-14 grid grid-cols-1 items-center gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
-          {/* Foto grande */}
-          <div className="relative mx-auto aspect-square w-full max-w-[480px]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={foto}
-              alt=""
-              className="h-full w-full object-contain drop-shadow-[0_30px_60px_rgba(26,26,26,0.18)]"
-              draggable={false}
-            />
-            <div
-              className="absolute -bottom-6 left-1/2 h-6 w-3/4 -translate-x-1/2 rounded-[50%] bg-tinta/15 blur-2xl"
-              aria-hidden
-            />
-          </div>
+        {/* Specs en grid horizontal */}
+        <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-8">
+          <Spec
+            tag="Material"
+            titulo="100% cuero genuino"
+            cuerpo="Chileno · curtido al cromo · hechura artesanal a mano"
+          />
+          <Spec
+            tag="Dimensiones"
+            titulo="40 × 32 × 16 cm"
+            cuerpo="Alto × Ancho × Profundidad · Peso aprox 1.400 g"
+          />
+          <Spec
+            tag="Capacidad"
+            titulo="9+ compartimentos"
+            cuerpo="Sección impermeable para mudador · biberones · llaves, celular y accesorios"
+          />
+        </div>
 
-          {/* Specs */}
-          <div className="space-y-8">
-            <Spec
-              tag="Material"
-              titulo="100% cuero genuino chileno"
-              cuerpo="Curtido al cromo · Hechura artesanal hecha a mano"
-            />
-            <Spec
-              tag="Dimensiones"
-              titulo="40 × 32 × 16 cm"
-              cuerpo="Alto × Ancho × Profundidad · Peso aprox 1.400 g"
-            />
-            <Spec
-              tag="Capacidad"
-              titulo="9+ compartimentos internos"
-              cuerpo="Sección impermeable para mudador · Espacio biberones · Bolsillos para llaves, celular y accesorios"
-            />
-          </div>
+        {/* Paleta 10 colores */}
+        <div className="mt-20 border-t border-piedra pt-12">
+          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
+            Diez colores · producción permanente
+          </p>
+          <p className="mt-3 max-w-2xl font-serif text-base italic text-niebla">
+            Todos disponibles para reposición continua.
+          </p>
+
+          <ul className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-3 sm:gap-8 lg:grid-cols-5">
+            {colores.map((c) => (
+              <li key={c.name} className="flex flex-col">
+                <div className="group relative aspect-square w-full overflow-hidden border border-piedra bg-fondo">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={c.foto}
+                    alt={c.name}
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                </div>
+                <p className="mt-3 font-serif text-base leading-tight tracking-[-0.01em] text-tinta sm:text-lg">
+                  {c.name}
+                </p>
+                <p className="mt-0.5 font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
+                  {c.hint}
+                </p>
+                {c.href && (
+                  <a
+                    href={c.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center gap-1 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-cuero transition-colors hover:text-tinta"
+                  >
+                    Ver en valiz.cl ↗
+                  </a>
+                )}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>
@@ -281,7 +286,7 @@ function Spec({
       <p className="mt-2 font-serif text-2xl leading-tight tracking-[-0.015em] sm:text-3xl">
         {titulo}
       </p>
-      <p className="mt-2 font-serif text-base leading-relaxed text-niebla">
+      <p className="mt-2 font-serif text-sm leading-relaxed text-niebla">
         {cuerpo}
       </p>
     </div>
@@ -289,7 +294,7 @@ function Spec({
 }
 
 /* ------------------------------------------------------------------------ */
-/* POR QUÉ ENCAJAMOS                                                       */
+/* POR QUÉ                                                                 */
 /* ------------------------------------------------------------------------ */
 function PorQueSection() {
   const razones = [
@@ -345,48 +350,6 @@ function PorQueSection() {
 }
 
 /* ------------------------------------------------------------------------ */
-/* PALETA                                                                  */
-/* ------------------------------------------------------------------------ */
-function PaletaSection({ colores }: { colores: ColorVariant[] }) {
-  return (
-    <section className="border-t border-piedra bg-tinta/[0.02] px-6 py-24 sm:px-12 sm:py-32">
-      <div className="mx-auto max-w-6xl">
-        <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
-          Paleta de colores
-        </p>
-        <h2 className="mt-4 max-w-3xl font-serif text-4xl leading-[1.02] tracking-[-0.02em] sm:text-5xl">
-          Diez colores activos en producción permanente.
-        </h2>
-        <p className="mt-4 font-serif text-lg italic text-niebla">
-          Todos disponibles para reposición continua.
-        </p>
-
-        <ul className="mt-14 grid grid-cols-2 gap-6 sm:grid-cols-3 sm:gap-8 lg:grid-cols-5">
-          {colores.map((c) => (
-            <li key={c.name} className="group flex flex-col">
-              <div className="relative aspect-square w-full overflow-hidden border border-piedra bg-fondo">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={c.foto}
-                  alt={c.name}
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-              </div>
-              <p className="mt-3 font-serif text-base leading-tight tracking-[-0.01em] text-tinta sm:text-lg">
-                {c.name}
-              </p>
-              <p className="mt-0.5 font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
-                {c.hint}
-              </p>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
-  );
-}
-
-/* ------------------------------------------------------------------------ */
 /* PROPUESTA COMERCIAL                                                     */
 /* ------------------------------------------------------------------------ */
 function PropuestaComercialSection() {
@@ -427,7 +390,7 @@ function PropuestaComercialSection() {
   ];
 
   return (
-    <section className="border-t border-piedra px-6 py-24 sm:px-12 sm:py-32">
+    <section className="border-t border-piedra bg-tinta/[0.02] px-6 py-24 sm:px-12 sm:py-32">
       <div className="mx-auto max-w-4xl">
         <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
           La propuesta comercial
@@ -441,8 +404,8 @@ function PropuestaComercialSection() {
         </h2>
         <p className="mt-6 max-w-2xl font-serif text-lg italic leading-relaxed text-niebla">
           Stock robusto para sus tiendas físicas y eCommerce, suficiente
-          para los primeros 2-3 meses de venta. Después, programa de
-          reposición mensual según rotación real.
+          para los primeros 2-3 meses. Después, programa de reposición
+          mensual según rotación real.
         </p>
 
         <dl className="mt-14 divide-y divide-piedra border-y border-piedra">
@@ -465,7 +428,6 @@ function PropuestaComercialSection() {
           ))}
         </dl>
 
-        {/* Total destacado */}
         <div className="mt-10 flex items-baseline justify-between gap-6 bg-tinta px-7 py-7 text-fondo">
           <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
             Total factura Mateas
@@ -490,7 +452,7 @@ function CumplimientoSection() {
     },
     {
       req: "Fotos profesionales de los productos",
-      val: "Disponibles en valiz.cl + sesiones lifestyle de marca · Las entregamos en alta resolución",
+      val: "Disponibles en valiz.cl + sesiones lifestyle · Las entregamos en alta resolución",
     },
     {
       req: "Lista de precios distribuidor con margen acorde al mercado",
@@ -498,7 +460,7 @@ function CumplimientoSection() {
     },
     {
       req: "Productos de calidad",
-      val: "Cuero genuino chileno · Hechura artesanal a mano · Costura reforzada · Durabilidad de años",
+      val: "Cuero genuino chileno · Hechura artesanal a mano · Costura reforzada",
     },
     {
       req: "Productos relacionados con bebés, niños o maternidad",
@@ -515,7 +477,7 @@ function CumplimientoSection() {
   ];
 
   return (
-    <section className="border-t border-piedra bg-tinta/[0.02] px-6 py-24 sm:px-12 sm:py-32">
+    <section className="border-t border-piedra px-6 py-24 sm:px-12 sm:py-32">
       <div className="mx-auto max-w-4xl">
         <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
           Cumplimiento de requisitos
@@ -549,11 +511,11 @@ function CumplimientoSection() {
 }
 
 /* ------------------------------------------------------------------------ */
-/* PRÓXIMOS PASOS + CONTACTO                                               */
+/* CIERRE                                                                  */
 /* ------------------------------------------------------------------------ */
-function ProximosPasosSection() {
+function CierreSection() {
   return (
-    <section className="border-t border-piedra px-6 py-24 text-center sm:px-12 sm:py-32">
+    <section className="border-t border-piedra bg-tinta/[0.02] px-6 py-24 text-center sm:px-12 sm:py-32">
       <div className="mx-auto max-w-3xl">
         <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
           Próximos pasos
@@ -565,41 +527,50 @@ function ProximosPasosSection() {
           para ambas marcas.
         </h2>
         <p className="mt-8 font-serif text-xl italic leading-relaxed text-niebla sm:text-2xl">
-          Nos encantaría agendar una reunión para presentar las piezas en
-          persona y diseñar juntos el plan de lanzamiento.
-        </p>
-        <p className="mt-3 font-serif text-lg italic text-niebla">
-          Esta semana o la próxima, en su oficina o donde sea más cómodo.
+          Conversemos. Esta semana o la próxima, en su oficina o donde
+          sea más cómodo.
         </p>
 
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+        <div className="mt-12">
           <a
-            href="mailto:hola@valiz.cl?subject=Propuesta%20Valiz%20×%20Mam%C3%A1s%20Mateas&body=Hola%20Benja,%20vimos%20la%20propuesta%20de%20Valiz%20para%20Mam%C3%A1s%20Mateas%20y%20queremos%20agendar%20una%20reuni%C3%B3n."
-            className="inline-flex items-center gap-3 bg-tinta px-9 py-5 font-sans text-xs font-semibold uppercase tracking-[0.28em] text-fondo transition-colors hover:bg-cuero"
-          >
-            Agendar reunión →
-          </a>
-          <a
-            href="https://wa.me/56000000000?text=Hola%20Benja,%20vimos%20la%20propuesta%20Valiz%20×%20Mam%C3%A1s%20Mateas"
+            href={WHATSAPP_HREF}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-3 border border-piedra bg-fondo px-7 py-5 font-sans text-xs font-semibold uppercase tracking-[0.28em] text-tinta transition-colors hover:border-cuero hover:text-cuero"
+            className="inline-flex items-center gap-3 bg-tinta px-10 py-5 font-sans text-xs font-semibold uppercase tracking-[0.28em] text-fondo transition-colors hover:bg-cuero"
           >
-            Escribir por WhatsApp
+            <WhatsAppIcon />
+            Hablemos por WhatsApp
           </a>
+          <p className="mt-4 font-sans text-[10px] uppercase tracking-[0.22em] text-niebla">
+            +56 9 6646 6977 · Benja Donoso
+          </p>
         </div>
 
-        {/* Firma */}
-        <div className="mt-24 flex flex-col items-center gap-3 border-t border-piedra pt-12">
-          <Image
-            src="/images/valiz-logo.png"
-            alt=""
-            width={56}
-            height={56}
-            className="opacity-90"
-          />
+        {/* Firma colab */}
+        <div className="mt-24 flex flex-col items-center gap-5 border-t border-piedra pt-12">
+          <div className="flex items-center gap-5">
+            <Image
+              src="/images/valiz-logo.png"
+              alt="Valiz"
+              width={48}
+              height={48}
+              className="opacity-90"
+            />
+            <span className="font-serif text-2xl italic text-cuero">
+              ×
+            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={MATEAS_LOGO}
+              alt="Mamás Mateas"
+              className="h-12 w-12 rounded-full object-contain"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+          </div>
           <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
-            Valiz SpA
+            Valiz SpA · Mayo 2026
           </p>
           <p className="font-serif text-base italic text-niebla">
             Marroquinería de autor hecha en Chile · valiz.cl
@@ -607,5 +578,19 @@ function ProximosPasosSection() {
         </div>
       </div>
     </section>
+  );
+}
+
+function WhatsAppIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M12.04 2C6.58 2 2.14 6.44 2.13 11.9c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.86 9.86 0 0 0 4.71 1.2c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm.01 18.15h-.01c-1.47 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.26 8.26 0 0 1-1.26-4.39c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.83c.01 4.54-3.69 8.24-8.22 8.24zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.25-.64.81-.78.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.43.12-.14.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43-.14 0-.31-.02-.48-.02-.17 0-.43.06-.66.31-.23.25-.86.84-.86 2.05 0 1.21.88 2.38 1 2.54.12.17 1.74 2.66 4.22 3.73.59.25 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.11-.23-.17-.48-.29z" />
+    </svg>
   );
 }
