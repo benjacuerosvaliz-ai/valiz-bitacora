@@ -6,7 +6,7 @@ import {
   useTransform,
 } from "motion/react";
 import Image from "next/image";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 const nf = new Intl.NumberFormat("es-CL");
 const WHATSAPP_NUMERO = "56966466977"; // +56 9 6646 6977
@@ -55,12 +55,26 @@ export function Propuesta({ colores }: { colores: ColorVariant[] }) {
 /* ------------------------------------------------------------------------ */
 function HeroSection() {
   const ref = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [muted, setMuted] = useState(true);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end start"],
   });
   const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
   const y = useTransform(scrollYProgress, [0, 1], [0, -80]);
+
+  function toggleMute() {
+    if (!videoRef.current) return;
+    const next = !muted;
+    videoRef.current.muted = next;
+    if (!next) {
+      // Al activar audio, asegurar que esté reproduciendo desde algún
+      // punto (no desde el inicio) — mejor UX
+      videoRef.current.play().catch(() => {});
+    }
+    setMuted(next);
+  }
 
   return (
     <section
@@ -136,19 +150,29 @@ function HeroSection() {
             </div>
           </div>
 
-          {/* Video de la Alforja Mama — vertical 9:16 (formato reel) */}
-          <div className="relative mx-auto aspect-[9/16] w-[60vw] max-w-[320px] overflow-hidden sm:w-[40vw] lg:w-[28vw]">
+          {/* Video de la Alforja Mama — vertical 9:16 con toggle audio */}
+          <div className="relative mx-auto aspect-[9/16] w-[60vw] max-w-[320px] sm:w-[40vw] lg:w-[28vw]">
             <video
+              ref={videoRef}
               src={VIDEO_HERO}
               autoPlay
               loop
-              muted
+              muted={muted}
               playsInline
               poster="/images/productos/mochila-alforja-mama/MAM-G-CAM/01-front.webp"
               className="h-full w-full object-cover drop-shadow-[0_30px_60px_rgba(26,26,26,0.22)]"
             />
+            {/* Toggle audio */}
+            <button
+              type="button"
+              onClick={toggleMute}
+              aria-label={muted ? "Activar sonido" : "Silenciar"}
+              className="absolute bottom-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-tinta/80 text-fondo backdrop-blur-sm transition-colors hover:bg-cuero"
+            >
+              {muted ? <SoundOffIcon /> : <SoundOnIcon />}
+            </button>
             <div
-              className="absolute -bottom-6 left-1/2 h-6 w-3/4 -translate-x-1/2 rounded-[50%] bg-tinta/20 blur-2xl"
+              className="absolute -bottom-6 left-1/2 -z-10 h-6 w-3/4 -translate-x-1/2 rounded-[50%] bg-tinta/20 blur-2xl"
               aria-hidden
             />
           </div>
@@ -578,6 +602,45 @@ function CierreSection() {
         </div>
       </div>
     </section>
+  );
+}
+
+function SoundOffIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+      <line x1="23" y1="9" x2="17" y2="15" />
+      <line x1="17" y1="9" x2="23" y2="15" />
+    </svg>
+  );
+}
+
+function SoundOnIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+    </svg>
   );
 }
 
