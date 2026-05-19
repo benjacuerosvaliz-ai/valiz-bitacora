@@ -150,8 +150,21 @@ function HeroSection() {
             </div>
           </div>
 
-          {/* Video de la Alforja Mama — vertical 9:16 con toggle audio */}
-          <div className="relative mx-auto aspect-[9/16] w-[60vw] max-w-[320px] sm:w-[40vw] lg:w-[28vw]">
+          {/* Video Alforja Mama — letterbox premium: video real
+              centrado sin crop + el mismo video blureado de fondo
+              ocupando todo el container (estilo cinemax). */}
+          <div className="relative mx-auto aspect-[4/3] w-full max-w-[560px] overflow-hidden bg-tinta shadow-[0_30px_60px_rgba(26,26,26,0.22)] sm:aspect-[5/4]">
+            {/* Background blureado para llenar las bandas laterales */}
+            <video
+              src={VIDEO_HERO}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl"
+              aria-hidden
+            />
+            {/* Video real centrado, completo, sin crop */}
             <video
               ref={videoRef}
               src={VIDEO_HERO}
@@ -160,21 +173,17 @@ function HeroSection() {
               muted={muted}
               playsInline
               poster="/images/productos/mochila-alforja-mama/MAM-G-CAM/01-front.webp"
-              className="h-full w-full object-cover drop-shadow-[0_30px_60px_rgba(26,26,26,0.22)]"
+              className="relative h-full w-full object-contain"
             />
             {/* Toggle audio */}
             <button
               type="button"
               onClick={toggleMute}
               aria-label={muted ? "Activar sonido" : "Silenciar"}
-              className="absolute bottom-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-tinta/80 text-fondo backdrop-blur-sm transition-colors hover:bg-cuero"
+              className="absolute bottom-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-fondo/85 text-tinta backdrop-blur-sm transition-colors hover:bg-cuero hover:text-fondo"
             >
               {muted ? <SoundOffIcon /> : <SoundOnIcon />}
             </button>
-            <div
-              className="absolute -bottom-6 left-1/2 -z-10 h-6 w-3/4 -translate-x-1/2 rounded-[50%] bg-tinta/20 blur-2xl"
-              aria-hidden
-            />
           </div>
         </div>
 
