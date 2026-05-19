@@ -471,7 +471,10 @@ function PropuestaComercialSection() {
       valor: `$${nf.format(9200000)}`,
     },
     { label: "IVA 19%", valor: `$${nf.format(1748000)}` },
-    { label: "Plazo de pago", valor: "30 días factura electrónica" },
+    {
+      label: "Plazo de pago",
+      valor: "50% contra entrega · 50% a 30 días",
+    },
     {
       label: "Plazo entrega inicial",
       valor: "45 días desde aceptación de OC",
