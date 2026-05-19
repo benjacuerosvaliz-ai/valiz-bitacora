@@ -45,6 +45,7 @@ export function Propuesta({ colores }: { colores: ColorVariant[] }) {
       <PorQueSection />
       <PropuestaComercialSection />
       <CumplimientoSection />
+      <FaseDosSection />
       <CierreSection />
     </main>
   );
@@ -603,6 +604,117 @@ function CumplimientoSection() {
         </ul>
       </div>
     </section>
+  );
+}
+
+/* ------------------------------------------------------------------------ */
+/* FASE 2 — co-branded product                                             */
+/* ------------------------------------------------------------------------ */
+function FaseDosSection() {
+  return (
+    <section className="border-t border-piedra px-6 py-24 sm:px-12 sm:py-32">
+      <div className="mx-auto max-w-5xl">
+        <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
+          Fase 2 · Después
+        </p>
+        <h2 className="mt-4 max-w-4xl font-serif text-4xl leading-[1.02] tracking-[-0.025em] sm:text-5xl lg:text-6xl">
+          Y cuando esto camine bien,{" "}
+          <span className="italic text-cuero">
+            hagamos algo juntos.
+          </span>
+        </h2>
+
+        {/* Collab grande visual */}
+        <div className="mt-12 flex items-center justify-center gap-6 border-y border-piedra py-10 sm:gap-10">
+          <Image
+            src="/images/valiz-logo.png"
+            alt="Valiz"
+            width={72}
+            height={72}
+            className="h-14 w-14 object-contain sm:h-20 sm:w-20"
+          />
+          <span className="font-serif text-3xl italic text-cuero sm:text-5xl">
+            ×
+          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={MATEAS_LOGO}
+            alt="Mamás Mateas"
+            className="h-14 w-14 rounded-full object-contain sm:h-20 sm:w-20"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
+          />
+        </div>
+
+        <div className="mt-12 grid grid-cols-1 gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
+          <div className="space-y-5">
+            <p className="font-serif text-lg leading-relaxed text-tinta sm:text-xl">
+              Una vez validemos la rotación de la Alforja Mamá en sus
+              tiendas, queremos dar el siguiente paso:{" "}
+              <strong className="italic text-cuero">
+                diseñar juntos un producto exclusivo Mamás Mateas × Valiz
+              </strong>
+              .
+            </p>
+            <p className="font-serif text-base italic leading-relaxed text-niebla sm:text-lg">
+              Una pieza que solo se venda en sus puntos. Pensada con
+              ustedes, hecha por nosotros. Co-firma en la etiqueta, co-
+              comunicación en redes, co-historia en cada bitácora del
+              cliente.
+            </p>
+          </div>
+
+          <div className="space-y-5 border-l-2 border-cuero pl-6 sm:border-l-0 sm:border-t sm:border-piedra sm:pl-0 sm:pt-6 lg:border-l-2 lg:border-cuero lg:border-t-0 lg:pl-6 lg:pt-0">
+            <Idea
+              tag="Producto"
+              titulo="Diseño co-creado"
+              cuerpo="Brief en conjunto sobre lo que su comunidad pide y aún no encuentra."
+            />
+            <Idea
+              tag="Exclusividad"
+              titulo="Solo en Mateas"
+              cuerpo="Edición limitada o permanente, vendida únicamente en sus canales."
+            />
+            <Idea
+              tag="Marca"
+              titulo="Co-firma en cada pieza"
+              cuerpo="Etiqueta + tarjeta con ambos logos. Storytelling compartido."
+            />
+          </div>
+        </div>
+
+        <p className="mt-12 max-w-3xl font-serif text-base italic text-niebla sm:text-lg">
+          No urge — primero veamos cómo recibe su público la Alforja
+          Mamá. Pero queremos que sepan desde ya que la puerta está
+          abierta para algo más grande.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function Idea({
+  tag,
+  titulo,
+  cuerpo,
+}: {
+  tag: string;
+  titulo: string;
+  cuerpo: string;
+}) {
+  return (
+    <div>
+      <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.32em] text-cuero">
+        {tag}
+      </p>
+      <p className="mt-1 font-serif text-xl leading-tight tracking-[-0.01em] text-tinta sm:text-2xl">
+        {titulo}
+      </p>
+      <p className="mt-1.5 font-serif text-sm leading-relaxed text-niebla sm:text-base">
+        {cuerpo}
+      </p>
+    </div>
   );
 }
 
