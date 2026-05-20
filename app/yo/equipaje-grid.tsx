@@ -11,6 +11,8 @@ export type EquipajePieza = {
   adquiridoAt: string | null;
   fotoUrl: string | null;
   fotoFallback: string | null; // ej. foto subida por user para manual
+  /** true si fotoUrl es fallback de familia (B&N), no la del SKU exacto */
+  esHistorico?: boolean;
   familiaName: string | null;
   familiaSlug: string | null;
   colorValiz: string | null;
@@ -50,7 +52,7 @@ export function EquipajeGrid({ piezas }: { piezas: EquipajePieza[] }) {
                 <img
                   src={p.fotoUrl ?? p.fotoFallback ?? ""}
                   alt={p.familiaName ?? p.sku}
-                  className="h-[78%] w-[78%] rounded-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                  className={`h-[78%] w-[78%] rounded-full object-cover object-center transition-transform duration-500 group-hover:scale-105 ${p.esHistorico ? "grayscale opacity-75" : ""}`}
                 />
               ) : (
                 <span className="font-serif text-xs italic text-niebla">
@@ -61,11 +63,15 @@ export function EquipajeGrid({ piezas }: { piezas: EquipajePieza[] }) {
             <p className="mt-3 text-center font-serif text-sm leading-tight">
               {p.familiaName ?? p.sku}
             </p>
-            {p.colorValiz && (
+            {p.colorValiz ? (
               <p className="text-center font-sans text-[10px] uppercase tracking-[0.18em] text-cuero">
                 {p.colorValiz}
               </p>
-            )}
+            ) : p.esHistorico ? (
+              <p className="text-center font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
+                Color histórico
+              </p>
+            ) : null}
           </li>
         ))}
       </ul>
@@ -102,7 +108,7 @@ export function EquipajeGrid({ piezas }: { piezas: EquipajePieza[] }) {
                   <img
                     src={active.fotoUrl ?? active.fotoFallback ?? ""}
                     alt={active.familiaName ?? active.sku}
-                    className="max-h-[60vh] w-full object-contain"
+                    className={`max-h-[60vh] w-full object-contain ${active.esHistorico ? "grayscale opacity-75" : ""}`}
                   />
                 ) : (
                   <p className="font-serif italic text-niebla">Sin foto disponible.</p>

@@ -11,7 +11,11 @@ import { BrandMark } from "@/components/brand-mark";
 import { ReferidoCodigo } from "@/components/referido-codigo";
 import { ShareButton } from "@/components/share-button";
 import { WelcomeTour } from "@/components/welcome-tour";
-import { getPhotoBySku } from "@/lib/product-photos";
+import {
+  getPhotoBySku,
+  isNonProductSku,
+  resolveProductPhoto,
+} from "@/lib/product-photos";
 import { getOrAssignReferidoCode } from "@/lib/referido";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createStaticClient } from "@/lib/supabase/static";
@@ -168,15 +172,19 @@ export default async function PerfilPublicoPage({
     order_items: { sku: string | null }[] | null;
   }[]) {
     for (const i of o.order_items ?? []) {
-      if (i.sku) equipaje.push({ sku: i.sku, fecha: o.paid_at, source: o.source });
+      // Excluir vouchers / tarjetas regalo / IDs numéricos misceláneos
+      if (i.sku && !isNonProductSku(i.sku)) {
+        equipaje.push({ sku: i.sku, fecha: o.paid_at, source: o.source });
+      }
     }
   }
   for (const m of (manualesRes.data ?? []) as {
     sku: string | null;
     fecha_compra: string | null;
   }[]) {
-    if (m.sku)
+    if (m.sku && !isNonProductSku(m.sku)) {
       equipaje.push({ sku: m.sku, fecha: m.fecha_compra, source: "manual" });
+    }
   }
   equipaje.sort((a, b) => (b.fecha ?? "").localeCompare(a.fecha ?? ""));
 
@@ -344,12 +352,14 @@ export default async function PerfilPublicoPage({
         ? talleristaById.get(p.tallerista_id)
         : null;
       const cuero = Array.isArray(p?.cuero) ? p?.cuero[0] : p?.cuero;
+      const fotoRes = resolveProductPhoto(e.sku);
       return {
         sku: e.sku,
         source: e.source as "shopify" | "manual",
         adquiridoAt: e.fecha,
-        fotoUrl: photoBySku.get(e.sku) ?? null,
+        fotoUrl: fotoRes?.foto ?? null,
         fotoFallback: null,
+        esHistorico: fotoRes?.esHistorico ?? false,
         familiaName: fam?.name ?? null,
         familiaSlug: fam?.slug ?? null,
         colorValiz: p?.color_valiz ?? null,
@@ -372,18 +382,20 @@ export default async function PerfilPublicoPage({
     : profile.bio ?? `Equipaje y bitácoras de ${nombre} en Valiz.`;
 
   // Puntos para el globo personal: solo SUS bitácoras con coords
-  // Foto del globo = foto del PRODUCTO (PNG Valiz), no la del user
+  // Foto del globo = foto del PRODUCTO (PNG Valiz), no la del user.
+  // resolveProductPhoto detecta SKUs antiguos por prefix de familia y
+  // devuelve foto fallback (B&N para indicar "histórico color desconocido").
   const points = bitacoras
     .filter((b) => b.lat !== null && b.lng !== null)
     .map((b) => {
       const p = b.sku ? productoBySku.get(b.sku) : null;
       const fam = p?.familia_id ? familiaById.get(p.familia_id) : null;
-      const fotoProducto = b.sku ? (photoBySku.get(b.sku) ?? null) : null;
+      const fotoRes = resolveProductPhoto(b.sku);
       return {
         id: b.id,
         lat: Number(b.lat),
         lng: Number(b.lng),
-        foto: fotoProducto ?? b.foto_url,
+        foto: fotoRes?.foto ?? b.foto_url,
         lugar: b.lugar,
         texto: b.texto,
         familia: fam?.name ?? null,
@@ -883,25 +895,35 @@ function EquipajeMedallas({
 }) {
   const dim = size === "sm" ? "h-7 w-7" : "h-9 w-9";
   const overflow = equipaje.length - max;
+  // Suppress unused warning — photoBySku se mantiene en la firma por
+  // backwards compatibility pero ya usamos resolveProductPhoto
+  void photoBySku;
   return (
     <div className="mt-2 flex flex-wrap items-center gap-1.5">
       {equipaje.slice(0, max).map((e, i) => {
         const p = productoBySku.get(e.sku);
         const fam = p?.familia_id ? familiaById.get(p.familia_id) : null;
-        const foto = photoBySku.get(e.sku);
+        const fotoRes = resolveProductPhoto(e.sku);
+        const tituloFam = fam?.name ?? null;
+        const tituloColor = p?.color_valiz ?? null;
+        const titulo = tituloFam
+          ? `${tituloFam}${tituloColor ? " · " + tituloColor : ""}`
+          : fotoRes?.esHistorico
+            ? "Pieza histórica · color no identificado"
+            : e.sku;
         return (
           <Link
             key={`${e.sku}-${i}`}
             href={fam ? `/piezas/${fam.slug}` : "#"}
-            title={`${fam?.name ?? e.sku}${p?.color_valiz ? " · " + p.color_valiz : ""}`}
+            title={titulo}
             className={`group flex ${dim} items-center justify-center overflow-hidden rounded-full border border-piedra bg-fondo transition-all hover:border-cuero hover:-translate-y-0.5`}
           >
-            {foto ? (
+            {fotoRes ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={foto}
+                src={fotoRes.foto}
                 alt=""
-                className="h-full w-full object-cover"
+                className={`h-full w-full object-cover ${fotoRes.esHistorico ? "grayscale opacity-80" : ""}`}
               />
             ) : (
               <span className="font-serif text-[7px] italic text-niebla">
