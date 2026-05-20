@@ -55,6 +55,8 @@ const cliente: ClienteConfig = {
         "Producción permanente en talleres propios. Stock garantizado, reposiciones mensuales según rotación.",
     },
   ],
+  comercialNota:
+    "100 unidades es nuestra recomendación para asegurar presencia robusta en sus dos puntos físicos y e-com. Podemos conversar partir con una producción menor si prefieren testear primero — totalmente flexible.",
   whatsappMessage:
     "Hola Benja, vimos la propuesta Valiz × Las Mellizas y queremos avanzar.",
 };

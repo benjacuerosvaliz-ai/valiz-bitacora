@@ -52,6 +52,11 @@ const cliente: ClienteConfig = {
         "Queremos ser un proveedor estable, no un one-shot. Producción permanente.",
     },
   ],
+  // Mamás Mateas SÍ tiene checklist público de 7 puntos para proveedores
+  cumplimientoCopy: {
+    tag: "Cumplimiento de requisitos",
+    titulo: "Revisamos su checklist. Valiz cumple los siete puntos.",
+  },
 };
 
 export default function PropuestaMateasPage() {

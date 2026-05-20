@@ -38,6 +38,22 @@ export type ClienteConfig = {
   porQueTitulo?: string;
   /** Mensaje pre-cargado del WhatsApp del cierre */
   whatsappMessage?: string;
+  /**
+   * Sección de "Cumplimiento" — el cliente puede tener un checklist
+   * público (ej Mamás Mateas) o no. Si tiene → "Cumplimos sus 7
+   * requisitos". Si no → "Cómo trabajamos" genérico.
+   */
+  cumplimientoCopy?: {
+    tag?: string;
+    titulo: string;
+  };
+  /**
+   * Nota debajo del H2 comercial. Default habla de "stock robusto para
+   * sus tiendas". Para clientes que pueden partir con menos volumen,
+   * adaptar (ej "Esta es nuestra recomendación, podemos partir con
+   * producción menor").
+   */
+  comercialNota?: string;
 };
 
 /**
@@ -66,8 +82,8 @@ export function PropuestaMochila({
       <CartaSection cliente={cliente} />
       <ProductoYPaletaSection colores={colores} />
       <PorQueSection cliente={cliente} />
-      <PropuestaComercialSection />
-      <CumplimientoSection />
+      <PropuestaComercialSection cliente={cliente} />
+      <CumplimientoSection cliente={cliente} />
       <FaseDosSection cliente={cliente} />
       <CierreSection cliente={cliente} whatsappHref={whatsappHref} />
     </main>
@@ -443,7 +459,11 @@ function PorQueSection({ cliente }: { cliente: ClienteConfig }) {
 /* ------------------------------------------------------------------------ */
 /* PROPUESTA COMERCIAL                                                     */
 /* ------------------------------------------------------------------------ */
-function PropuestaComercialSection() {
+function PropuestaComercialSection({
+  cliente,
+}: {
+  cliente: ClienteConfig;
+}) {
   const filas: { label: string; valor: string; accent?: boolean }[] = [
     { label: "Producto", valor: "Mochila Alforja Mamá" },
     { label: "Colores disponibles", valor: "10 colores (paleta activa permanente)" },
@@ -498,9 +518,8 @@ function PropuestaComercialSection() {
           </span>
         </h2>
         <p className="mt-6 max-w-2xl font-serif text-lg italic leading-relaxed text-niebla">
-          Stock robusto para sus tiendas físicas y eCommerce, suficiente
-          para los primeros 2-3 meses. Después, programa de reposición
-          mensual según rotación real.
+          {cliente.comercialNota ??
+            "Stock robusto para sus tiendas físicas y eCommerce, suficiente para los primeros 2-3 meses. Después, programa de reposición mensual según rotación real."}
         </p>
 
         <dl className="mt-14 divide-y divide-piedra border-y border-piedra">
@@ -561,7 +580,11 @@ function PropuestaComercialSection() {
 /* ------------------------------------------------------------------------ */
 /* CUMPLIMIENTO                                                            */
 /* ------------------------------------------------------------------------ */
-function CumplimientoSection() {
+function CumplimientoSection({
+  cliente,
+}: {
+  cliente: ClienteConfig;
+}) {
   const items = [
     {
       req: "Razón social, facturas y guías de despacho",
@@ -593,14 +616,19 @@ function CumplimientoSection() {
     },
   ];
 
+  const tag = cliente.cumplimientoCopy?.tag ?? "Cómo trabajamos";
+  const titulo =
+    cliente.cumplimientoCopy?.titulo ??
+    "Esto es lo que ya tenemos listo para operar el día uno.";
+
   return (
     <section className="border-t border-piedra px-6 py-24 sm:px-12 sm:py-32">
       <div className="mx-auto max-w-4xl">
         <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
-          Cumplimiento de requisitos
+          {tag}
         </p>
         <h2 className="mt-4 max-w-3xl font-serif text-4xl leading-[1.02] tracking-[-0.02em] sm:text-5xl">
-          Revisamos su checklist. Valiz cumple los siete puntos.
+          {titulo}
         </h2>
         <ul className="mt-14 grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2 sm:gap-x-10 sm:gap-y-8">
           {items.map((it) => (
