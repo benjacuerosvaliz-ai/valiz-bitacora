@@ -17,7 +17,7 @@ export const revalidate = 3600;
 const cliente: ClienteConfig = {
   nombre: "SmartMom Chile",
   nombreCorto: "SmartMom",
-  logo: null,
+  logo: "/images/smartmom-logo.png",
   saludo: "Hola, equipo SmartMom",
   cartaParrafo: (
     <>

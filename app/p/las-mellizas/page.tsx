@@ -17,7 +17,7 @@ export const revalidate = 3600;
 const cliente: ClienteConfig = {
   nombre: "Las Mellizas",
   nombreCorto: "Las Mellizas",
-  logo: null,
+  logo: "/images/las-mellizas-logo.png",
   saludo: "Hola, equipo Las Mellizas",
   cartaParrafo: (
     <>
