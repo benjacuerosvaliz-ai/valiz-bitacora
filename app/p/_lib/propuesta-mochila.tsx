@@ -10,11 +10,6 @@ import { useRef, useState } from "react";
 
 const nf = new Intl.NumberFormat("es-CL");
 const WHATSAPP_NUMERO = "56966466977"; // +56 9 6646 6977
-const WHATSAPP_TEXT =
-  "Hola Benja, vimos la propuesta Valiz × Mamás Mateas y queremos avanzar.";
-const WHATSAPP_HREF = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(WHATSAPP_TEXT)}`;
-
-const MATEAS_LOGO = "/images/mamas-mateas-logo.png";
 const VIDEO_HERO = "/videos/mamas-alforja.mp4";
 
 export type ColorVariant = {
@@ -24,29 +19,57 @@ export type ColorVariant = {
   href: string | null;
 };
 
+export type Razon = { titulo: string; cuerpo: string };
+
+export type ClienteConfig = {
+  /** "Mamás Mateas", "BORN Concept Store", etc. */
+  nombre: string;
+  /** "Mateas", "BORN", "Las Mellizas" — versión corta para frases */
+  nombreCorto: string;
+  /** Path al logo en /public/images/. Si null, no se muestra logo. */
+  logo: string | null;
+  /** Vocativo para la carta: "Hola, equipo Mamás Mateas" */
+  saludo: string;
+  /** Párrafo de apertura — JSX permitido */
+  cartaParrafo: React.ReactNode;
+  /** 4 razones de "Por qué encajamos" específicas del cliente */
+  razones: Razon[];
+  /** Título grande de "Por qué encajamos" (default "Dos marcas con la misma filosofía") */
+  porQueTitulo?: string;
+  /** Mensaje pre-cargado del WhatsApp del cierre */
+  whatsappMessage?: string;
+};
+
 /**
- * Propuesta Valiz × Mamás Mateas — landing scroll-driven privada.
+ * Propuesta Valiz × [Cliente] — template compartido scroll-driven.
  *
- * Flujo nuevo:
- *  HERO          — video Alforja Mama + título + Valiz × Mamás Mateas
- *  CARTA         — apertura breve (3 líneas)
- *  EL PRODUCTO   — specs + paleta (10 colores con CTA a valiz.cl) juntos
- *  POR QUÉ       — 4 razones de match
- *  COMERCIAL     — tabla + total destacado
- *  CUMPLIMIENTO  — 7 ✓ del checklist Mateas
- *  CIERRE        — "Esto puede ser un hitazo" + único CTA WhatsApp
+ * Recibe config del cliente y los colores del producto. Las secciones
+ * fijas (producto, comercial, cumplimiento, fase 2) son iguales para
+ * todos. Las variables (hero, carta, por qué, whatsapp) toman valores
+ * del prop cliente.
  */
-export function Propuesta({ colores }: { colores: ColorVariant[] }) {
+export function PropuestaMochila({
+  cliente,
+  colores,
+}: {
+  cliente: ClienteConfig;
+  colores: ColorVariant[];
+}) {
+  const whatsappText =
+    cliente.whatsappMessage ??
+    `Hola Benja, vimos la propuesta Valiz × ${cliente.nombre} y queremos avanzar.`;
+  const whatsappHref = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(whatsappText)}`;
+
   return (
     <main className="bg-fondo text-tinta">
-      <HeroSection />
-      <CartaSection />
+      <HeroSection cliente={cliente} />
+      <CartaSection cliente={cliente} />
       <ProductoYPaletaSection colores={colores} />
-      <PorQueSection />
+      <PorQueSection cliente={cliente} />
       <PropuestaComercialSection />
       <CumplimientoSection />
-      <FaseDosSection />
-      <CierreSection />
+      <FaseDosSection cliente={cliente} />
+      <CierreSection cliente={cliente} whatsappHref={whatsappHref} />
     </main>
   );
 }
@@ -54,7 +77,7 @@ export function Propuesta({ colores }: { colores: ColorVariant[] }) {
 /* ------------------------------------------------------------------------ */
 /* HERO con video                                                          */
 /* ------------------------------------------------------------------------ */
-function HeroSection() {
+function HeroSection({ cliente }: { cliente: ClienteConfig }) {
   const ref = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
@@ -109,7 +132,7 @@ function HeroSection() {
           </p>
           <h1 className="mt-3 font-serif text-[13vw] leading-[0.92] tracking-[-0.03em] sm:text-[8vw] lg:text-[6vw]">
             Para{" "}
-            <span className="italic text-cuero">Mamás Mateas.</span>
+            <span className="italic text-cuero">{cliente.nombre}.</span>
           </h1>
 
           {/* MOBILE: video vertical IZQ + descripción/collab DER en row */}
@@ -159,17 +182,19 @@ function HeroSection() {
                   ×
                 </span>
                 <div className="flex items-center gap-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={MATEAS_LOGO}
-                    alt="Mamás Mateas"
-                    className="h-7 w-7 rounded-full object-contain"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
+                  {cliente.logo && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={cliente.logo}
+                      alt={cliente.nombre}
+                      className="h-7 w-7 rounded-full object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  )}
                   <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-tinta">
-                    Mamás Mateas
+                    {cliente.nombre}
                   </span>
                 </div>
               </div>
@@ -200,17 +225,19 @@ function HeroSection() {
                   ×
                 </span>
                 <div className="flex items-center gap-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={MATEAS_LOGO}
-                    alt="Mamás Mateas"
-                    className="h-10 w-10 rounded-full object-contain"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
+                  {cliente.logo && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={cliente.logo}
+                      alt={cliente.nombre}
+                      className="h-10 w-10 rounded-full object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  )}
                   <span className="font-sans text-sm font-semibold uppercase tracking-[0.22em] text-tinta">
-                    Mamás Mateas
+                    {cliente.nombre}
                   </span>
                 </div>
               </div>
@@ -259,23 +286,16 @@ function HeroSection() {
 /* ------------------------------------------------------------------------ */
 /* CARTA — versión corta                                                   */
 /* ------------------------------------------------------------------------ */
-function CartaSection() {
+function CartaSection({ cliente }: { cliente: ClienteConfig }) {
   return (
     <section className="border-t border-piedra px-6 py-20 sm:px-12 sm:py-28">
       <div className="mx-auto max-w-3xl">
         <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
-          Hola, equipo Mamás Mateas
+          {cliente.saludo}
         </p>
-        <p className="mt-7 font-serif text-2xl leading-relaxed text-tinta sm:text-3xl">
-          Somos{" "}
-          <strong className="italic text-cuero">Valiz</strong>: marca
-          chilena de marroquinería artesanal, seis años haciendo cuero
-          genuino a mano en talleres locales. Queremos ofrecerles
-          formalmente nuestra{" "}
-          <strong className="italic text-cuero">Mochila Alforja Mamá</strong>
-          {" "}— la pieza más pedida de nuestro catálogo y la que mejor
-          encaja con su comunidad.
-        </p>
+        <div className="mt-7 font-serif text-2xl leading-relaxed text-tinta sm:text-3xl">
+          {cliente.cartaParrafo}
+        </div>
       </div>
     </section>
   );
@@ -390,30 +410,7 @@ function Spec({
 /* ------------------------------------------------------------------------ */
 /* POR QUÉ                                                                 */
 /* ------------------------------------------------------------------------ */
-function PorQueSection() {
-  const razones = [
-    {
-      titulo: "Cliente común",
-      cuerpo:
-        "La mamá chilena que valora curaduría, oficio y producto que dura.",
-    },
-    {
-      titulo: "Posicionamiento curado",
-      cuerpo:
-        "Mateas no vende cualquier cosa, y nosotros tampoco fabricamos cualquier cosa.",
-    },
-    {
-      titulo: "Producto único",
-      cuerpo:
-        "No hay otra mochila alforja mamá artesanal con la propuesta de Valiz en el mercado local.",
-    },
-    {
-      titulo: "Reposiciones programadas",
-      cuerpo:
-        "Queremos ser un proveedor estable, no un one-shot. Producción permanente.",
-    },
-  ];
-
+function PorQueSection({ cliente }: { cliente: ClienteConfig }) {
   return (
     <section className="border-t border-piedra px-6 py-24 sm:px-12 sm:py-32">
       <div className="mx-auto max-w-5xl">
@@ -421,10 +418,10 @@ function PorQueSection() {
           Por qué encajamos
         </p>
         <h2 className="mt-4 max-w-3xl font-serif text-4xl leading-[1.02] tracking-[-0.02em] sm:text-5xl">
-          Dos marcas con la misma filosofía.
+          {cliente.porQueTitulo ?? "Dos marcas con la misma filosofía."}
         </h2>
         <div className="mt-12 grid grid-cols-2 gap-x-5 gap-y-8 sm:gap-x-14 sm:gap-y-12">
-          {razones.map((r, i) => (
+          {cliente.razones.map((r, i) => (
             <div key={r.titulo}>
               <p className="font-mono text-xl font-semibold tracking-tight text-cuero sm:text-2xl">
                 {String(i + 1).padStart(2, "0")}
@@ -455,7 +452,7 @@ function PropuestaComercialSection() {
       valor: "10 unidades por color × 10 colores = 100 unidades",
     },
     {
-      label: "Precio neto a Mateas",
+      label: "Precio neto distribuidor",
       valor: `$${nf.format(92000)} / unidad (sin IVA)`,
     },
     {
@@ -463,7 +460,7 @@ function PropuestaComercialSection() {
       valor: `$${nf.format(149990)} con IVA`,
     },
     {
-      label: "Margen Mateas sobre PVP",
+      label: "Margen distribuidor sobre PVP",
       valor: "27% (markup 37% sobre costo)",
       accent: true,
     },
@@ -528,7 +525,7 @@ function PropuestaComercialSection() {
 
         <div className="mt-10 flex items-baseline justify-between gap-6 bg-tinta px-7 py-7 text-fondo">
           <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
-            Total factura Mateas
+            Total factura
           </p>
           <p className="font-serif text-4xl leading-none tracking-[-0.02em] sm:text-5xl">
             ${nf.format(10948000)}
@@ -576,7 +573,7 @@ function CumplimientoSection() {
     },
     {
       req: "Lista de precios distribuidor con margen acorde al mercado",
-      val: "$92.000 neto / unidad · Margen Mateas 27% sobre PVP · 37% markup sobre costo",
+      val: "$92.000 neto / unidad · Margen 27% sobre PVP · 37% markup sobre costo",
     },
     {
       req: "Productos de calidad",
@@ -633,7 +630,7 @@ function CumplimientoSection() {
 /* ------------------------------------------------------------------------ */
 /* FASE 2 — co-branded product                                             */
 /* ------------------------------------------------------------------------ */
-function FaseDosSection() {
+function FaseDosSection({ cliente }: { cliente: ClienteConfig }) {
   return (
     <section className="border-t border-piedra px-6 py-24 sm:px-12 sm:py-32">
       <div className="mx-auto max-w-5xl">
@@ -659,15 +656,21 @@ function FaseDosSection() {
           <span className="font-serif text-3xl italic text-cuero sm:text-5xl">
             ×
           </span>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={MATEAS_LOGO}
-            alt="Mamás Mateas"
-            className="h-14 w-14 rounded-full object-contain sm:h-20 sm:w-20"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = "none";
-            }}
-          />
+          {cliente.logo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={cliente.logo}
+              alt={cliente.nombre}
+              className="h-14 w-14 rounded-full object-contain sm:h-20 sm:w-20"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+          ) : (
+            <span className="font-serif text-2xl italic text-cuero sm:text-3xl">
+              {cliente.nombre}
+            </span>
+          )}
         </div>
 
         <div className="mt-12 grid grid-cols-1 gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
@@ -676,7 +679,8 @@ function FaseDosSection() {
               Una vez validemos la rotación de la Alforja Mamá en sus
               tiendas, queremos dar el siguiente paso:{" "}
               <strong className="italic text-cuero">
-                diseñar juntos un producto exclusivo Mamás Mateas × Valiz
+                diseñar juntos un producto exclusivo{" "}
+                {cliente.nombreCorto} × Valiz
               </strong>
               .
             </p>
@@ -696,7 +700,7 @@ function FaseDosSection() {
             />
             <Idea
               tag="Exclusividad"
-              titulo="Solo en Mateas"
+              titulo={`Solo en ${cliente.nombreCorto}`}
               cuerpo="Edición limitada o permanente, vendida únicamente en sus canales."
             />
             <Idea
@@ -744,7 +748,13 @@ function Idea({
 /* ------------------------------------------------------------------------ */
 /* CIERRE                                                                  */
 /* ------------------------------------------------------------------------ */
-function CierreSection() {
+function CierreSection({
+  cliente,
+  whatsappHref,
+}: {
+  cliente: ClienteConfig;
+  whatsappHref: string;
+}) {
   return (
     <section className="border-t border-piedra bg-tinta/[0.02] px-6 py-24 text-center sm:px-12 sm:py-32">
       <div className="mx-auto max-w-3xl">
@@ -764,7 +774,7 @@ function CierreSection() {
 
         <div className="mt-12">
           <a
-            href={WHATSAPP_HREF}
+            href={whatsappHref}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-3 bg-tinta px-10 py-5 font-sans text-xs font-semibold uppercase tracking-[0.28em] text-fondo transition-colors hover:bg-cuero"
@@ -790,15 +800,21 @@ function CierreSection() {
             <span className="font-serif text-2xl italic text-cuero">
               ×
             </span>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={MATEAS_LOGO}
-              alt="Mamás Mateas"
-              className="h-12 w-12 rounded-full object-contain"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
-              }}
-            />
+            {cliente.logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={cliente.logo}
+                alt={cliente.nombre}
+                className="h-12 w-12 rounded-full object-contain"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
+              />
+            ) : (
+              <span className="font-serif text-xl italic text-cuero">
+                {cliente.nombre}
+              </span>
+            )}
           </div>
           <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
             Valiz SpA · Mayo 2026
