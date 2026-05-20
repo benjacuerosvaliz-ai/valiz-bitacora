@@ -16,7 +16,7 @@ export const revalidate = 3600;
 
 const cliente: ClienteConfig = {
   nombre: "Mamás Mateas",
-  nombreCorto: "Mateas",
+  nombreCorto: "Mamás Mateas",
   logo: "/images/mamas-mateas-logo.png",
   saludo: "Hola, equipo Mamás Mateas",
   cartaParrafo: (
@@ -39,7 +39,7 @@ const cliente: ClienteConfig = {
     {
       titulo: "Posicionamiento curado",
       cuerpo:
-        "Mateas no vende cualquier cosa, y nosotros tampoco fabricamos cualquier cosa.",
+        "Mamás Mateas no vende cualquier cosa, y nosotros tampoco fabricamos cualquier cosa.",
     },
     {
       titulo: "Producto único",
