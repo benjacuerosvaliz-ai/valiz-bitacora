@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { BrandMark } from "@/components/brand-mark";
+import { getPhotoBySku } from "@/lib/product-photos";
 import { createStaticClient } from "@/lib/supabase/static";
 
 import { MapaColectivo } from "./mapa";
@@ -96,14 +97,18 @@ export default async function MapaPage() {
     0,
   );
 
+  // Foto del globo = foto del PRODUCTO Valiz (PNG), no la del user.
+  // Quien protagoniza el mapa son los Valiz, no las personas.
+  const photoBySku = getPhotoBySku();
   const points = bitacoras.map((b) => {
     const p = b.sku ? productoBySku.get(b.sku) : null;
     const fam = p?.familia_id ? familiaById.get(p.familia_id) : null;
+    const fotoProducto = b.sku ? (photoBySku.get(b.sku) ?? null) : null;
     return {
       id: b.id,
       lat: Number(b.lat),
       lng: Number(b.lng),
-      foto: b.foto_url,
+      foto: fotoProducto ?? b.foto_url,
       lugar: b.lugar,
       texto: b.texto,
       familia: fam ?? null,

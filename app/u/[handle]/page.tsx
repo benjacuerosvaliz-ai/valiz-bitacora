@@ -372,16 +372,18 @@ export default async function PerfilPublicoPage({
     : profile.bio ?? `Equipaje y bitácoras de ${nombre} en Valiz.`;
 
   // Puntos para el globo personal: solo SUS bitácoras con coords
+  // Foto del globo = foto del PRODUCTO (PNG Valiz), no la del user
   const points = bitacoras
     .filter((b) => b.lat !== null && b.lng !== null)
     .map((b) => {
       const p = b.sku ? productoBySku.get(b.sku) : null;
       const fam = p?.familia_id ? familiaById.get(p.familia_id) : null;
+      const fotoProducto = b.sku ? (photoBySku.get(b.sku) ?? null) : null;
       return {
         id: b.id,
         lat: Number(b.lat),
         lng: Number(b.lng),
-        foto: b.foto_url,
+        foto: fotoProducto ?? b.foto_url,
         lugar: b.lugar,
         texto: b.texto,
         familia: fam?.name ?? null,

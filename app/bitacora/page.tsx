@@ -248,17 +248,22 @@ export default async function BitacoraColectivaPage({
     0,
   );
 
-  // Puntos para el mapa (solo bitácoras con coords)
+  // Puntos para el mapa (solo bitácoras con coords).
+  // Foto = foto del PRODUCTO (PNG Valiz), NO la que subió el user.
+  // Quien comparte el mundo: los Valiz, no las personas. Si no hay
+  // foto de producto (sin SKU asociado), usamos la foto del user como
+  // fallback graceful.
   const points: Point[] = bitacoras
     .filter((b) => b.lat !== null && b.lng !== null)
     .map((b) => {
       const p = b.sku ? productoBySku.get(b.sku) : null;
       const fam = p?.familia_id ? familiaNameById.get(p.familia_id) : null;
+      const fotoProducto = b.sku ? (photoBySku.get(b.sku) ?? null) : null;
       return {
         id: b.id,
         lat: Number(b.lat),
         lng: Number(b.lng),
-        foto: b.foto_url,
+        foto: fotoProducto ?? b.foto_url,
         lugar: b.lugar,
         texto: b.texto,
         familia: fam ?? null,

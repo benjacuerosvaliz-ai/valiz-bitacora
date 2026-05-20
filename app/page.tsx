@@ -208,16 +208,20 @@ export default async function HomePage() {
     ]),
   );
 
+  // En el mapa colectivo mostramos las FOTOS DE PRODUCTO (PNG Valiz)
+  // como protagonistas — son los Valiz los que viajan por el mundo.
+  // La foto que sube el user queda solo en la página de su bitácora.
   const points: Point[] = bits
     .filter((b) => b.lat !== null && b.lng !== null)
     .map((b) => {
       const p = b.sku ? prodBySku.get(b.sku) : null;
       const fam = p?.familia_id ? famNameById.get(p.familia_id) : null;
+      const fotoProducto = b.sku ? (photoBySku.get(b.sku) ?? null) : null;
       return {
         id: b.id,
         lat: Number(b.lat),
         lng: Number(b.lng),
-        foto: b.foto_url,
+        foto: fotoProducto ?? b.foto_url,
         lugar: b.lugar,
         texto: b.texto,
         familia: fam ?? null,
