@@ -474,7 +474,8 @@ function PropuestaComercialSection() {
     { label: "IVA 19%", valor: `$${nf.format(1748000)}` },
     {
       label: "Plazo de pago",
-      valor: "50% contra entrega · 50% a 30 días",
+      valor: "60 días vía Lokal — sin comisión, transacción con respaldo",
+      accent: true,
     },
     {
       label: "Plazo entrega inicial",
@@ -532,6 +533,28 @@ function PropuestaComercialSection() {
           <p className="font-serif text-4xl leading-none tracking-[-0.02em] sm:text-5xl">
             ${nf.format(10948000)}
           </p>
+        </div>
+
+        {/* Bloque Lokal — cómo se concreta el pago */}
+        <div className="mt-10 border border-cuero/40 bg-cuero/[0.04] p-6 sm:p-7">
+          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
+            Cómo concretamos el pago
+          </p>
+          <p className="mt-3 font-serif text-lg leading-relaxed text-tinta sm:text-xl">
+            Manejamos toda la transacción a través de{" "}
+            <strong className="italic text-cuero">Lokal</strong> —
+            plataforma B2B chilena que da respaldo, transparencia y
+            permite pago a <strong>60 días sin comisión</strong> para
+            ustedes.
+          </p>
+          <a
+            href="https://somoslokal.cl/makers/valiz?referred=valiz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 inline-flex items-center gap-2 border border-cuero bg-cuero px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-fondo transition-colors hover:bg-tinta hover:border-tinta"
+          >
+            Ver perfil Valiz en Lokal ↗
+          </a>
         </div>
       </div>
     </section>
