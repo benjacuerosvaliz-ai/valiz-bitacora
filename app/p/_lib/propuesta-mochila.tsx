@@ -177,45 +177,18 @@ function HeroSection({ cliente }: { cliente: ClienteConfig }) {
             )}
           </div>
 
-          {/* MOBILE: video vertical IZQ + descripción DER en row */}
-          <div className="mt-8 grid grid-cols-[auto_1fr] items-center gap-4 lg:hidden">
-            {/* Video vertical chico al lado del texto */}
-            <div className="relative aspect-[9/16] w-[36vw] max-w-[170px] overflow-hidden shadow-[0_20px_40px_rgba(26,26,26,0.18)]">
-              <video
-                ref={videoRef}
-                src={VIDEO_HERO}
-                autoPlay
-                loop
-                muted={muted}
-                playsInline
-                poster="/images/productos/mochila-alforja-mama/MAM-G-CAM/01-front.webp"
-                className="h-full w-full object-cover"
-              />
-              <button
-                type="button"
-                onClick={toggleMute}
-                aria-label={muted ? "Activar sonido" : "Silenciar"}
-                className="absolute bottom-2 right-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-fondo/85 text-tinta backdrop-blur-sm transition-colors hover:bg-cuero hover:text-fondo"
-              >
-                {muted ? <SoundOffIcon /> : <SoundOnIcon />}
-              </button>
-            </div>
-
-            {/* Descripción al lado del video */}
-            <p className="font-serif text-base italic leading-snug text-niebla">
-              Mochila Alforja Mamá — la pieza más esperada del catálogo
-              Valiz.
-            </p>
-          </div>
-
-          {/* DESKTOP: descripción + video letterbox lado a lado */}
-          <div className="mt-10 hidden grid-cols-[1.1fr_1fr] items-center gap-14 lg:grid">
-            <div className="flex flex-col gap-5">
-              <p className="font-serif text-xl italic leading-relaxed text-niebla sm:text-2xl">
+          {/* Grid responsive con UN solo video (mobile y desktop comparten
+              el mismo element para evitar audio duplicado). En mobile:
+              video izq + descripción der. En desktop: descripción izq +
+              video con letterbox blureado der. */}
+          <div className="mt-8 grid grid-cols-[auto_1fr] items-center gap-4 lg:mt-10 lg:grid-cols-[1.1fr_1fr] lg:gap-14">
+            {/* Descripción: order según viewport */}
+            <div className="order-2 lg:order-1 lg:flex lg:flex-col lg:gap-5">
+              <p className="font-serif text-base italic leading-snug text-niebla lg:text-2xl lg:leading-relaxed">
                 Mochila Alforja Mamá — la pieza más esperada del catálogo
                 Valiz.
               </p>
-              <div className="mt-2 flex items-center gap-3 border-l-2 border-cuero pl-5">
+              <div className="mt-2 hidden items-center gap-3 border-l-2 border-cuero pl-5 lg:flex">
                 <span className="font-sans text-sm font-semibold uppercase tracking-[0.22em] text-tinta">
                   Valiz
                 </span>
@@ -228,31 +201,36 @@ function HeroSection({ cliente }: { cliente: ClienteConfig }) {
               </div>
             </div>
 
-            {/* Video letterbox horizontal (desktop only) */}
-            <div className="relative aspect-[5/4] w-full max-w-[560px] overflow-hidden bg-tinta shadow-[0_30px_60px_rgba(26,26,26,0.22)]">
+            {/* Video — UN solo element. Container responsive: vertical
+                en mobile, letterbox horizontal en desktop. */}
+            <div className="relative order-1 aspect-[9/16] w-[36vw] max-w-[170px] overflow-hidden shadow-[0_20px_40px_rgba(26,26,26,0.18)] lg:order-2 lg:aspect-[5/4] lg:w-full lg:max-w-[560px] lg:bg-tinta lg:shadow-[0_30px_60px_rgba(26,26,26,0.22)]">
+              {/* Background blureado letterbox SOLO desktop (muted hardcoded
+                  para que nunca duplique audio del video real) */}
               <video
                 src={VIDEO_HERO}
                 autoPlay
                 loop
                 muted
                 playsInline
-                className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl"
+                className="absolute inset-0 hidden h-full w-full scale-110 object-cover opacity-60 blur-2xl lg:block"
                 aria-hidden
               />
+              {/* Video real con ref + control de audio */}
               <video
+                ref={videoRef}
                 src={VIDEO_HERO}
                 autoPlay
                 loop
                 muted={muted}
                 playsInline
                 poster="/images/productos/mochila-alforja-mama/MAM-G-CAM/01-front.webp"
-                className="relative h-full w-full object-contain"
+                className="relative h-full w-full object-cover lg:object-contain"
               />
               <button
                 type="button"
                 onClick={toggleMute}
                 aria-label={muted ? "Activar sonido" : "Silenciar"}
-                className="absolute bottom-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-fondo/85 text-tinta backdrop-blur-sm transition-colors hover:bg-cuero hover:text-fondo"
+                className="absolute bottom-2 right-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-fondo/85 text-tinta backdrop-blur-sm transition-colors hover:bg-cuero hover:text-fondo lg:bottom-3 lg:right-3 lg:h-10 lg:w-10"
               >
                 {muted ? <SoundOffIcon /> : <SoundOnIcon />}
               </button>
