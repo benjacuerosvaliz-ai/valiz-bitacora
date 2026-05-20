@@ -142,17 +142,43 @@ function HeroSection({ cliente }: { cliente: ClienteConfig }) {
         className="relative sticky top-0 flex h-screen items-center"
       >
         <div className="mx-auto w-full max-w-6xl px-5 sm:px-12 lg:px-16">
-          {/* Tag + H1 (siempre arriba) */}
+          {/* Tag arriba */}
           <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.32em] text-cuero sm:text-[11px]">
             Propuesta comercial · Mayo 2026
           </p>
-          <h1 className="mt-3 font-serif text-[13vw] leading-[0.92] tracking-[-0.03em] sm:text-[8vw] lg:text-[6vw]">
-            Para{" "}
-            <span className="italic text-cuero">{cliente.nombre}.</span>
-          </h1>
 
-          {/* MOBILE: video vertical IZQ + descripción/collab DER en row */}
-          <div className="mt-6 grid grid-cols-[auto_1fr] items-start gap-4 lg:hidden">
+          {/* COLLAB GIGANTE: Valiz × [Cliente] — lo primero que ven */}
+          <div className="mt-5 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6 lg:gap-8">
+            <Image
+              src="/images/valiz-logo.png"
+              alt="Valiz"
+              width={200}
+              height={200}
+              className="h-20 w-20 object-contain sm:h-28 sm:w-28 lg:h-36 lg:w-36"
+              priority
+            />
+            <span className="font-serif text-4xl italic text-cuero sm:text-5xl lg:text-6xl">
+              ×
+            </span>
+            {cliente.logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={cliente.logo}
+                alt={cliente.nombre}
+                className="h-20 w-20 rounded-full object-contain sm:h-28 sm:w-28 lg:h-36 lg:w-36"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
+              />
+            ) : (
+              <span className="font-serif text-5xl italic text-cuero sm:text-6xl lg:text-7xl">
+                {cliente.nombre}
+              </span>
+            )}
+          </div>
+
+          {/* MOBILE: video vertical IZQ + descripción DER en row */}
+          <div className="mt-8 grid grid-cols-[auto_1fr] items-center gap-4 lg:hidden">
             {/* Video vertical chico al lado del texto */}
             <div className="relative aspect-[9/16] w-[36vw] max-w-[170px] overflow-hidden shadow-[0_20px_40px_rgba(26,26,26,0.18)]">
               <video
@@ -175,87 +201,30 @@ function HeroSection({ cliente }: { cliente: ClienteConfig }) {
               </button>
             </div>
 
-            {/* Texto + collab apilados, al lado del video */}
-            <div className="flex flex-col gap-3">
-              <p className="font-serif text-sm italic leading-snug text-niebla">
-                Mochila Alforja Mamá — la pieza más esperada del catálogo
-                Valiz.
-              </p>
-              <div className="flex flex-col gap-2 border-l-2 border-cuero pl-3">
-                <div className="flex items-center gap-2">
-                  <Image
-                    src="/images/valiz-logo.png"
-                    alt="Valiz"
-                    width={28}
-                    height={28}
-                    className="h-7 w-7 object-contain"
-                  />
-                  <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-tinta">
-                    Valiz
-                  </span>
-                </div>
-                <span className="font-serif text-base italic text-cuero leading-none">
-                  ×
-                </span>
-                <div className="flex items-center gap-2">
-                  {cliente.logo && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={cliente.logo}
-                      alt={cliente.nombre}
-                      className="h-7 w-7 rounded-full object-contain"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                  )}
-                  <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-tinta">
-                    {cliente.nombre}
-                  </span>
-                </div>
-              </div>
-            </div>
+            {/* Descripción al lado del video */}
+            <p className="font-serif text-base italic leading-snug text-niebla">
+              Mochila Alforja Mamá — la pieza más esperada del catálogo
+              Valiz.
+            </p>
           </div>
 
-          {/* DESKTOP: layout original (texto izq grande + video letterbox der) */}
+          {/* DESKTOP: descripción + video letterbox lado a lado */}
           <div className="mt-10 hidden grid-cols-[1.1fr_1fr] items-center gap-14 lg:grid">
             <div className="flex flex-col gap-5">
               <p className="font-serif text-xl italic leading-relaxed text-niebla sm:text-2xl">
                 Mochila Alforja Mamá — la pieza más esperada del catálogo
                 Valiz.
               </p>
-              <div className="mt-2 flex items-center gap-5 border-l-2 border-cuero pl-5">
-                <div className="flex items-center gap-3">
-                  <Image
-                    src="/images/valiz-logo.png"
-                    alt="Valiz"
-                    width={40}
-                    height={40}
-                    className="h-10 w-10 object-contain"
-                  />
-                  <span className="font-sans text-sm font-semibold uppercase tracking-[0.22em] text-tinta">
-                    Valiz
-                  </span>
-                </div>
+              <div className="mt-2 flex items-center gap-3 border-l-2 border-cuero pl-5">
+                <span className="font-sans text-sm font-semibold uppercase tracking-[0.22em] text-tinta">
+                  Valiz
+                </span>
                 <span className="font-serif text-2xl italic text-cuero">
                   ×
                 </span>
-                <div className="flex items-center gap-3">
-                  {cliente.logo && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={cliente.logo}
-                      alt={cliente.nombre}
-                      className="h-10 w-10 rounded-full object-contain"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                  )}
-                  <span className="font-sans text-sm font-semibold uppercase tracking-[0.22em] text-tinta">
-                    {cliente.nombre}
-                  </span>
-                </div>
+                <span className="font-sans text-sm font-semibold uppercase tracking-[0.22em] text-tinta">
+                  {cliente.nombre}
+                </span>
               </div>
             </div>
 
