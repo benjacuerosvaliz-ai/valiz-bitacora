@@ -474,7 +474,7 @@ function PropuestaComercialSection() {
     { label: "IVA 19%", valor: `$${nf.format(1748000)}` },
     {
       label: "Plazo de pago",
-      valor: "60 días vía Lokal — sin comisión, transacción con respaldo",
+      valor: "Hasta 60 días vía Lokal — sin comisión, transacción con respaldo",
       accent: true,
     },
     {
@@ -544,8 +544,8 @@ function PropuestaComercialSection() {
             Manejamos toda la transacción a través de{" "}
             <strong className="italic text-cuero">Lokal</strong> —
             plataforma B2B chilena que da respaldo, transparencia y
-            permite pago a <strong>60 días sin comisión</strong> para
-            ustedes.
+            permite pago a <strong>hasta 60 días sin comisión</strong>{" "}
+            para ustedes.
           </p>
           <a
             href="https://somoslokal.cl/makers/valiz?referred=valiz"
