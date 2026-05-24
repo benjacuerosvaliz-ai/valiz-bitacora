@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { MISIONES, otorgarMision } from "@/lib/auth/misiones";
 import { sendCanjeConfirmation } from "@/lib/email/notify";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -59,11 +58,6 @@ export async function POST(request: NextRequest) {
       ptsRestantes: profile?.puntos_actuales ?? 0,
     }).catch((e) => console.error("[send canje email]", e));
   }
-
-  // Misión "primer canje" — idempotente, fire-and-forget.
-  otorgarMision(user.id, MISIONES.PRIMER_CANJE).catch((e) =>
-    console.error("[canje] otorgarMision", e),
-  );
 
   return NextResponse.json({ ok: true, code: data });
 }

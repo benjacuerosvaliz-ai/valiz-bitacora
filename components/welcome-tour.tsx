@@ -195,7 +195,7 @@ export function WelcomeTour({
             compras desde $25.000.
           </p>
           <p className="font-serif text-lg italic text-niebla">
-            Y hay hasta $8.000 más por completar tu bitácora:
+            Y hay hasta $3.000 más completando tu bitácora:
           </p>
           <ul className="space-y-3 border-y border-piedra py-5">
             <Mision
@@ -213,17 +213,11 @@ export function WelcomeTour({
               titulo="Presenta tu equipaje"
               detalle="Confirma las piezas Valiz que ya tienes."
             />
-            <Mision
-              premio="+$1.000"
-              titulo="Cada amigo invitado"
-              detalle="Por cada amigo que crea cuenta con tu código. Sin tope."
-            />
-            <Mision
-              premio="+$1.000"
-              titulo="Tu primer canje"
-              detalle="Cuando uses tus pesos por primera vez en valiz.cl."
-            />
           </ul>
+          <p className="font-serif text-sm italic text-niebla">
+            Después, ganas 5% del subtotal cada vez que un amigo compra
+            Valiz con tu código de referido. Sin tope.
+          </p>
         </div>
       ),
     },

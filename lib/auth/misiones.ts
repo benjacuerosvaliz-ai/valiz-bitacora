@@ -17,17 +17,21 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 import { PUNTOS_RULES } from "./reconcile";
 
-/** Catálogo de misiones (IDs estables — no cambiar). */
+/**
+ * Catálogo de misiones de onboarding (IDs estables — no cambiar).
+ * Cada misión otorga $1.000 (PUNTOS_RULES.MISION_AMOUNT) una sola vez.
+ *
+ * Anti-abuso: NO incluye "amigo invitado al signup" (farming con
+ * múltiples emails) ni "primer canje" (regalo sin venta). La plata
+ * adicional al onboarding se gana orgánicamente:
+ *   - 5% del subtotal cuando un referido COMPRA (genera venta real)
+ *   - $200 por bitácora extra (max 1/pieza/mes)
+ *   - Concursos (controlados por admin)
+ */
 export const MISIONES = {
   PERFIL_COMPLETO: "perfil_completo",
   PRIMERA_BITACORA: "primera_bitacora",
   PRESENTAR_EQUIPAJE: "presentar_equipaje",
-  PRIMER_CANJE: "primer_canje",
-  /**
-   * Amigo invitado: la referencia_id es `amigo_invitado:<friend_user_id>`
-   * — una por amigo invitado, sin tope.
-   */
-  AMIGO_INVITADO_PREFIX: "amigo_invitado:",
 } as const;
 
 export type MisionId = (typeof MISIONES)[keyof typeof MISIONES] | string;

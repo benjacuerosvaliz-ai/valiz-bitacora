@@ -1,23 +1,31 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
- * Reglas de puntos (Fase 1):
- *   • 5 pts por cada $1.000 CLP gastados.
- *   • +2.000 pts al crear cuenta (bono bienvenida inmediato).
- *   • Hasta +5.000 pts adicionales por completar misiones de presentación
- *     (perfil, primera bitácora, presentar equipaje, primer canje, +1.000
- *     por amigo referido). Las misiones se implementan en endpoints
- *     separados — acá solo se otorga el welcome.
+ * Reglas de puntos:
+ *   • 5 pts por cada $1.000 CLP gastados (al sumar venta paid).
+ *   • Welcome condicional:
+ *       - Cliente (email con order paid previa): +2.000 pts
+ *       - No-cliente (email nuevo, sin compras): +1.000 pts
+ *   • Hasta +3.000 pts adicionales por misiones de presentación:
+ *       - Completar perfil (foto + ig/tiktok + ciudad): +1.000
+ *       - Primera bitácora (foto + lugar + texto): +1.000
+ *       - Presentar equipaje (confirmar piezas históricas): +1.000
+ *     → Cap total "onboarding": $5.000 para cliente, $4.000 para no-cliente.
  *   • +500 pts la primera vez que tienes una pieza de cada familia distinta.
- *   • +200 pts por cada bitácora comprobable (max 1/pieza/mes — se aplica en
- *     el endpoint de subida de bitácora, no acá).
+ *   • +200 pts por cada bitácora comprobable extra (max 1/pieza/mes).
+ *   • 5% del subtotal al referidor cuando un amigo COMPRA con su código.
  *
- * Canje: mínimo $25.000 CLP de compra para usar pts (regla en endpoint
- * de canje). 1 pt = $1 CLP.
+ * Anti-abuso: el bonus por amigo invitado y el bonus por primer canje
+ * fueron eliminados — la plata solo sale ahora con (a) onboarding capped,
+ * (b) actividad orgánica (bitácoras), o (c) venta real (referido).
+ *
+ * Canje: mínimo $25.000 CLP de compra en valiz.cl (enforcement en Shopify
+ * al crear los lotes de códigos). 1 pt = $1 CLP.
  */
 export const PUNTOS_RULES = {
   POR_MIL_CLP: 5,
-  BONO_BIENVENIDA: 2000,
+  BONO_BIENVENIDA_CLIENTE: 2000,
+  BONO_BIENVENIDA_NUEVO: 1000,
   BONO_FAMILIA_NUEVA: 500,
   POR_BITACORA: 200,
   CANJE_MINIMO_CLP: 25000,
@@ -53,16 +61,28 @@ export async function ensureProfileAndReconcile(args: {
 
   if (!created) return { created };
 
-  // Bono bienvenida (idempotente)
+  // Welcome condicional: cliente con orders pagadas previas vs.
+  // no-cliente (email nuevo sin compras).
+  const { count: ordersCount } = await sb
+    .from("orders")
+    .select("id", { head: true, count: "exact" })
+    .eq("email", email)
+    .in("financial_status", ["paid", "partially_refunded"]);
+  const esCliente = (ordersCount ?? 0) > 0;
+  const bonoBienvenida = esCliente
+    ? PUNTOS_RULES.BONO_BIENVENIDA_CLIENTE
+    : PUNTOS_RULES.BONO_BIENVENIDA_NUEVO;
+
   await insertIfMissing(
     sb,
     args.userId,
     "bono_bienvenida",
     null,
-    PUNTOS_RULES.BONO_BIENVENIDA,
+    bonoBienvenida,
   );
 
-  // Reconciliación del email primary
+  // Reconciliación del email primary (puntos por compras previas + bono
+  // familia nueva). Para no-clientes esto es no-op.
   await reconcileBonusesForEmail(args.userId, email);
 
   return { created };

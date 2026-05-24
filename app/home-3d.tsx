@@ -541,13 +541,13 @@ function IncentivoHero() {
           Valiz · Bitácora
         </p>
         <h1 className="max-w-4xl font-serif text-[10vw] leading-[0.95] tracking-[-0.03em] text-tinta sm:text-[6vw] lg:text-[5vw]">
-          $2.000 al instante.
+          Hasta $5.000 de regalo.
           <br />
-          <span className="italic text-cuero">Hasta $10.000 si te involucras.</span>
+          <span className="italic text-cuero">$2.000 al instante.</span>
         </h1>
         <p className="max-w-2xl font-serif text-lg italic leading-relaxed text-niebla sm:text-xl">
-          Te damos dos mil pesos por crear tu cuenta. El resto los ganas
-          completando tu bitácora y trayendo a tus amigos.
+          Te damos dos mil pesos por crear tu cuenta. Los tres mil
+          restantes los ganas completando tu bitácora.
         </p>
 
         {/* Misiones — 2x2 en mobile, 4 cols en desktop */}
@@ -569,10 +569,15 @@ function IncentivoHero() {
           />
           <Mision
             premio="+$1.000"
-            titulo="Cada amigo invitado"
-            cuerpo="Por cada amigo que crea cuenta con tu código. Sin tope."
+            titulo="Presenta tu equipaje"
+            cuerpo="Confirma las piezas Valiz que ya tienes en tu bitácora."
           />
         </div>
+
+        <p className="max-w-2xl font-serif text-base italic text-niebla">
+          Después: 5% del subtotal cada vez que alguien compra Valiz con
+          tu código de referido. Sin tope.
+        </p>
 
         <p className="font-serif text-base italic text-niebla">
           Tus pesos en valiz.cl — canjeables en compras desde $25.000.
