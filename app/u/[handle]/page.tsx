@@ -428,7 +428,13 @@ export default async function PerfilPublicoPage({
           puntosBienvenida={PUNTOS_BIENVENIDA}
           referidoCode={referidoCode}
           handle={profile.handle}
-          tieneAvatar={!!profile.avatar_url}
+          perfilActual={{
+            avatarUrl: profile.avatar_url ?? null,
+            displayName: profile.display_name ?? null,
+            instagramHandle: profile.instagram_handle ?? null,
+            tiktokHandle: profile.tiktok_handle ?? null,
+            city: profile.city ?? null,
+          }}
         />
       )}
 

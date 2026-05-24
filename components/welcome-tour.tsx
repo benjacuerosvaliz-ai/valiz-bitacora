@@ -1,9 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 const nf = new Intl.NumberFormat("es-CL");
 
@@ -15,10 +14,19 @@ const nf = new Intl.NumberFormat("es-CL");
  *
  * Steps:
  *  1. Bienvenida + resumen del equipaje
- *  2. Sistema de puntos (1pt = 1 CLP, 200 por bitácora, 5% por referido)
- *  3. Tu código de referido + compartir
- *  4. Tu perfil (foto + handle público)
+ *  2. Tu regalo (2.000 + misiones para llegar a 10.000)
+ *  3. Tu código de referido
+ *  4. Completá tu perfil (form inline: foto + nombre + IG + ciudad)
+ *     — al guardar otorga la misión PERFIL_COMPLETO (+$1.000)
  */
+type PerfilActual = {
+  avatarUrl: string | null;
+  displayName: string | null;
+  instagramHandle: string | null;
+  tiktokHandle: string | null;
+  city: string | null;
+};
+
 export function WelcomeTour({
   nombre,
   piezas,
@@ -27,7 +35,7 @@ export function WelcomeTour({
   puntosBienvenida,
   referidoCode,
   handle,
-  tieneAvatar,
+  perfilActual,
 }: {
   nombre: string;
   piezas: number;
@@ -36,23 +44,43 @@ export function WelcomeTour({
   puntosBienvenida: number; // típicamente 2000 (1 pt = $1 CLP)
   referidoCode: string | null;
   handle: string;
-  tieneAvatar: boolean;
+  perfilActual: PerfilActual;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(true);
   const [step, setStep] = useState(0);
   const [copied, setCopied] = useState(false);
 
+  // Estado del form del último step
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(
+    perfilActual.avatarUrl,
+  );
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [displayName, setDisplayName] = useState(
+    perfilActual.displayName ?? "",
+  );
+  const [instagram, setInstagram] = useState(
+    perfilActual.instagramHandle ?? "",
+  );
+  const [city, setCity] = useState(perfilActual.city ?? "");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   const primerNombre = nombre.split(/\s+/)[0];
 
-  async function close() {
-    setOpen(false);
+  async function markWelcomed() {
     try {
       await fetch("/api/auth/welcomed", { method: "POST" });
-      router.refresh();
     } catch {
       // no-op
     }
+  }
+
+  async function close() {
+    setOpen(false);
+    await markWelcomed();
+    router.refresh();
   }
 
   async function copyCode() {
@@ -63,6 +91,58 @@ export function WelcomeTour({
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // no-op
+    }
+  }
+
+  function onAvatarPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setAvatarFile(f);
+    setAvatarPreview(URL.createObjectURL(f));
+  }
+
+  async function guardarPerfil() {
+    setSaveError(null);
+    setSaving(true);
+    try {
+      // 1. Subir foto si hay archivo nuevo
+      if (avatarFile) {
+        const fd = new FormData();
+        fd.append("file", avatarFile);
+        const r = await fetch("/api/perfil/avatar", {
+          method: "POST",
+          body: fd,
+        });
+        if (!r.ok) {
+          const j = await r.json().catch(() => null);
+          throw new Error(j?.error ?? "No pude subir la foto.");
+        }
+      }
+      // 2. Update de campos de texto
+      const r2 = await fetch("/api/perfil", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          display_name: displayName.trim() || null,
+          city: city.trim() || null,
+          instagram_handle: instagram.trim() || null,
+          // No tocamos: country, bio, tiktok_handle (los maneja /yo/perfil)
+          country: null,
+          bio: null,
+          tiktok_handle: perfilActual.tiktokHandle ?? null,
+        }),
+      });
+      if (!r2.ok) {
+        const j = await r2.json().catch(() => null);
+        throw new Error(j?.error ?? "No pude guardar el perfil.");
+      }
+      // 3. Cerrar modal (el backend ya disparó la misión PERFIL_COMPLETO
+      // si tiene avatar + city + ig/tiktok).
+      await close();
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Algo falló.");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -121,7 +201,7 @@ export function WelcomeTour({
             <Mision
               premio="+$1.000"
               titulo="Completa tu perfil"
-              detalle="Foto, Instagram y ciudad."
+              detalle="Foto, Instagram y ciudad. Es el próximo paso."
             />
             <Mision
               premio="+$1.000"
@@ -186,37 +266,92 @@ export function WelcomeTour({
       ),
     },
     {
-      tag: "Tu identidad",
-      titulo: "Esto es tu carta Valiz.",
+      tag: "Completa tu perfil · +$1.000",
+      titulo: "Que se vea tu cara en bitacora.valiz.cl.",
       contenido: (
         <div className="space-y-5">
-          <p className="font-serif text-lg leading-relaxed text-tinta sm:text-xl">
-            Tu perfil en{" "}
-            <code className="font-mono text-[14px] text-cuero">
+          <p className="font-serif text-base leading-relaxed text-niebla sm:text-lg">
+            Tu perfil público está en{" "}
+            <code className="font-mono text-[13px] text-cuero">
               bitacora.valiz.cl/u/{handle}
-            </code>{" "}
-            es la cara que ven los demás. Cuando lo compartís por WhatsApp
-            sale tu foto + equipaje + puntos + código.
+            </code>
+            . Llénalo y te damos{" "}
+            <strong className="not-italic text-cuero">$1.000 al toque</strong>.
           </p>
-          <div className="border-t border-piedra pt-5">
-            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
-              {tieneAvatar ? "Tu foto ya está lista" : "Lo más importante"}
-            </p>
-            <p className="mt-2 font-serif text-base italic leading-relaxed text-niebla">
-              {tieneAvatar
-                ? "Si querés cambiarla más adelante, la editás desde Editar perfil."
-                : "Subí una foto de perfil para que el preview compartido se vea con tu cara, no con un monograma."}
-            </p>
-            {!tieneAvatar && (
-              <Image
-                src="/images/valiz-logo.png"
-                alt=""
-                width={32}
-                height={32}
-                className="mt-3 opacity-30"
+
+          {/* Avatar uploader */}
+          <div className="flex items-center gap-4 border-t border-piedra pt-5">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-piedra bg-fondo transition-colors hover:border-cuero"
+              aria-label="Subir foto de perfil"
+            >
+              {avatarPreview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={avatarPreview}
+                  alt="Tu foto"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center font-serif text-2xl text-niebla group-hover:text-cuero">
+                  +
+                </span>
+              )}
+            </button>
+            <div>
+              <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+                Foto de perfil
+              </p>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="mt-1 font-serif text-sm italic text-niebla underline transition-colors hover:text-cuero"
+              >
+                {avatarPreview ? "Cambiar foto" : "Subir tu foto"}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={onAvatarPick}
               />
-            )}
+            </div>
           </div>
+
+          {/* Inputs de texto */}
+          <div className="space-y-4">
+            <Campo
+              label="Tu nombre"
+              placeholder="Como quieres que te lean"
+              value={displayName}
+              onChange={setDisplayName}
+              maxLength={60}
+            />
+            <Campo
+              label="Instagram"
+              placeholder="tuusuario (sin el @)"
+              value={instagram}
+              onChange={setInstagram}
+              maxLength={60}
+              prefix="@"
+            />
+            <Campo
+              label="Ciudad"
+              placeholder="Santiago, Valdivia, etc."
+              value={city}
+              onChange={setCity}
+              maxLength={80}
+            />
+          </div>
+
+          {saveError && (
+            <p className="font-sans text-[11px] uppercase tracking-[0.18em] text-[#a83a1f]">
+              {saveError}
+            </p>
+          )}
         </div>
       ),
     },
@@ -258,9 +393,10 @@ export function WelcomeTour({
               <button
                 type="button"
                 onClick={close}
-                className="font-sans text-[10px] uppercase tracking-[0.22em] text-niebla transition-colors hover:text-tinta"
+                disabled={saving}
+                className="font-sans text-[10px] uppercase tracking-[0.22em] text-niebla transition-colors hover:text-tinta disabled:opacity-40"
               >
-                Saltar
+                {isLast ? "Después" : "Saltar"}
               </button>
             </div>
 
@@ -280,21 +416,29 @@ export function WelcomeTour({
               <button
                 type="button"
                 onClick={() => setStep((s) => Math.max(0, s - 1))}
-                disabled={isFirst}
+                disabled={isFirst || saving}
                 className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-niebla transition-colors hover:text-tinta disabled:opacity-30 disabled:hover:text-niebla"
               >
                 ← Atrás
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (isLast) close();
-                  else setStep((s) => s + 1);
-                }}
-                className="bg-tinta px-7 py-3 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-fondo transition-colors hover:bg-cuero"
-              >
-                {isLast ? "Empezar" : "Siguiente →"}
-              </button>
+              {isLast ? (
+                <button
+                  type="button"
+                  onClick={guardarPerfil}
+                  disabled={saving}
+                  className="bg-cuero px-7 py-3 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-fondo transition-colors hover:bg-tinta disabled:opacity-50"
+                >
+                  {saving ? "Guardando…" : "Guardar y ganar $1.000 →"}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setStep((s) => s + 1)}
+                  className="bg-tinta px-7 py-3 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-fondo transition-colors hover:bg-cuero"
+                >
+                  Siguiente →
+                </button>
+              )}
             </div>
           </motion.div>
         </motion.div>
@@ -310,19 +454,54 @@ function Mision({
 }: {
   premio: string;
   titulo: string;
-  detalle: string;
+  detalle?: string;
 }) {
   return (
-    <li className="flex items-start gap-3">
-      <span className="mt-0.5 inline-flex shrink-0 items-center justify-center border border-cuero bg-cuero/5 px-2 py-1 font-mono text-xs font-semibold text-cuero">
+    <li className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5">
+      <span className="row-span-2 font-serif text-xl font-semibold leading-none text-cuero">
         {premio}
       </span>
-      <div className="flex-1">
-        <p className="font-serif text-base text-tinta">{titulo}</p>
-        <p className="mt-0.5 font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
-          {detalle}
-        </p>
-      </div>
+      <p className="font-serif text-base text-tinta">{titulo}</p>
+      {detalle && (
+        <p className="font-serif text-sm italic text-niebla">{detalle}</p>
+      )}
     </li>
+  );
+}
+
+function Campo({
+  label,
+  placeholder,
+  value,
+  onChange,
+  maxLength,
+  prefix,
+}: {
+  label: string;
+  placeholder?: string;
+  value: string;
+  onChange: (v: string) => void;
+  maxLength?: number;
+  prefix?: string;
+}) {
+  return (
+    <label className="block">
+      <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+        {label}
+      </span>
+      <div className="mt-1 flex items-baseline gap-1 border-b border-piedra focus-within:border-cuero">
+        {prefix && (
+          <span className="font-serif text-lg text-niebla">{prefix}</span>
+        )}
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          className="w-full bg-transparent py-2 font-serif text-lg text-tinta outline-none placeholder:text-niebla/40"
+        />
+      </div>
+    </label>
   );
 }
