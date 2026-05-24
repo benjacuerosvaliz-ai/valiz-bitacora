@@ -249,18 +249,27 @@ export default async function PerfilPublicoPage({
   const puntosTotal = Number(dueno?.puntos_actuales ?? 0);
   const isFirstLogin = esElDueno && !dueno?.welcomed_at;
 
-  // Si es primer login, otorgar 1000 pts de bienvenida (idempotente
-  // via referencia_id único). Esto pasa una sola vez por user.
-  const PUNTOS_BIENVENIDA = 1000;
+  // Si es primer login, otorgar 5000 pts de bienvenida (idempotente).
+  // Doble chequeo: tanto si fue pre-poblado (motivo='bono_bienvenida')
+  // como si lo otorgó esta misma ruta antes (motivo='ajuste_admin' con
+  // refId 'bienvenida:<id>'), no volver a insertar.
+  const PUNTOS_BIENVENIDA = 2000;
   if (isFirstLogin) {
     const refId = `bienvenida:${profile.id}`;
-    const { count: yaTiene } = await admin
-      .from("puntos_movimientos")
-      .select("id", { head: true, count: "exact" })
-      .eq("user_id", profile.id)
-      .eq("motivo", "ajuste_admin")
-      .eq("referencia_id", refId);
-    if ((yaTiene ?? 0) === 0) {
+    const [{ count: yaAjuste }, { count: yaBono }] = await Promise.all([
+      admin
+        .from("puntos_movimientos")
+        .select("id", { head: true, count: "exact" })
+        .eq("user_id", profile.id)
+        .eq("motivo", "ajuste_admin")
+        .eq("referencia_id", refId),
+      admin
+        .from("puntos_movimientos")
+        .select("id", { head: true, count: "exact" })
+        .eq("user_id", profile.id)
+        .eq("motivo", "bono_bienvenida"),
+    ]);
+    if ((yaAjuste ?? 0) === 0 && (yaBono ?? 0) === 0) {
       await admin.from("puntos_movimientos").insert({
         user_id: profile.id,
         delta: PUNTOS_BIENVENIDA,
@@ -427,20 +436,18 @@ export default async function PerfilPublicoPage({
       </header>
 
       {/* Barra del dueño (solo visible cuando el visitante es el dueño
-          logueado). Accesos rápidos a las acciones más comunes. */}
+          logueado). Accesos rápidos a las acciones más comunes. El CTA
+          principal "+ Bitácora" va destacado como botón. */}
       {esElDueno && (
-        <div className="border-b border-piedra bg-tinta/[0.025] px-5 py-2.5 sm:px-10">
-          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2">
-            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
-              Acciones rápidas
-            </p>
+        <div className="border-b border-piedra bg-tinta/[0.025] px-5 py-3 sm:px-10">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3">
+            <Link
+              href="/yo/bitacora/nueva"
+              className="inline-flex items-center gap-2 bg-cuero px-4 py-2 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-fondo transition-colors hover:bg-tinta"
+            >
+              + Subir bitácora
+            </Link>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-              <Link
-                href="/yo/bitacora/nueva"
-                className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-tinta transition-colors hover:text-cuero"
-              >
-                + Bitácora
-              </Link>
               <Link
                 href="/yo/agregar-pieza"
                 className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-tinta transition-colors hover:text-cuero"
@@ -451,7 +458,7 @@ export default async function PerfilPublicoPage({
                 href="/yo/canje"
                 className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-tinta transition-colors hover:text-cuero"
               >
-                Canjear puntos
+                Canjear saldo
               </Link>
               <Link
                 href="/yo/perfil"
@@ -624,11 +631,11 @@ export default async function PerfilPublicoPage({
                 />
               </>
             )}
-            {/* Puntos Valiz — siempre visible (motiva ver que la gente
-                acumula plata). 1 pt = $1 CLP de descuento. */}
+            {/* Saldo acumulado — siempre visible (motiva ver que la gente
+                acumula plata). 1 pt = $1 CLP de descuento en valiz.cl. */}
             <Stat
-              label="Puntos · 1pt=$1 CLP"
-              big={nf.format(puntosTotal)}
+              label="Acumulado en valiz.cl"
+              big={`$${nf.format(puntosTotal)}`}
             />
           </div>
 
@@ -842,12 +849,26 @@ export default async function PerfilPublicoPage({
           {equipajeDetalle.length > 0 && (
             <section className="border-t border-piedra px-5 py-10 sm:px-10 sm:py-14">
               <div className="mx-auto max-w-5xl">
-                <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
-                  Tu equipaje en detalle
-                </p>
-                <h2 className="mt-2 font-serif text-2xl leading-tight tracking-[-0.015em] sm:text-3xl">
-                  Cada pieza, su historia.
-                </h2>
+                <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
+                  <div>
+                    <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+                      Tu equipaje en detalle
+                    </p>
+                    <h2 className="mt-2 font-serif text-2xl leading-tight tracking-[-0.015em] sm:text-3xl">
+                      Cada pieza, su historia.
+                    </h2>
+                    <p className="mt-2 font-serif text-sm italic text-niebla">
+                      Toca una pieza para subir una bitácora con foto y
+                      lugar. Cada bitácora suma $200 a tu saldo.
+                    </p>
+                  </div>
+                  <Link
+                    href="/yo/bitacora/nueva"
+                    className="inline-flex items-center gap-2 border border-cuero bg-cuero px-5 py-3 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-fondo transition-colors hover:bg-tinta hover:border-tinta"
+                  >
+                    + Subir bitácora
+                  </Link>
+                </div>
                 <div className="mt-6">
                   <EquipajeGrid piezas={equipajeDetalle} />
                 </div>

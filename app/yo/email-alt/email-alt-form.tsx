@@ -87,7 +87,7 @@ export function EmailAltForm({ primaryEmail }: { primaryEmail: string }) {
               : "compras históricas con ese correo"}
             , y te dimos{" "}
             <strong className="text-cuero">
-              {nf.format(result.pts)} pts retroactivos
+              ${nf.format(result.pts)} retroactivos
             </strong>
             .
           </p>

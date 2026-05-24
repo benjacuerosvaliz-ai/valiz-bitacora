@@ -237,7 +237,7 @@ export function tplCanjeConfirmacion(args: {
       `Pégalo en el cupón al hacer checkout en <a href="${escape(args.shopUrl)}" style="color:${CUERO};">valiz.cl</a>. Es de un solo uso.`,
     ),
     p(
-      `Saldo restante en tu bitácora: <strong>${nf.format(args.ptsRestantes)} pts</strong>.`,
+      `Saldo restante en tu bitácora: <strong>$${nf.format(args.ptsRestantes)}</strong>.`,
     ),
   ].join("");
   return {
@@ -298,10 +298,10 @@ export function tplCompraValidada(args: {
   const ptsLine =
     args.ptsOtorgados > 0
       ? p(
-          `Te dimos <strong>${nf.format(args.ptsOtorgados)} pts</strong> retroactivos por esta pieza, a tu saldo.`,
+          `Te dimos <strong>$${nf.format(args.ptsOtorgados)}</strong> retroactivos por esta pieza, a tu saldo.`,
         )
       : p(
-          `Sin puntos retroactivos esta vez, pero queda registrada en tu bitácora.`,
+          `Sin retroactivo esta vez, pero queda registrada en tu bitácora.`,
         );
   const body = [
     p(

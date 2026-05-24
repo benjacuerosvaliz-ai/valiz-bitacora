@@ -4,9 +4,18 @@ cargar_codigos.py — Carga lote de códigos de descuento de Shopify a la
 tabla `codigos_disponibles`. Cada código tiene una denominación CLP fija.
 
 Uso típico:
-  1. En Shopify admin generas un lote de códigos únicos no acumulables
-     (Discounts → Create discount → Amount off products → Discount code →
-     Generate codes → ej 50 códigos, $5.000 fijo).
+  1. En Shopify admin generas un lote de códigos únicos no acumulables:
+     Discounts → Create discount → Amount off products → Discount code →
+     Generate codes → ej 50 códigos, $5.000 fijo.
+
+     IMPORTANTE — Marca SIEMPRE estas opciones al crear el lote:
+       • Minimum purchase requirements → Minimum purchase amount:
+         $25.000 CLP  (regla de margen: evita que el regalo de
+         bienvenida pague casi toda una pieza chica).
+       • Customer eligibility → All customers (o segmento bitácora).
+       • Usage limits → Limit to one use per customer.
+       • Combinations → No combina con otros descuentos.
+
   2. Exportas el CSV con los códigos.
   3. Corres este script:
        cd /Users/benja/valiz-bitacora

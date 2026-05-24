@@ -95,9 +95,10 @@ export function WelcomeModal({
                   <p>
                     Te dimos{" "}
                     <strong className="font-serif italic text-cuero">
-                      {nf.format(puntos)} puntos
+                      ${nf.format(puntos)}
                     </strong>{" "}
-                    como reconocimiento. Cada punto vale $1 CLP para canjear en valiz.cl.
+                    como reconocimiento. Canjeables 1 a 1 en valiz.cl, en
+                    compras desde $25.000.
                   </p>
                 )}
               </div>
@@ -122,7 +123,7 @@ export function WelcomeModal({
                   <p>
                     Te dejamos{" "}
                     <strong className="not-italic text-cuero">
-                      {nf.format(puntos)} pts de bienvenida
+                      ${nf.format(puntos)} de bienvenida
                     </strong>{" "}
                     de todos modos.
                   </p>

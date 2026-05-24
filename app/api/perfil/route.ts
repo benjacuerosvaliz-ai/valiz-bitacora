@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { evaluarPerfilCompleto } from "@/lib/auth/misiones";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -56,5 +57,11 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Misión "perfil completo" — fire-and-forget, idempotente.
+  evaluarPerfilCompleto(user.id).catch((e) =>
+    console.error("[perfil] evaluarPerfilCompleto", e),
+  );
+
   return NextResponse.json({ ok: true });
 }

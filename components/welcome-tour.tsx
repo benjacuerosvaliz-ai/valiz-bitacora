@@ -33,7 +33,7 @@ export function WelcomeTour({
   piezas: number;
   horas: number;
   pies: number;
-  puntosBienvenida: number; // típicamente 1000
+  puntosBienvenida: number; // típicamente 2000 (1 pt = $1 CLP)
   referidoCode: string | null;
   handle: string;
   tieneAvatar: boolean;
@@ -98,37 +98,50 @@ export function WelcomeTour({
             <p>
               Esta es tu bitácora. Acá vas a registrar tus Valiz y los
               lugares por donde van. Cuanto más te involucres, más puntos
-              acumulás.
+              acumulas.
             </p>
           )}
         </div>
       ),
     },
     {
-      tag: "Tus puntos",
-      titulo: `${nf.format(puntosBienvenida)} pts de regalo para empezar.`,
+      tag: "Tu regalo",
+      titulo: `$${nf.format(puntosBienvenida)} de regalo para empezar.`,
       contenido: (
         <div className="space-y-5">
           <p className="font-serif text-lg leading-relaxed text-tinta sm:text-xl">
-            En Valiz Bitácora ganás puntos por participar. Cada{" "}
-            <strong className="italic text-cuero">1 pt = $1 CLP</strong> de
-            descuento en valiz.cl.
+            Cada peso se canjea 1 a 1 en{" "}
+            <strong className="italic text-cuero">valiz.cl</strong>, en
+            compras desde $25.000.
+          </p>
+          <p className="font-serif text-lg italic text-niebla">
+            Y hay hasta $8.000 más por completar tu bitácora:
           </p>
           <ul className="space-y-3 border-y border-piedra py-5">
             <Mision
-              premio="+1.000"
-              titulo="Por crear cuenta"
-              detalle="Ya están en tu cuenta."
+              premio="+$1.000"
+              titulo="Completa tu perfil"
+              detalle="Foto, Instagram y ciudad."
             />
             <Mision
-              premio="+200"
-              titulo="Cada bitácora con foto, ubicación y texto"
-              detalle="Una por mes por cada pieza tuya."
+              premio="+$1.000"
+              titulo="Tu primera bitácora con foto y lugar"
+              detalle="Después +$200 por cada bitácora extra."
             />
             <Mision
-              premio="+5% pts"
-              titulo="Cada venta con tu código de referido"
-              detalle="Sin techo. Si recomendás mucho, ganás mucho."
+              premio="+$1.000"
+              titulo="Presenta tu equipaje"
+              detalle="Confirma las piezas Valiz que ya tienes."
+            />
+            <Mision
+              premio="+$1.000"
+              titulo="Cada amigo invitado"
+              detalle="Por cada amigo que crea cuenta con tu código. Sin tope."
+            />
+            <Mision
+              premio="+$1.000"
+              titulo="Tu primer canje"
+              detalle="Cuando uses tus pesos por primera vez en valiz.cl."
             />
           </ul>
         </div>
@@ -142,10 +155,10 @@ export function WelcomeTour({
       contenido: (
         <div className="space-y-5">
           <p className="font-serif text-lg leading-relaxed text-tinta sm:text-xl">
-            Compartilo con quien quieras. Si lo usa, obtiene{" "}
+            Compártelo con quien quieras. Si lo usa, obtiene{" "}
             <strong className="italic text-cuero">15% off</strong> en su
-            primera compra Valiz, y vos te llevás{" "}
-            <strong className="italic text-cuero">5% del subtotal en pts</strong>.
+            primera compra Valiz, y tú te llevas{" "}
+            <strong className="italic text-cuero">5% del subtotal en pesos</strong>.
           </p>
           {referidoCode ? (
             <button

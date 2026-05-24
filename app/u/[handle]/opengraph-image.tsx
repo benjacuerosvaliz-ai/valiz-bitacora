@@ -295,8 +295,8 @@ export default async function Image({
           <Stat label="Horas" value={nf.format(horasTotal)} />
           <Stat label="Pies²" value={nf.format(piesTotal)} />
           <Stat
-            label="Pts · 1pt=$1"
-            value={nf.format(puntosTotal)}
+            label="Acumulado"
+            value={`$${nf.format(puntosTotal)}`}
             accent
           />
         </div>

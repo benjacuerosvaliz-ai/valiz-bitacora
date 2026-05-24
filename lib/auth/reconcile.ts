@@ -3,18 +3,25 @@ import { createAdminClient } from "@/lib/supabase/admin";
 /**
  * Reglas de puntos (Fase 1):
  *   • 5 pts por cada $1.000 CLP gastados.
- *   • +1.000 pts una sola vez al registrarte (bono bienvenida).
+ *   • +2.000 pts al crear cuenta (bono bienvenida inmediato).
+ *   • Hasta +5.000 pts adicionales por completar misiones de presentación
+ *     (perfil, primera bitácora, presentar equipaje, primer canje, +1.000
+ *     por amigo referido). Las misiones se implementan en endpoints
+ *     separados — acá solo se otorga el welcome.
  *   • +500 pts la primera vez que tienes una pieza de cada familia distinta.
  *   • +200 pts por cada bitácora comprobable (max 1/pieza/mes — se aplica en
  *     el endpoint de subida de bitácora, no acá).
  *
- * 1 pt = $1 CLP al canjear.
+ * Canje: mínimo $25.000 CLP de compra para usar pts (regla en endpoint
+ * de canje). 1 pt = $1 CLP.
  */
 export const PUNTOS_RULES = {
   POR_MIL_CLP: 5,
-  BONO_BIENVENIDA: 1000,
+  BONO_BIENVENIDA: 2000,
   BONO_FAMILIA_NUEVA: 500,
   POR_BITACORA: 200,
+  CANJE_MINIMO_CLP: 25000,
+  MISION_AMOUNT: 1000,
 } as const;
 
 /**

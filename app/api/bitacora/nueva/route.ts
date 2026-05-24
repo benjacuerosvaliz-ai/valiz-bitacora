@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { NextResponse, type NextRequest } from "next/server";
 
+import { MISIONES, otorgarMision } from "@/lib/auth/misiones";
 import { notifyAdminBitacoraNueva } from "@/lib/email/notify";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -145,6 +146,16 @@ export async function POST(request: NextRequest) {
       motivo: "bitacora",
       referencia_id: inserted.id,
     });
+  }
+
+  // Misión "primera bitácora con foto + lugar + texto" — idempotente.
+  // Solo cuenta si la entry califica (foto + lat/lng + texto suficiente).
+  const calificaParaMision =
+    !!fotoUrl && lat != null && lng != null && texto.length >= TEXTO_MIN;
+  if (calificaParaMision) {
+    otorgarMision(user.id, MISIONES.PRIMERA_BITACORA).catch((e) =>
+      console.error("[bitacora] otorgarMision", e),
+    );
   }
 
   // Notificar admin (fire-and-forget)

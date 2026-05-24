@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { NextResponse, type NextRequest } from "next/server";
 
+import { evaluarPerfilCompleto } from "@/lib/auth/misiones";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -89,6 +90,11 @@ export async function POST(request: NextRequest) {
   if (dbErr) {
     return NextResponse.json({ error: dbErr.message }, { status: 500 });
   }
+
+  // Misión "perfil completo" — fire-and-forget, idempotente.
+  evaluarPerfilCompleto(user.id).catch((e) =>
+    console.error("[avatar] evaluarPerfilCompleto", e),
+  );
 
   return NextResponse.json({ ok: true, url: publicUrl });
 }

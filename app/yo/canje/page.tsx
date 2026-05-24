@@ -74,22 +74,22 @@ export default async function CanjePage() {
       <header className="flex items-center justify-between border-b border-piedra px-8 py-5 sm:px-16 sm:py-6">
         <BrandMark variant="back" href="/yo" />
         <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
-          Canjear puntos
+          Canjear tu saldo
         </p>
       </header>
 
       <section className="border-b border-piedra px-8 py-20 sm:px-16">
         <div className="mx-auto max-w-3xl">
           <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-            Canjear puntos
+            Canjear tu saldo
           </p>
           <h1 className="mt-4 font-serif text-4xl leading-[1.04] tracking-[-0.022em] sm:text-5xl">
-            Tu saldo: {nf.format(puntos)} pts.
+            Tu saldo: ${nf.format(puntos)}.
           </h1>
           <p className="mt-6 max-w-xl font-serif italic leading-relaxed text-niebla">
-            1 pt = $1 CLP. Eliges una denominación y te entregamos un código
-            de descuento para usar en valiz.cl. El código aparece arriba al
-            instante.
+            Eliges una denominación y te entregamos un código de descuento
+            para usar en valiz.cl, en compras desde $25.000. El código aparece
+            arriba al instante.
           </p>
 
           <div className="mt-12">

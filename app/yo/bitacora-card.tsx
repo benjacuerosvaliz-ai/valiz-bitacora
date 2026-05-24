@@ -77,7 +77,7 @@ export function BitacoraCard({
               month: "short",
               year: "numeric",
             })}
-            {pointsAwarded > 0 && ` · +${nf.format(pointsAwarded)} pts`}
+            {pointsAwarded > 0 && ` · +$${nf.format(pointsAwarded)}`}
           </p>
         </div>
       </Link>

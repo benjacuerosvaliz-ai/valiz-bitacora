@@ -29,7 +29,7 @@ const nf = new Intl.NumberFormat("es-CL");
  *  VIDA I        → cuero (Mochila Alforja flotando + pies² rescatados)
  *  VIDA II       → horas en taller (Cartera Zarga + horas + talleres)
  *  VIDA III      → bitácora colectiva (globo Mapbox flotando)
- *  OUTRO         → 1000 pts al crear cuenta + misiones, SOLO CTA crear
+ *  OUTRO         → $2.000 al crear cuenta + hasta $10.000 por misiones
  */
 
 export function Home3D({
@@ -570,7 +570,7 @@ function MiniStat({ big, label }: { big: string; label: string }) {
 }
 
 /* ------------------------------------------------------------------------ */
-/* OUTRO — 1000 pts al crear cuenta + misiones                             */
+/* OUTRO — $2.000 al crear cuenta + hasta $10.000 por misiones             */
 /* ------------------------------------------------------------------------ */
 function OutroSection() {
   const ref = useRef<HTMLDivElement>(null);
@@ -603,41 +603,41 @@ function OutroSection() {
           Sé parte de la bitácora
         </p>
         <h2 className="max-w-4xl font-serif text-[10vw] leading-[0.95] tracking-[-0.03em] text-tinta sm:text-[6vw] lg:text-[5vw]">
-          1.000 puntos
+          $2.000 al instante.
           <br />
-          <span className="italic text-cuero">por crear tu cuenta.</span>
+          <span className="italic text-cuero">Hasta $10.000 si te involucras.</span>
         </h2>
         <p className="max-w-2xl font-serif text-xl italic leading-relaxed text-niebla sm:text-2xl">
-          Y cada misión que completas suma más. Concursos cada mes con
-          piezas Valiz de regalo para los mejores viajes.
+          Te damos dos mil pesos por crear tu cuenta. El resto los ganas
+          completando tu bitácora y trayendo a tus amigos.
         </p>
 
-        {/* Misiones rápidas — 2x2 en mobile, 4 cols en desktop */}
+        {/* Misiones — 2x2 en mobile, 4 cols en desktop */}
         <div className="mt-6 grid w-full max-w-5xl grid-cols-2 gap-6 border-y border-piedra py-10 text-left sm:gap-8 lg:grid-cols-4 lg:gap-10">
           <Mision
-            premio="+1.000"
+            premio="$2.000"
             titulo="Crear cuenta"
-            cuerpo="Te damos la bienvenida con mil puntos en tu equipaje."
+            cuerpo="Tu bienvenida. Aparecen al toque en tu equipaje."
           />
           <Mision
-            premio="+200"
-            titulo="Cada bitácora"
-            cuerpo="Foto, ubicación y un texto contando dónde fuiste."
+            premio="+$1.000"
+            titulo="Completa tu perfil"
+            cuerpo="Foto, Instagram y ciudad. Te da identidad en la bitácora."
           />
           <Mision
-            premio="+5% pts"
-            titulo="Recomienda"
-            cuerpo="Tu código da 15% off al que compra. Tú llevas 5% del subtotal en pts."
+            premio="+$1.000"
+            titulo="Tu primera bitácora"
+            cuerpo="Foto, ubicación y un texto contando dónde fuiste con tu Valiz."
           />
           <Mision
-            premio="Valiz"
-            titulo="Concursos"
-            cuerpo="Cada mes premiamos las mejores bitácoras con piezas nuevas."
+            premio="+$1.000"
+            titulo="Cada amigo invitado"
+            cuerpo="Por cada amigo que crea cuenta con tu código. Sin tope."
           />
         </div>
 
         <p className="font-serif text-base italic text-niebla">
-          1 punto = $1 CLP de descuento en valiz.cl
+          Tus pesos en valiz.cl — canjeables en compras desde $25.000.
         </p>
 
         {/* CTAs duales: crear cuenta (primario) + iniciar sesión */}

@@ -91,12 +91,11 @@ export function CanjeForm({
               ${nf.format(o.denominacion)} CLP
             </span>
             <span className="font-sans text-[11px] uppercase tracking-[0.18em] text-niebla">
-              {nf.format(o.denominacion)} pts
               {o.stock === 0
-                ? " · Sin stock"
+                ? "Sin stock"
                 : !o.puedePagar
-                  ? ` · Te faltan ${nf.format(o.denominacion - puntos)}`
-                  : ` · ${o.stock} disponible${o.stock === 1 ? "" : "s"}`}
+                  ? `Te faltan $${nf.format(o.denominacion - puntos)}`
+                  : `${o.stock} disponible${o.stock === 1 ? "" : "s"}`}
               {loading === o.denominacion && " · Canjeando…"}
             </span>
           </button>

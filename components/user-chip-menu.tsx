@@ -67,7 +67,7 @@ export function UserChipMenu({
           onClick={() => setOpen((o) => !o)}
           aria-haspopup="menu"
           aria-expanded={open}
-          aria-label={`${nombre} · ${nf.format(pts)} puntos`}
+          aria-label={`${nombre} · $${nf.format(pts)} acumulados`}
           className="group transition-colors"
         >
           {/* Mobile: círculo compacto (40px) con inicial */}
@@ -77,7 +77,7 @@ export function UserChipMenu({
           {/* Desktop: pill con nombre + pts */}
           <span className="hidden items-center gap-3 rounded-full border border-piedra bg-fondo px-4 py-2 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors group-hover:border-cuero group-hover:text-cuero sm:inline-flex">
             <span>{nombre}</span>
-            <span className="text-cuero">{nf.format(pts)} pts</span>
+            <span className="text-cuero">${nf.format(pts)}</span>
             <span
               className={`text-[8px] transition-transform duration-200 ${open ? "rotate-180" : ""}`}
               aria-hidden
@@ -100,26 +100,21 @@ export function UserChipMenu({
                 {nombre}
               </p>
               <p className="mt-1 font-serif text-lg leading-none text-tinta">
-                {nf.format(pts)}{" "}
                 <span className="font-sans text-[10px] uppercase tracking-[0.22em] text-cuero">
-                  pts
+                  $
                 </span>
+                {nf.format(pts)}
               </p>
             </div>
             <MenuItem href="/yo/referir" onClick={() => setOpen(false)} accent>
               Recomendar Valiz
             </MenuItem>
-            <MenuItem href="/yo" onClick={() => setOpen(false)}>
+            <MenuItem
+              href={handle ? `/u/${handle}` : "/yo"}
+              onClick={() => setOpen(false)}
+            >
               Tu perfil
             </MenuItem>
-            {handle && (
-              <MenuItem
-                href={`/u/${handle}`}
-                onClick={() => setOpen(false)}
-              >
-                Mi perfil público
-              </MenuItem>
-            )}
             <MenuItem href="/bitacora" onClick={() => setOpen(false)}>
               Valiz en el mundo
             </MenuItem>
@@ -127,7 +122,7 @@ export function UserChipMenu({
               Participar en concursos
             </MenuItem>
             <MenuItem href="/yo/canje" onClick={() => setOpen(false)}>
-              Canjear puntos
+              Canjear saldo
             </MenuItem>
             <MenuItem href="/sobre" onClick={() => setOpen(false)}>
               Sobre Valiz

@@ -151,7 +151,7 @@ export default async function ReferirPage() {
                           )}
                         </span>
                         <span className="font-serif text-lg text-cuero">
-                          +{nf.format(m.delta)} pts
+                          +${nf.format(m.delta)}
                         </span>
                       </div>
                     </li>

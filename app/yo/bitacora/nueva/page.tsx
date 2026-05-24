@@ -90,11 +90,11 @@ export default async function NuevaBitacoraPage({
             Nueva bitácora
           </p>
           <h1 className="mt-4 font-serif text-4xl leading-[1.04] tracking-[-0.022em] sm:text-5xl">
-            Conta dónde fue.
+            Cuenta dónde fue.
           </h1>
           <p className="mt-6 max-w-xl font-serif italic leading-relaxed text-niebla">
             Subir una foto + lugar + 30 caracteres de historia te da{" "}
-            <span className="not-italic font-semibold text-cuero">200 pts</span>
+            <span className="not-italic font-semibold text-cuero">$200</span>
             . Solo cuenta una vez al mes por pieza, así que valen las que
             importan. Tu bitácora aparece pública en el mapa de Valiz.
           </p>
