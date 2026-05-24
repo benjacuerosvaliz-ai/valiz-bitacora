@@ -19,17 +19,17 @@ import type { Point, Producto3D, StatsGlobales } from "./page";
 const nf = new Intl.NumberFormat("es-CL");
 
 /**
- * Home3D — narrativa Tres Vidas como landing scroll-driven.
+ * Home3D — landing scroll-driven, optimizada para conversión.
  *
  * Paleta Valiz cream/cuero/tinta (NO dark) — coherente con el resto
  * de la app y permite que el globo Mapbox se funda con el fondo.
  *
- * Estructura:
- *  HERO          → logos Valiz girando + título "Cada Valiz tiene tres vidas"
- *  VIDA I        → cuero (Mochila Alforja flotando + pies² rescatados)
- *  VIDA II       → horas en taller (Cartera Zarga + horas + talleres)
- *  VIDA III      → bitácora colectiva (globo Mapbox flotando)
- *  OUTRO         → $2.000 al crear cuenta + hasta $10.000 por misiones
+ * Estructura (incentivo primero, historia después):
+ *  1. INCENTIVO     → $2.000 + misiones + CTA crear cuenta (sin fade)
+ *  2. PRUEBA SOCIAL → globo de bitácoras de la comunidad (Vida III)
+ *  3. VIDA I        → cuero rescatado (por qué Valiz)
+ *  4. VIDA II       → horas en taller (cómo se hace)
+ *  5. CIERRE        → re-CTA crear cuenta al final del scroll
  */
 
 export function Home3D({
@@ -46,10 +46,19 @@ export function Home3D({
       className="bg-fondo text-tinta"
       style={{ perspective: "1400px" } as React.CSSProperties}
     >
-      <HeroSection />
+      {/* 1. HERO INCENTIVO — primero, sin fade. La gente quiere saber
+            qué se lleva antes de leer la filosofía. */}
+      <IncentivoHero />
+
+      {/* 2. PRUEBA SOCIAL — el globo lleno de bitácoras de otros. Justo
+            después del CTA muestra que el sistema ya está vivo. */}
+      <VidaIIIBitacora stats={stats} points={points} />
+
+      {/* 3. HISTORIA — para quien quiere saber por qué vale la pena.
+            Cueros rescatados → horas en taller. */}
       <VidaCueroSection
         numero="I"
-        tagline="Vida pasada"
+        tagline="Por qué Valiz"
         titulo="El cuero antes de ser tuyo."
         parrafo="Subproducto de la industria ganadera chilena. Curtido localmente, con procesos cuidadosos. Sin nosotros, descarte. Con nosotros, objeto que vivirá décadas."
         imagen="/images/vida-pasada.jpg"
@@ -67,7 +76,7 @@ export function Home3D({
         <VidaSection
           numero="II"
           producto={cartera}
-          tagline="Vida presente"
+          tagline="Cómo se hace"
           titulo="Las horas en taller."
           parrafo="Tres talleres chilenos. Roberto, César y David lideran cada uno el suyo. Cada pieza pasa por las manos de un equipo entero antes de salir — cortada, cosida, terminada sin atajos ni máquinas industriales."
           stats={[
@@ -85,79 +94,10 @@ export function Home3D({
           textOnRight={false}
         />
       )}
-      <VidaIIIBitacora stats={stats} points={points} />
-      <OutroSection />
+
+      {/* 4. CIERRE — re-CTA al final del scroll, ya con contexto. */}
+      <CierreCTA />
     </main>
-  );
-}
-
-/* ------------------------------------------------------------------------ */
-/* HERO con logos Valiz girando                                            */
-/* ------------------------------------------------------------------------ */
-function HeroSection() {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end start"],
-  });
-  const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
-  const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
-
-  return (
-    <section ref={ref} className="relative h-screen overflow-hidden">
-      {/* Logos Valiz girando como fondo (sutiles, decorativos) */}
-      <div className="pointer-events-none absolute inset-0">
-        <SpinningLogo
-          size="18vw"
-          duration={45}
-          reverse
-          className="absolute left-[6%] top-[16%] opacity-25 sm:opacity-35"
-        />
-        <SpinningLogo
-          size="14vw"
-          duration={55}
-          className="absolute right-[8%] top-[22%] opacity-25 sm:opacity-35"
-        />
-        <SpinningLogo
-          size="10vw"
-          duration={40}
-          reverse
-          className="absolute right-[14%] bottom-[16%] opacity-25 sm:opacity-35"
-        />
-        <SpinningLogo
-          size="8vw"
-          duration={50}
-          className="absolute left-[12%] bottom-[20%] opacity-25 sm:opacity-35"
-        />
-      </div>
-
-      <motion.div
-        style={{ opacity, y }}
-        className="relative sticky top-0 z-10 flex h-screen flex-col items-center justify-center px-6 text-center sm:px-12"
-      >
-        {/* Logo Valiz principal — sello central, prominente, girando */}
-        <SpinningLogo
-          size="clamp(80px, 11vw, 140px)"
-          duration={40}
-          className="opacity-95"
-        />
-        <p className="mt-5 font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
-          Valiz · Bitácora
-        </p>
-        <h1 className="mt-5 font-serif text-[12vw] leading-[0.92] tracking-[-0.03em] text-tinta sm:text-[8vw] lg:text-[6.5vw]">
-          Cada Valiz tiene
-          <br />
-          <span className="italic text-cuero">tres vidas.</span>
-        </h1>
-        <p className="mt-6 max-w-md font-serif text-base italic leading-relaxed text-niebla sm:text-lg">
-          La que el cuero ya tuvo, la que pasa en taller, la que viene
-          contigo.
-        </p>
-        <p className="mt-10 font-sans text-[10px] uppercase tracking-[0.32em] text-niebla">
-          Desliza ↓
-        </p>
-      </motion.div>
-    </section>
   );
 }
 
@@ -570,22 +510,16 @@ function MiniStat({ big, label }: { big: string; label: string }) {
 }
 
 /* ------------------------------------------------------------------------ */
-/* OUTRO — $2.000 al crear cuenta + hasta $10.000 por misiones             */
+/* INCENTIVO HERO + CIERRE CTA — primero y último, sin fade               */
 /* ------------------------------------------------------------------------ */
-function OutroSection() {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end end"],
-  });
-
-  // Importante: SE ILUMINA al fondo del scroll. La opacity y el lift
-  // suben de 0 a 1 conforme bajas, NO se hacen fade-out al final.
-  const opacity = useTransform(scrollYProgress, [0, 0.4, 1], [0, 1, 1]);
-  const y = useTransform(scrollYProgress, [0, 1], [60, 0]);
-
+/**
+ * IncentivoHero — primera sección de la home. Sin fade, visible
+ * inmediato. Header con logo Valiz girando, $2.000 + misiones + CTAs.
+ * Al pie: "Conoce la historia ↓" que invita al scroll narrativo.
+ */
+function IncentivoHero() {
   return (
-    <section ref={ref} className="relative min-h-screen overflow-hidden">
+    <section className="relative min-h-screen overflow-hidden">
       {/* Logo Valiz girando sutil de fondo */}
       <div className="pointer-events-none absolute inset-0">
         <SpinningLogo
@@ -595,25 +529,29 @@ function OutroSection() {
         />
       </div>
 
-      <motion.div
-        style={{ y, opacity }}
-        className="relative flex min-h-screen flex-col items-center justify-center gap-8 px-6 py-20 text-center sm:gap-10 sm:px-12 sm:py-24"
-      >
+      <div className="relative flex min-h-screen flex-col items-center justify-center gap-7 px-6 py-16 text-center sm:gap-9 sm:px-12 sm:py-20">
+        {/* Logo sello arriba para anclar la marca */}
+        <SpinningLogo
+          size="clamp(56px, 7vw, 90px)"
+          duration={40}
+          className="opacity-95"
+        />
+
         <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
-          Sé parte de la bitácora
+          Valiz · Bitácora
         </p>
-        <h2 className="max-w-4xl font-serif text-[10vw] leading-[0.95] tracking-[-0.03em] text-tinta sm:text-[6vw] lg:text-[5vw]">
+        <h1 className="max-w-4xl font-serif text-[10vw] leading-[0.95] tracking-[-0.03em] text-tinta sm:text-[6vw] lg:text-[5vw]">
           $2.000 al instante.
           <br />
           <span className="italic text-cuero">Hasta $10.000 si te involucras.</span>
-        </h2>
-        <p className="max-w-2xl font-serif text-xl italic leading-relaxed text-niebla sm:text-2xl">
+        </h1>
+        <p className="max-w-2xl font-serif text-lg italic leading-relaxed text-niebla sm:text-xl">
           Te damos dos mil pesos por crear tu cuenta. El resto los ganas
           completando tu bitácora y trayendo a tus amigos.
         </p>
 
         {/* Misiones — 2x2 en mobile, 4 cols en desktop */}
-        <div className="mt-6 grid w-full max-w-5xl grid-cols-2 gap-6 border-y border-piedra py-10 text-left sm:gap-8 lg:grid-cols-4 lg:gap-10">
+        <div className="mt-2 grid w-full max-w-5xl grid-cols-2 gap-5 border-y border-piedra py-8 text-left sm:gap-7 lg:grid-cols-4 lg:gap-9">
           <Mision
             premio="$2.000"
             titulo="Crear cuenta"
@@ -641,12 +579,12 @@ function OutroSection() {
         </p>
 
         {/* CTAs duales: crear cuenta (primario) + iniciar sesión */}
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
           <Link
             href="/login"
             className="inline-flex items-center gap-3 bg-tinta px-10 py-5 font-sans text-xs font-semibold uppercase tracking-[0.28em] text-fondo transition-colors hover:bg-cuero"
           >
-            Crear cuenta →
+            Crear cuenta gratis →
           </Link>
           <Link
             href="/login"
@@ -656,10 +594,53 @@ function OutroSection() {
           </Link>
         </div>
 
-        <p className="mt-8 font-sans text-[10px] uppercase tracking-[0.32em] text-niebla">
+        <p className="mt-6 font-sans text-[10px] uppercase tracking-[0.32em] text-niebla">
+          Conoce la historia ↓
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * CierreCTA — al final del scroll, después de las dos vidas. Re-CTA
+ * crear cuenta para quien llegó hasta abajo enganchado por la
+ * historia (que ya pasó por la prueba social del globo arriba).
+ */
+function CierreCTA() {
+  return (
+    <section className="relative border-t border-piedra bg-tinta/[0.02] px-6 py-20 text-center sm:px-12 sm:py-28">
+      <div className="mx-auto max-w-3xl">
+        <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.32em] text-cuero">
+          Sé parte
+        </p>
+        <h2 className="mt-4 font-serif text-4xl leading-[1.02] tracking-[-0.025em] text-tinta sm:text-5xl">
+          Ya sabes cómo se hace.
+          <br />
+          <span className="italic text-cuero">Ahora súmate.</span>
+        </h2>
+        <p className="mt-5 font-serif text-lg italic leading-relaxed text-niebla">
+          $2.000 al instante por crear cuenta. Tu equipaje, tu bitácora,
+          tu mapa.
+        </p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-3 bg-tinta px-10 py-5 font-sans text-xs font-semibold uppercase tracking-[0.28em] text-fondo transition-colors hover:bg-cuero"
+          >
+            Crear cuenta gratis →
+          </Link>
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-3 border border-piedra bg-fondo px-8 py-5 font-sans text-xs font-semibold uppercase tracking-[0.28em] text-tinta transition-colors hover:border-cuero hover:text-cuero"
+          >
+            Ya tengo cuenta
+          </Link>
+        </div>
+        <p className="mt-10 font-sans text-[10px] uppercase tracking-[0.32em] text-niebla">
           Valiz · Since 2018
         </p>
-      </motion.div>
+      </div>
     </section>
   );
 }
