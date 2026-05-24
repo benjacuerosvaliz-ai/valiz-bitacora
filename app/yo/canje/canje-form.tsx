@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -18,6 +19,18 @@ export function CanjeForm({
   puntos: number;
   opciones: Opcion[];
 }) {
+  // Si hay denominaciones bloqueadas por saldo insuficiente, mostramos
+  // CTAs concretos para ganar más — el usuario está en el momento de
+  // máxima intención de canje, no podemos dejarlo sin salida.
+  const hayBloqueadas = opciones.some((o) => !o.puedePagar && o.stock > 0);
+  const faltaParaMin = (() => {
+    const minDispo = opciones
+      .filter((o) => o.stock > 0)
+      .map((o) => o.denominacion)
+      .sort((a, b) => a - b)[0];
+    if (!minDispo) return null;
+    return minDispo - puntos;
+  })();
   const router = useRouter();
   const [loading, setLoading] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -106,6 +119,81 @@ export function CanjeForm({
           {error}
         </p>
       )}
+
+      {/* CTAs para desbloquear — solo si hay denominaciones bloqueadas
+          por saldo insuficiente. */}
+      {hayBloqueadas && (
+        <div className="mt-2 border border-cuero bg-cuero/5 px-5 py-4">
+          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+            Cómo desbloquear más saldo
+            {faltaParaMin && faltaParaMin > 0 && (
+              <>
+                {" "}
+                <span className="text-niebla">
+                  · te faltan ${nf.format(faltaParaMin)} para canjear
+                </span>
+              </>
+            )}
+          </p>
+          <ul className="mt-3 space-y-1.5">
+            <CtaMision
+              href="/yo/bitacora/nueva"
+              titulo="Sube una bitácora con foto y lugar"
+              monto="+$200"
+              detalle="Inmediato. Después +$200 por cada nueva (1/mes/pieza)."
+            />
+            <CtaMision
+              href="/yo/perfil"
+              titulo="Completa tu perfil"
+              monto="+$1.000"
+              detalle="Foto + Instagram + ciudad. Solo se cobra una vez."
+            />
+            <CtaMision
+              href="/yo/referir"
+              titulo="Comparte tu código de referido"
+              monto="5%"
+              detalle="Cada amigo que compra con tu código te suma 5% del subtotal. Sin tope."
+            />
+          </ul>
+        </div>
+      )}
     </div>
+  );
+}
+
+function CtaMision({
+  href,
+  titulo,
+  monto,
+  detalle,
+}: {
+  href: string;
+  titulo: string;
+  monto: string;
+  detalle: string;
+}) {
+  return (
+    <li>
+      <Link
+        href={href}
+        className="group flex items-baseline gap-3 rounded px-2 py-1.5 transition-colors hover:bg-cuero/10"
+      >
+        <span className="shrink-0 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
+          {monto}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-serif text-sm text-tinta group-hover:text-cuero">
+            {titulo}
+          </p>
+          <p className="font-serif text-xs italic text-niebla">{detalle}</p>
+        </div>
+        <span
+          aria-hidden
+          className="shrink-0 font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero"
+        >
+          →
+        </span>
+      </Link>
+    </li>
   );
 }

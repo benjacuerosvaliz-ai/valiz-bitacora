@@ -8,6 +8,7 @@ import {
   type EquipajePieza,
 } from "@/app/yo/equipaje-grid";
 import { BrandMark } from "@/components/brand-mark";
+import { MisionesProgreso } from "@/components/misiones-progreso";
 import { ReferidoCodigo } from "@/components/referido-codigo";
 import { ShareButton } from "@/components/share-button";
 import { WelcomeTour } from "@/components/welcome-tour";
@@ -288,6 +289,55 @@ export default async function PerfilPublicoPage({
         motivo: "ajuste_admin",
         referencia_id: refId,
       });
+    }
+  }
+
+  // Estado de misiones del onboarding (solo para el dueño) +
+  // detectar si es cliente (welcome $2k) o no-cliente ($1k).
+  // Auto-otorga "presentar_equipaje" si tiene piezas — la misión se
+  // considera cumplida por tener equipaje ya pre-poblado.
+  let misionesCompletadas = {
+    perfil: false,
+    bitacora: false,
+    equipaje: false,
+  };
+  let esCliente = false;
+  if (esElDueno) {
+    const { data: movs } = await admin
+      .from("puntos_movimientos")
+      .select("motivo, referencia_id, delta")
+      .eq("user_id", profile.id)
+      .in("motivo", ["bono_bienvenida", "mision"]);
+    const moves = movs ?? [];
+    // Welcome de $2k = cliente; $1k = no-cliente
+    const welcome = moves.find((m) => m.motivo === "bono_bienvenida");
+    esCliente = Number(welcome?.delta ?? 0) >= 2000;
+    const misionIds = new Set(
+      moves
+        .filter((m) => m.motivo === "mision")
+        .map((m) => m.referencia_id),
+    );
+    misionesCompletadas = {
+      perfil: misionIds.has("perfil_completo"),
+      bitacora: misionIds.has("primera_bitacora"),
+      equipaje: misionIds.has("presentar_equipaje"),
+    };
+
+    // Auto-otorga "presentar equipaje" si tiene piezas pre-pobladas
+    // y la misión no se otorgó antes. Fire-and-forget; el render
+    // siguiente la mostrará completada.
+    if (!misionesCompletadas.equipaje && equipaje.length > 0) {
+      const { error: misionErr } = await admin
+        .from("puntos_movimientos")
+        .insert({
+          user_id: profile.id,
+          delta: 1000,
+          motivo: "mision",
+          referencia_id: "presentar_equipaje",
+        });
+      if (!misionErr) {
+        misionesCompletadas.equipaje = true;
+      }
     }
   }
 
@@ -590,6 +640,18 @@ export default async function PerfilPublicoPage({
             <p className="mt-3 max-w-2xl font-serif text-sm italic leading-relaxed text-tinta/75 sm:text-base">
               {profile.bio}
             </p>
+          )}
+
+          {/* PROGRESO MISIONES — solo dueño. Muestra cuánto le falta del
+              cap de bienvenida y CTAs a las pendientes. */}
+          {esElDueno && (
+            <div className="mt-3">
+              <MisionesProgreso
+                saldo={puntosTotal}
+                esCliente={esCliente}
+                completadas={misionesCompletadas}
+              />
+            </div>
           )}
 
           {/* CONSTELACIÓN: stats izq · GLOBO centro · saldo+código der.
