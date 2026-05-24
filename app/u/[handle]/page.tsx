@@ -488,10 +488,11 @@ export default async function PerfilPublicoPage({
         </div>
       )}
 
-      {/* CONSTELACIÓN — identidad compacta + globo central + datos
-          alrededor. Pensada para verse completa en 1 viewport sin
-          scroll. El globo es el protagonista. */}
-      <section className="border-b border-piedra px-4 py-5 sm:px-8 sm:py-7">
+      {/* CONSTELACIÓN — identidad compacta + medallas + globo central
+          + datos alrededor. Pensada para verse completa en 1 viewport
+          sin scroll. El globo es el protagonista, las stats están
+          pegadas a sus lados. */}
+      <section className="border-b border-piedra px-4 py-4 sm:px-8 sm:py-5">
         <div className="mx-auto max-w-6xl">
           {/* Fila 1 — identidad ultra-compacta */}
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
@@ -565,8 +566,25 @@ export default async function PerfilPublicoPage({
             </p>
           )}
 
-          {/* CONSTELACIÓN: stats izq · GLOBO centro · saldo+código der */}
-          <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.8fr)_minmax(0,1fr)] lg:gap-6">
+          {/* MEDALLAS arriba — equipaje como continuación de la
+              identidad, visible al toque sin scroll. */}
+          {equipaje.length > 0 && (
+            <div className="mt-3">
+              <EquipajeMedallas
+                equipaje={equipaje}
+                productoBySku={productoBySku}
+                familiaById={familiaById}
+                photoBySku={photoBySku}
+                size="md"
+                max={20}
+              />
+            </div>
+          )}
+
+          {/* CONSTELACIÓN: stats izq · GLOBO centro · saldo+código der.
+              Mt reducido para que el globo quede cerca de la identidad
+              y las medallas. */}
+          <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.8fr)_minmax(0,1fr)] lg:gap-5">
             {/* IZQUIERDA — stats de impacto (desktop) */}
             <div className="hidden flex-col justify-center gap-6 lg:flex">
               {equipaje.length > 0 && (
@@ -595,7 +613,7 @@ export default async function PerfilPublicoPage({
 
             {/* CENTRO — el GLOBO, protagonista */}
             <div className="relative order-first lg:order-none">
-              <p className="mb-2 text-center font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+              <p className="mb-1 text-center font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
                 {nombre.split(/\s+/)[0]} en el mundo
               </p>
               {points.length > 0 ? (
@@ -649,8 +667,9 @@ export default async function PerfilPublicoPage({
             </div>
           </div>
 
-          {/* MOBILE — stats compactas debajo del globo */}
-          <div className="mt-4 grid grid-cols-2 gap-3 border-t border-piedra pt-4 sm:grid-cols-4 sm:gap-6 lg:hidden">
+          {/* MOBILE — stats compactas debajo del globo (sin border-t
+              para que queden pegadas al mapa) */}
+          <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-6 lg:hidden">
             {equipaje.length > 0 && (
               <>
                 <Stat label="Piezas" big={nf.format(equipaje.length)} />
@@ -672,28 +691,11 @@ export default async function PerfilPublicoPage({
 
           {/* MOBILE — código de referido full-width */}
           {referidoCode && (
-            <div className="mt-4 lg:hidden">
+            <div className="mt-3 lg:hidden">
               <ReferidoCodigo
                 code={referidoCode}
                 nombre={primerNombre}
                 showCopy
-              />
-            </div>
-          )}
-
-          {/* Medallas del equipaje — fila completa debajo de todo */}
-          {equipaje.length > 0 && (
-            <div className="mt-5 border-t border-piedra pt-4">
-              <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
-                Su equipaje
-              </p>
-              <EquipajeMedallas
-                equipaje={equipaje}
-                productoBySku={productoBySku}
-                familiaById={familiaById}
-                photoBySku={photoBySku}
-                size="md"
-                max={20}
               />
             </div>
           )}

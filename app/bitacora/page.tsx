@@ -13,6 +13,8 @@ import { createClient } from "@/lib/supabase/server";
 import { slugify } from "@/lib/slugify";
 import { createStaticClient } from "@/lib/supabase/static";
 
+import { BuscadorGente } from "@/components/buscador-gente";
+
 import { BitacoraFiltros } from "./bitacora-filtros";
 import { MapaColectivo, type Point } from "./mapa/mapa";
 
@@ -58,6 +60,7 @@ type ProfileRow = {
   display_name: string | null;
   handle: string | null;
   avatar_url: string | null;
+  city: string | null;
 };
 type ProductoStats = {
   p2: number | string | null;
@@ -105,7 +108,7 @@ export default async function BitacoraColectivaPage({
       sb.from("familias").select("id, slug, name, hours_per_unit"),
       sb
         .from("user_profiles_public")
-        .select("id, display_name, handle, avatar_url"),
+        .select("id, display_name, handle, avatar_url, city"),
       sb
         .from("productos")
         .select("p2, sales_total, familia_id")
@@ -439,7 +442,23 @@ export default async function BitacoraColectivaPage({
         </section>
       )}
 
-      {/* FILTROS ---------------------------------------------------------- */}
+      {/* BUSCADOR DE GENTE + FILTROS ------------------------------------ */}
+      <div className="border-b border-piedra bg-tinta/[0.02] px-6 py-3 sm:px-12">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
+          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+            Buscar persona
+          </p>
+          <BuscadorGente
+            personas={profiles.map((p) => ({
+              handle: p.handle,
+              display_name: p.display_name,
+              avatar_url: p.avatar_url,
+              city: p.city,
+            }))}
+          />
+        </div>
+      </div>
+
       <BitacoraFiltros
         talleristas={talleristas.map((t) => ({
           value: slugify(t.name),
