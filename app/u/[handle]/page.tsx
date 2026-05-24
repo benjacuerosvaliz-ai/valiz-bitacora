@@ -488,97 +488,101 @@ export default async function PerfilPublicoPage({
         </div>
       )}
 
-      {/* CONSTELACIÓN — identidad compacta + medallas + globo central
-          + datos alrededor. Pensada para verse completa en 1 viewport
-          sin scroll. El globo es el protagonista, las stats están
-          pegadas a sus lados. */}
+      {/* CONSTELACIÓN — identidad + medallas al lado del nombre +
+          globo central + datos alrededor. Pensada para verse completa
+          en 1 viewport sin scroll. */}
       <section className="border-b border-piedra px-4 py-4 sm:px-8 sm:py-5">
         <div className="mx-auto max-w-6xl">
-          {/* Fila 1 — identidad ultra-compacta */}
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+          {/* IDENTIDAD: avatar + (nombre/handle/ciudad + medallas) +
+              redes a la derecha. En mobile las redes pasan a fila
+              propia para no chocar con el handle largo. */}
+          <div className="flex items-start gap-3 sm:gap-4">
             {profile.avatar_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={profile.avatar_url}
                 alt={nombre}
-                className="h-14 w-14 shrink-0 rounded-full border-2 border-piedra object-cover sm:h-16 sm:w-16"
+                className="h-16 w-16 shrink-0 rounded-full border-2 border-piedra object-cover sm:h-20 sm:w-20"
               />
             ) : (
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-piedra bg-cuero font-serif text-2xl text-fondo sm:h-16 sm:w-16 sm:text-3xl">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-2 border-piedra bg-cuero font-serif text-2xl text-fondo sm:h-20 sm:w-20 sm:text-4xl">
                 {nombre.trim().charAt(0).toUpperCase() || "V"}
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <h1 className="font-serif text-2xl leading-[1.02] tracking-[-0.02em] sm:text-3xl">
+              <h1 className="font-serif text-2xl leading-[1.02] tracking-[-0.02em] sm:text-3xl lg:text-4xl">
                 {nombre}
               </h1>
               <p className="mt-0.5 font-sans text-[10px] uppercase tracking-[0.22em] text-niebla">
                 <span className="text-cuero">@{profile.handle}</span>
                 {ubicacion && <span> · {ubicacion}</span>}
               </p>
-            </div>
-            <div className="flex items-center gap-2">
-              {profile.instagram_handle && (
-                <a
-                  href={`https://instagram.com/${profile.instagram_handle}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`Instagram @${profile.instagram_handle}`}
-                  title={`@${profile.instagram_handle}`}
-                  className="inline-flex h-8 w-8 items-center justify-center text-white transition-opacity hover:opacity-85"
-                  style={{
-                    background:
-                      "linear-gradient(45deg, #FEDA75 0%, #FA7E1E 20%, #D62976 50%, #962FBF 75%, #4F5BD5 100%)",
-                  }}
-                >
-                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.43.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.43.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.72 3.72 0 0 1-1.38-.9 3.72 3.72 0 0 1-.9-1.38c-.16-.43-.36-1.06-.41-2.23-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.43-.16 1.06-.36 2.23-.41 1.27-.06 1.65-.07 4.85-.07M12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63a5.92 5.92 0 0 0-2.13 1.39A5.92 5.92 0 0 0 .62 4.14c-.3.76-.5 1.64-.56 2.91C0 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.31.79.72 1.46 1.39 2.13a5.92 5.92 0 0 0 2.13 1.39c.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56a5.92 5.92 0 0 0 2.13-1.39 5.92 5.92 0 0 0 1.39-2.13c.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91a5.92 5.92 0 0 0-1.39-2.13A5.92 5.92 0 0 0 19.86.62c-.76-.3-1.64-.5-2.91-.56C15.67.01 15.26 0 12 0zm0 5.84a6.16 6.16 0 1 0 0 12.32 6.16 6.16 0 0 0 0-12.32zm0 10.16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.41-11.85a1.44 1.44 0 1 0 0 2.88 1.44 1.44 0 0 0 0-2.88z" />
-                  </svg>
-                </a>
+
+              {/* Medallas — al lado del nombre, dentro de la columna
+                  de identidad. Wrap natural si hay muchas. */}
+              {equipaje.length > 0 && (
+                <div className="mt-2">
+                  <EquipajeMedallas
+                    equipaje={equipaje}
+                    productoBySku={productoBySku}
+                    familiaById={familiaById}
+                    photoBySku={photoBySku}
+                    size="md"
+                    max={20}
+                  />
+                </div>
               )}
-              {profile.tiktok_handle && (
-                <a
-                  href={`https://tiktok.com/@${profile.tiktok_handle}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`TikTok @${profile.tiktok_handle}`}
-                  title={`@${profile.tiktok_handle}`}
-                  className="inline-flex h-8 w-8 items-center justify-center bg-black text-white transition-opacity hover:opacity-85"
-                >
-                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.1z" />
-                  </svg>
-                </a>
-              )}
-              <ShareButton
-                title={shareTitle}
-                text={shareText}
-                url={`/u/${profile.handle}`}
-                label={referidoCode ? "Regalar 15% off" : "Compartir"}
-                highlight={!!referidoCode}
-              />
             </div>
+          </div>
+
+          {/* Redes + Share — fila propia para no chocar con handles
+              largos en mobile. */}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {profile.instagram_handle && (
+              <a
+                href={`https://instagram.com/${profile.instagram_handle}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Instagram @${profile.instagram_handle}`}
+                title={`@${profile.instagram_handle}`}
+                className="inline-flex h-8 w-8 items-center justify-center text-white transition-opacity hover:opacity-85"
+                style={{
+                  background:
+                    "linear-gradient(45deg, #FEDA75 0%, #FA7E1E 20%, #D62976 50%, #962FBF 75%, #4F5BD5 100%)",
+                }}
+              >
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.43.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.43.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.72 3.72 0 0 1-1.38-.9 3.72 3.72 0 0 1-.9-1.38c-.16-.43-.36-1.06-.41-2.23-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.43-.16 1.06-.36 2.23-.41 1.27-.06 1.65-.07 4.85-.07M12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63a5.92 5.92 0 0 0-2.13 1.39A5.92 5.92 0 0 0 .62 4.14c-.3.76-.5 1.64-.56 2.91C0 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.31.79.72 1.46 1.39 2.13a5.92 5.92 0 0 0 2.13 1.39c.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56a5.92 5.92 0 0 0 2.13-1.39 5.92 5.92 0 0 0 1.39-2.13c.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91a5.92 5.92 0 0 0-1.39-2.13A5.92 5.92 0 0 0 19.86.62c-.76-.3-1.64-.5-2.91-.56C15.67.01 15.26 0 12 0zm0 5.84a6.16 6.16 0 1 0 0 12.32 6.16 6.16 0 0 0 0-12.32zm0 10.16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.41-11.85a1.44 1.44 0 1 0 0 2.88 1.44 1.44 0 0 0 0-2.88z" />
+                </svg>
+              </a>
+            )}
+            {profile.tiktok_handle && (
+              <a
+                href={`https://tiktok.com/@${profile.tiktok_handle}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`TikTok @${profile.tiktok_handle}`}
+                title={`@${profile.tiktok_handle}`}
+                className="inline-flex h-8 w-8 items-center justify-center bg-black text-white transition-opacity hover:opacity-85"
+              >
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.1z" />
+                </svg>
+              </a>
+            )}
+            <ShareButton
+              title={shareTitle}
+              text={shareText}
+              url={`/u/${profile.handle}`}
+              label={referidoCode ? "Regalar 15% off" : "Compartir"}
+              highlight={!!referidoCode}
+            />
           </div>
 
           {profile.bio && (
             <p className="mt-3 max-w-2xl font-serif text-sm italic leading-relaxed text-tinta/75 sm:text-base">
               {profile.bio}
             </p>
-          )}
-
-          {/* MEDALLAS arriba — equipaje como continuación de la
-              identidad, visible al toque sin scroll. */}
-          {equipaje.length > 0 && (
-            <div className="mt-3">
-              <EquipajeMedallas
-                equipaje={equipaje}
-                productoBySku={productoBySku}
-                familiaById={familiaById}
-                photoBySku={photoBySku}
-                size="md"
-                max={20}
-              />
-            </div>
           )}
 
           {/* CONSTELACIÓN: stats izq · GLOBO centro · saldo+código der.
