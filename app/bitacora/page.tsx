@@ -278,108 +278,93 @@ export default async function BitacoraColectivaPage({
 
   return (
     <main className="flex min-h-screen flex-col bg-fondo">
-      <header className="flex items-center justify-between border-b border-piedra px-8 py-5 sm:px-16 sm:py-6">
+      <header className="flex items-center justify-between border-b border-piedra px-6 py-4 sm:px-12 sm:py-5">
         <BrandMark variant="back" href="/" />
         <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-niebla">
-          Bitácora colectiva
+          Valiz en el mundo
         </p>
       </header>
 
-      {/* GLOBO COMO HERO ------------------------------------------------- */}
-      {/* MOBILE: layout vertical normal (título → globo → stats → CTA) */}
-      <section className="border-b border-piedra bg-fondo sm:hidden">
-        <div className="px-6 pt-8">
-          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-            Valiz por el mundo
-          </p>
-          <h1 className="mt-3 font-serif text-4xl leading-[1.04] tracking-[-0.022em] text-tinta">
-            El cuero anda solo.
-          </h1>
-          <p className="mt-3 font-serif text-sm italic leading-relaxed text-niebla">
-            Cada pieza después del taller deja huella en algún lugar. Esto es
-            lo que vamos viendo.
-          </p>
-        </div>
+      {/* HERO UNIFICADO: título + buscador arriba → stats horas/piezas
+          → GLOBO → pies² rescatados (cuero) abajo. */}
+      <section className="border-b border-piedra px-4 py-5 sm:px-8 sm:py-6">
+        <div className="mx-auto max-w-5xl">
+          {/* Título */}
+          <div className="flex flex-col items-center gap-3 text-center">
+            <BrandMark variant="icon" size={48} />
+            <h1 className="font-serif text-3xl leading-[1.02] tracking-[-0.02em] text-tinta sm:text-4xl">
+              Valiz en el mundo
+            </h1>
+          </div>
 
-        <div className="mt-6 aspect-square w-full overflow-hidden">
-          <MapaColectivo points={points} />
-        </div>
+          {/* Buscador de personas — arriba */}
+          <div className="mt-5 flex flex-col items-center gap-2">
+            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+              Buscar persona
+            </p>
+            <BuscadorGente
+              personas={profiles.map((p) => ({
+                handle: p.handle,
+                display_name: p.display_name,
+                avatar_url: p.avatar_url,
+                city: p.city,
+              }))}
+            />
+          </div>
 
-        <div className="grid grid-cols-2 gap-x-6 gap-y-5 px-6 py-8">
-          <StatCompact label="Horas artesanos" big={nf.format(horasTotal)} />
-          <StatCompact label="Pies² rescatados" big={nf.format(piesTotal)} />
-          <StatCompact label="Piezas viajando" big={nf.format(piezasTotal)} />
-          <StatCompact
-            label="Bitácoras"
-            big={nf.format(points.length)}
-            small={
-              personasUnicas > 0
-                ? `de ${personasUnicas} ${personasUnicas === 1 ? "persona" : "personas"}`
-                : undefined
-            }
-          />
-        </div>
+          {/* Stats horas + piezas — arriba del globo */}
+          <div className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-piedra pt-4 sm:grid-cols-3 sm:gap-x-10">
+            <StatCompact
+              label="Horas de artesanos"
+              big={nf.format(horasTotal)}
+            />
+            <StatCompact
+              label="Piezas viajando"
+              big={nf.format(piezasTotal)}
+            />
+            <StatCompact
+              label="Bitácoras"
+              big={nf.format(points.length)}
+              small={
+                personasUnicas > 0
+                  ? `${personasUnicas} ${personasUnicas === 1 ? "persona" : "personas"}`
+                  : undefined
+              }
+            />
+          </div>
 
-        <div className="px-6 pb-8">
-          <Link
-            href="#feed"
-            className="inline-flex w-full items-center justify-center gap-3 border border-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
-          >
-            Ver entradas ↓
-          </Link>
-        </div>
-      </section>
+          {/* GLOBO — protagonista, ocupa todo el ancho */}
+          <div className="relative mt-4 aspect-square w-full overflow-hidden sm:aspect-[5/3]">
+            <MapaColectivo points={points} />
+            {points.length === 0 && (
+              <div className="pointer-events-none absolute left-1/2 top-[60%] -translate-x-1/2 text-center">
+                <p className="bg-fondo/85 px-5 py-3 font-serif text-base italic text-niebla backdrop-blur-sm">
+                  Aún no hay puntos. Sube la primera bitácora con ubicación.
+                </p>
+              </div>
+            )}
+          </div>
 
-      {/* DESKTOP: full-bleed con overlays absolutos */}
-      <section className="relative hidden overflow-hidden border-b border-piedra bg-fondo sm:block">
-        <div className="h-[calc(100vh-78px)] w-full">
-          <MapaColectivo points={points} />
-        </div>
-
-        <div className="pointer-events-none absolute left-12 top-12 max-w-md">
-          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-cuero">
-            Valiz por el mundo
-          </p>
-          <h1 className="mt-3 font-serif text-5xl leading-[1.04] tracking-[-0.022em] text-tinta">
-            El cuero anda solo.
-          </h1>
-          <p className="mt-3 max-w-xs font-serif text-base italic leading-relaxed text-niebla">
-            Cada pieza después del taller deja huella en algún lugar. Esto es
-            lo que vamos viendo.
-          </p>
-        </div>
-
-        <div className="pointer-events-none absolute bottom-12 left-12 grid grid-cols-4 gap-x-12">
-          <Stat label="Horas de artesanos" big={nf.format(horasTotal)} />
-          <Stat label="Pies² rescatados" big={nf.format(piesTotal)} />
-          <Stat label="Piezas viajando" big={nf.format(piezasTotal)} />
-          <Stat
-            label="Bitácoras"
-            big={nf.format(points.length)}
-            small={
-              personasUnicas > 0
-                ? `de ${personasUnicas} ${personasUnicas === 1 ? "persona" : "personas"}`
-                : undefined
-            }
-          />
-        </div>
-
-        <div className="pointer-events-none absolute bottom-12 right-12">
-          <Link
-            href="#feed"
-            className="pointer-events-auto inline-flex items-center gap-3 border border-tinta bg-fondo/85 px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta backdrop-blur-sm transition-colors hover:bg-tinta hover:text-fondo"
-          >
-            Ver entradas ↓
-          </Link>
-        </div>
-
-        {points.length === 0 && (
-          <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 translate-y-40 text-center">
-            <p className="bg-fondo/85 px-5 py-3 font-serif text-base italic text-niebla backdrop-blur-sm">
-              Aún no hay puntos. Sube la primera bitácora con ubicación.
+          {/* Pies² rescatados — el cuero, abajo del globo */}
+          <div className="mt-4 border-t border-piedra pt-4 text-center">
+            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
+              Cuero rescatado del descarte
+            </p>
+            <p className="mt-2 font-serif text-4xl leading-none tracking-[-0.02em] text-tinta sm:text-5xl">
+              {nf.format(piesTotal)} <span className="text-2xl italic text-cuero sm:text-3xl">pies²</span>
             </p>
           </div>
-        )}
+
+          {/* CTA al feed */}
+          <div className="mt-5 flex justify-center">
+            <Link
+              href="#feed"
+              className="inline-flex items-center gap-3 border border-tinta px-5 py-3 font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-tinta transition-colors hover:bg-tinta hover:text-fondo"
+            >
+              Ver bitácoras ↓
+            </Link>
+          </div>
+        </div>
       </section>
 
       {/* LO MÁS AMADO ----------------------------------------------------- */}
@@ -442,23 +427,7 @@ export default async function BitacoraColectivaPage({
         </section>
       )}
 
-      {/* BUSCADOR DE GENTE + FILTROS ------------------------------------ */}
-      <div className="border-b border-piedra bg-tinta/[0.02] px-6 py-3 sm:px-12">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
-          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-cuero">
-            Buscar persona
-          </p>
-          <BuscadorGente
-            personas={profiles.map((p) => ({
-              handle: p.handle,
-              display_name: p.display_name,
-              avatar_url: p.avatar_url,
-              city: p.city,
-            }))}
-          />
-        </div>
-      </div>
-
+      {/* FILTROS DEL FEED ------------------------------------------------ */}
       <BitacoraFiltros
         talleristas={talleristas.map((t) => ({
           value: slugify(t.name),
@@ -596,32 +565,6 @@ function Avatar({ profile }: { profile: ProfileRow | undefined }) {
     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cuero font-serif text-[10px] text-fondo">
       {inicial}
     </span>
-  );
-}
-
-function Stat({
-  label,
-  big,
-  small,
-}: {
-  label: string;
-  big: string;
-  small?: string;
-}) {
-  return (
-    <div>
-      <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-niebla">
-        {label}
-      </p>
-      <p className="mt-1 font-serif text-3xl leading-none tracking-[-0.02em] text-tinta sm:text-4xl">
-        {big}
-      </p>
-      {small && (
-        <p className="mt-1 font-sans text-[10px] uppercase tracking-[0.18em] text-niebla">
-          {small}
-        </p>
-      )}
-    </div>
   );
 }
 
