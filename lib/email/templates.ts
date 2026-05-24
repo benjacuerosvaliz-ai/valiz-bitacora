@@ -322,6 +322,44 @@ export function tplCompraValidada(args: {
 }
 
 // ============================================================================
+// Notificación admin: nuevo signup (alguien entró a la bitácora)
+// ============================================================================
+export function tplAdminNuevoSignup(args: {
+  userEmail: string;
+  handle: string | null;
+  displayName: string | null;
+  city: string | null;
+  country: string | null;
+  piezas: number;
+  saldoInicial: number;
+  perfilUrl: string;
+}): { subject: string; html: string } {
+  const nombre = args.displayName ?? args.handle ?? args.userEmail;
+  const ubic = [args.city, args.country].filter(Boolean).join(", ");
+  const lineas: string[] = [
+    `<strong>${escape(args.userEmail)}</strong>`,
+  ];
+  if (args.handle) lineas.push(`@${escape(args.handle)}`);
+  if (ubic) lineas.push(escape(ubic));
+  lineas.push(`${args.piezas} pieza${args.piezas === 1 ? "" : "s"} en su equipaje`);
+  lineas.push(`Saldo inicial: <strong>$${args.saldoInicial.toLocaleString("es-CL")}</strong>`);
+  const body = [
+    p(`<strong>${escape(nombre)}</strong> acaba de entrar a la bitácora.`),
+    p(lineas.join(" &middot; ")),
+  ].join("");
+  return {
+    subject: `Nuevo signup — ${args.userEmail}`,
+    html: shell({
+      preheader: `${args.userEmail} entró a la bitácora`,
+      title: "Nueva cuenta.",
+      intro: "Alguien terminó su bienvenida y ya tiene perfil propio.",
+      body,
+      cta: { label: "Ver perfil", url: args.perfilUrl },
+    }),
+  };
+}
+
+// ============================================================================
 // Digest semanal: resumen de lo nuevo en Valiz Bitácora
 // ============================================================================
 export function tplDigestSemanal(args: {

@@ -6,6 +6,7 @@ import {
 import {
   tplAdminBitacoraNueva,
   tplAdminCompraPendiente,
+  tplAdminNuevoSignup,
   tplCanjeConfirmacion,
   tplCodigoVerificacion,
   tplCompraValidada,
@@ -60,6 +61,36 @@ export async function notifyAdminCompraPendiente(args: {
   const t = tplAdminCompraPendiente({
     ...args,
     adminUrl: `${APP_URL}/admin`,
+  });
+  await sendQuiet({
+    to: ADMIN_NOTIFY_EMAIL,
+    subject: t.subject,
+    html: t.html,
+    replyTo: args.userEmail,
+  });
+}
+
+export async function notifyAdminNuevoSignup(args: {
+  userEmail: string;
+  handle: string | null;
+  displayName: string | null;
+  city: string | null;
+  country: string | null;
+  piezas: number;
+  saldoInicial: number;
+}): Promise<void> {
+  const perfilUrl = args.handle
+    ? `${APP_URL}/u/${args.handle}`
+    : `${APP_URL}/admin`;
+  const t = tplAdminNuevoSignup({
+    userEmail: args.userEmail,
+    handle: args.handle,
+    displayName: args.displayName,
+    city: args.city,
+    country: args.country,
+    piezas: args.piezas,
+    saldoInicial: args.saldoInicial,
+    perfilUrl,
   });
   await sendQuiet({
     to: ADMIN_NOTIFY_EMAIL,
