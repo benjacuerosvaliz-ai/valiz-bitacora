@@ -20,7 +20,11 @@ import { getOrAssignReferidoCode } from "@/lib/referido";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createStaticClient } from "@/lib/supabase/static";
 
-export const revalidate = 60;
+// `force-dynamic` en vez de revalidate: la página depende de
+// `auth.getUser()` para detectar si el visitante es el dueño (`esElDueno`)
+// y mostrar la barra "Acciones rápidas" + sus secciones exclusivas.
+// Con ISR cacheada, todos los visitantes verían la versión sin sesión.
+export const dynamic = "force-dynamic";
 
 const nf = new Intl.NumberFormat("es-CL");
 
