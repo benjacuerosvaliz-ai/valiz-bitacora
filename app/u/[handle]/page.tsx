@@ -18,6 +18,7 @@ import {
 } from "@/lib/product-photos";
 import { getOrAssignReferidoCode } from "@/lib/referido";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createStaticClient } from "@/lib/supabase/static";
 
 // `force-dynamic` en vez de revalidate: la página depende de
@@ -237,7 +238,13 @@ export default async function PerfilPublicoPage({
   // perfil logueado y no tiene código, se le asigna uno automático del
   // pool. Para visitantes anónimos, solo mostramos el código si ya
   // estaba asignado (no consumimos pool por curiosos).
-  const { data: { user: currentUser } } = await sb.auth.getUser();
+  //
+  // IMPORTANTE: createStaticClient (sb) NO lee cookies — para detectar
+  // al user logueado necesitamos el server client que sí las maneja.
+  const serverSb = await createServerClient();
+  const {
+    data: { user: currentUser },
+  } = await serverSb.auth.getUser();
   const esElDueno = currentUser?.id === profile.id;
   const referidoCode = await getOrAssignReferidoCode(
     profile.id,
