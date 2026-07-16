@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Valiz Bitácora — Muestras tipográficas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..900,0..100,0..1&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@300;400;500;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&family=Newsreader:opsz,wght@6..72,200;6..72,300;6..72,400;6..72,500;6..72,600;6..72,700&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg: #f7f6f2;
+  --text: #1a1a1a;
+  --cuero: #7a3b1f;
+  --gris: #666666;
+  --borde: #d4d2cb;
+  --ambar: #d97a00;
+}
+*{margin:0; padding:0; box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg); color:var(--text); padding:48px 32px; min-height:100vh}
+
+.shell{max-width:1240px; margin:0 auto}
+
+.page-header{padding-bottom:24px; border-bottom:1px solid var(--borde); margin-bottom:64px}
+.page-label{font-family:'Inter',sans-serif; font-size:11px; text-transform:uppercase; letter-spacing:0.22em; color:var(--cuero); font-weight:600}
+.page-title{font-family:'Fraunces',serif; font-size:44px; font-weight:400; letter-spacing:-0.02em; margin-top:12px; font-variation-settings: "SOFT" 50, "WONK" 0}
+.page-sub{font-family:'Inter',sans-serif; color:var(--gris); margin-top:12px; font-size:15px; max-width:60ch; line-height:1.5}
+
+.nav{font-family:'Inter',sans-serif; font-size:13px; margin-top:24px; display:flex; gap:24px; color:var(--gris)}
+.nav a{color:var(--gris); text-decoration:none; padding-bottom:4px; border-bottom:1px solid transparent}
+.nav a:hover{color:var(--cuero); border-bottom-color:var(--cuero)}
+
+.combos{display:flex; flex-direction:column; gap:96px}
+
+.combo{scroll-margin-top:32px}
+.combo-header{display:flex; align-items:baseline; justify-content:space-between; padding-bottom:16px; border-bottom:1px solid var(--borde); margin-bottom:40px; flex-wrap:wrap; gap:12px}
+.combo-label{font-family:'Inter',sans-serif; font-size:11px; text-transform:uppercase; letter-spacing:0.22em; color:var(--cuero); font-weight:600}
+.combo-name{font-family:'Inter',sans-serif; font-size:13px; color:var(--gris)}
+
+.sample{display:grid; grid-template-columns:1.3fr 1fr; gap:56px}
+@media (max-width: 900px){ .sample{ grid-template-columns:1fr; gap:40px } }
+
+.hero-serif{font-size:64px; line-height:1.04; letter-spacing:-0.022em; font-weight:400}
+.subhead-serif{font-size:22px; line-height:1.35; margin-top:24px; font-style:italic; color:var(--cuero); font-weight:400}
+.body-sans{font-size:16px; line-height:1.65; margin-top:28px; max-width:52ch; color:var(--text); font-weight:400}
+.body-sans .small{color:var(--gris); font-size:12px; margin-top:18px; display:block; text-transform:uppercase; letter-spacing:0.16em; font-weight:600}
+
+.leather-card{border:1px solid var(--borde); padding:28px; background:#fff}
+.leather-label{font-size:10px; text-transform:uppercase; letter-spacing:0.22em; color:var(--gris); font-weight:600}
+.leather-name{font-size:30px; margin-top:10px; line-height:1.05; font-weight:400; letter-spacing:-0.01em}
+.leather-italic{font-style:italic; color:var(--cuero); margin-top:8px; font-size:16px}
+.leather-meta{font-size:13px; color:var(--gris); margin-top:14px; font-weight:400}
+
+.spec{display:flex; gap:24px; margin-top:28px; padding-top:24px; border-top:1px solid var(--borde)}
+.spec-item{flex:1}
+.spec-num{font-size:36px; font-weight:400; line-height:1; letter-spacing:-0.02em}
+.spec-label{font-size:10px; text-transform:uppercase; letter-spacing:0.22em; color:var(--gris); margin-top:10px; font-weight:600}
+
+/* COMBO A — Fraunces + Inter */
+.combo-a .hero-serif, .combo-a .subhead-serif, .combo-a .leather-name, .combo-a .leather-italic, .combo-a .spec-num{font-family:'Fraunces',serif}
+.combo-a .hero-serif{font-variation-settings: "SOFT" 50, "WONK" 0}
+.combo-a .leather-name{font-variation-settings: "SOFT" 30}
+.combo-a .body-sans, .combo-a .leather-label, .combo-a .spec-label, .combo-a .body-sans .small{font-family:'Inter',sans-serif}
+
+/* COMBO B — Cormorant Garamond + DM Sans */
+.combo-b .hero-serif, .combo-b .subhead-serif, .combo-b .leather-name, .combo-b .leather-italic, .combo-b .spec-num{font-family:'Cormorant Garamond',serif}
+.combo-b .hero-serif{font-weight:500}
+.combo-b .leather-name{font-weight:500}
+.combo-b .body-sans, .combo-b .leather-label, .combo-b .spec-label, .combo-b .body-sans .small{font-family:'DM Sans',sans-serif}
+
+/* COMBO C — Newsreader + Manrope */
+.combo-c .hero-serif, .combo-c .subhead-serif, .combo-c .leather-name, .combo-c .leather-italic, .combo-c .spec-num{font-family:'Newsreader',serif}
+.combo-c .body-sans, .combo-c .leather-label, .combo-c .spec-label, .combo-c .body-sans .small{font-family:'Manrope',sans-serif}
+
+footer{margin-top:96px; padding-top:32px; border-top:1px solid var(--borde); font-family:'Inter',sans-serif; font-size:13px; color:var(--gris); line-height:1.6; max-width:60ch}
+footer strong{color:var(--text); font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <div class="page-header">
+    <div class="page-label">Valiz Bitácora · Sesión 1</div>
+    <div class="page-title">Muestras tipográficas</div>
+    <div class="page-sub">Tres combinaciones aplicadas sobre vocabulario real de Valiz. Mira cada bloque completo antes de decidir — el carácter aparece en el conjunto (titular + ficha + números), no en una palabra suelta.</div>
+    <div class="nav">
+      <a href="#combo-a">A · Fraunces + Inter</a>
+      <a href="#combo-b">B · Cormorant + DM Sans</a>
+      <a href="#combo-c">C · Newsreader + Manrope</a>
+    </div>
+  </div>
+
+  <div class="combos">
+
+    <section id="combo-a" class="combo combo-a">
+      <div class="combo-header">
+        <div class="combo-label">Combo A · Recomendado</div>
+        <div class="combo-name">Fraunces + Inter · gratis (Google Fonts) · heritage moderno</div>
+      </div>
+      <div class="sample">
+        <div>
+          <h1 class="hero-serif">Bitácora de un objeto que envejece bien.</h1>
+          <p class="subhead-serif">Una mochila alforja de Everest Miel, cosida a mano por Roberto en su taller de Ñuñoa.</p>
+          <p class="body-sans">
+            Cada pieza Valiz nace de un cuero recuperado y curtido lentamente. El paso del tiempo es parte del diseño: el cuero se ablanda, las costuras se asientan, las marcas del viaje se vuelven parte de la historia.
+            <span class="small">Mochilas · Tabaqueras · Carteras Zarga · Cinturones</span>
+          </p>
+        </div>
+        <div>
+          <div class="leather-card">
+            <div class="leather-label">El cuero</div>
+            <div class="leather-name">Everest Trenzado Vicuña</div>
+            <div class="leather-italic">Curtido vegetal, Cuero Market</div>
+            <div class="leather-meta">11 pies² · 4.5 horas · taller Roberto · colección Trigo</div>
+          </div>
+          <div class="spec">
+            <div class="spec-item"><div class="spec-num">11</div><div class="spec-label">Pies²</div></div>
+            <div class="spec-item"><div class="spec-num">4.5</div><div class="spec-label">Horas</div></div>
+            <div class="spec-item"><div class="spec-num">$184k</div><div class="spec-label">CLP</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="combo-b" class="combo combo-b">
+      <div class="combo-header">
+        <div class="combo-label">Combo B</div>
+        <div class="combo-name">Cormorant Garamond + DM Sans · gratis · romántico, italianate</div>
+      </div>
+      <div class="sample">
+        <div>
+          <h1 class="hero-serif">Bitácora de un objeto que envejece bien.</h1>
+          <p class="subhead-serif">Una mochila alforja de Everest Miel, cosida a mano por Roberto en su taller de Ñuñoa.</p>
+          <p class="body-sans">
+            Cada pieza Valiz nace de un cuero recuperado y curtido lentamente. El paso del tiempo es parte del diseño: el cuero se ablanda, las costuras se asientan, las marcas del viaje se vuelven parte de la historia.
+            <span class="small">Mochilas · Tabaqueras · Carteras Zarga · Cinturones</span>
+          </p>
+        </div>
+        <div>
+          <div class="leather-card">
+            <div class="leather-label">El cuero</div>
+            <div class="leather-name">Everest Trenzado Vicuña</div>
+            <div class="leather-italic">Curtido vegetal, Cuero Market</div>
+            <div class="leather-meta">11 pies² · 4.5 horas · taller Roberto · colección Trigo</div>
+          </div>
+          <div class="spec">
+            <div class="spec-item"><div class="spec-num">11</div><div class="spec-label">Pies²</div></div>
+            <div class="spec-item"><div class="spec-num">4.5</div><div class="spec-label">Horas</div></div>
+            <div class="spec-item"><div class="spec-num">$184k</div><div class="spec-label">CLP</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="combo-c" class="combo combo-c">
+      <div class="combo-header">
+        <div class="combo-label">Combo C</div>
+        <div class="combo-name">Newsreader + Manrope · gratis · aproximación al look "PP Editorial + Söhne" (pago)</div>
+      </div>
+      <div class="sample">
+        <div>
+          <h1 class="hero-serif">Bitácora de un objeto que envejece bien.</h1>
+          <p class="subhead-serif">Una mochila alforja de Everest Miel, cosida a mano por Roberto en su taller de Ñuñoa.</p>
+          <p class="body-sans">
+            Cada pieza Valiz nace de un cuero recuperado y curtido lentamente. El paso del tiempo es parte del diseño: el cuero se ablanda, las costuras se asientan, las marcas del viaje se vuelven parte de la historia.
+            <span class="small">Mochilas · Tabaqueras · Carteras Zarga · Cinturones</span>
+          </p>
+        </div>
+        <div>
+          <div class="leather-card">
+            <div class="leather-label">El cuero</div>
+            <div class="leather-name">Everest Trenzado Vicuña</div>
+            <div class="leather-italic">Curtido vegetal, Cuero Market</div>
+            <div class="leather-meta">11 pies² · 4.5 horas · taller Roberto · colección Trigo</div>
+          </div>
+          <div class="spec">
+            <div class="spec-item"><div class="spec-num">11</div><div class="spec-label">Pies²</div></div>
+            <div class="spec-item"><div class="spec-num">4.5</div><div class="spec-label">Horas</div></div>
+            <div class="spec-item"><div class="spec-num">$184k</div><div class="spec-label">CLP</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    Las tres combinaciones son Google Fonts (gratis). El <strong>Combo C</strong> aproxima el look de PP Editorial New + Söhne (pago, ~USD 200–400 en licencias). Si te gusta esa dirección, las cambiamos al final sin romper código — son intercambiables a nivel CSS.
+  </footer>
+
+</div>
+
+</body>
+</html>
